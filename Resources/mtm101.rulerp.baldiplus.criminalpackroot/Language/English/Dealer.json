@@ -1,0 +1,35 @@
+{"items":[
+
+{"key":"PST_PRI_Dealer1","value":"Dealer"},
+{"key":"PST_PRI_Dealer2","value":"This sketchy teen is the school's delivery boy! He may offload his work, but he takes the job very seriously..."},
+
+{"key":"Dealer_HeyYou1","value":"Hey you!"},
+{"key":"Dealer_HeyYou2","value":"Hey!"},
+{"key":"Dealer_HeyYou3","value":"Hey kiddo!"},
+{"key":"Dealer_HeyYou4","value":"Hey kid!"},
+{"key":"Dealer_Interact1","value":"Take this item."},
+{"key":"Dealer_DeliverTo","value":"Deliver it to..."},
+{"key":"Dealer_ThrowAt","value":"Just throw it at them, they'll pick it up."},
+{"key":"Dealer_Inquire","value":"Hey have you delivered that item yet?"},
+{"key":"Dealer_InquireGood","value":"You did? Good. Now take these points as payment."},
+{"key":"Dealer_InquireBad","value":"You didn't? Well... it looks like you're going to be paying the price..."},
+{"key":"Dealer_InquireLost","value":"You lost it?! Well... it looks like you're going to be paying the price..."},
+{"key":"Dealer_InquireWarning","value":"Not yet? You better have it delivered by the next time I see you..."},
+{"key":"Dealer_UhOh","value":"Uh oh..."},
+{"key":"Dealer_UhOh2","value":"Uh oh! I gotta scram!"},
+{"key":"Dealer_Taxed","value":"I hope you didn't need those! Because I'll be taking them as tax!"},
+{"key":"Dealer_TaxedWithItem","value":"You can keep the item you STOLE from me... but I'll be taking the rest as tax."},
+{"key":"Dealer_Interrupted","value":"Hey! I wasn't done!"},
+{"key":"Dealer_Chr_ArtsAndCrafters","value":"Arts and Crafters"},
+{"key":"Dealer_Chr_Baldi","value":"Baldi"},
+{"key":"Dealer_Chr_Beans","value":"Beans"},
+{"key":"Dealer_Chr_Bully","value":"Bully"},
+{"key":"Dealer_Chr_Baldi","value":"Baldi"},
+{"key":"Dealer_Chr_DrReflex","value":"Dr. Reflex"},
+{"key":"Dealer_Chr_FirstPrize","value":"First-Prize"},
+{"key":"Dealer_Chr_MrsPomp","value":"Mrs. Pomp"},
+{"key":"Dealer_Chr_Playtime","value":"Playtime"},
+{"key":"Dealer_Chr_Principal","value":"Principal"},
+{"key":"Dealer_Chr_Sweep","value":"Gotta Sweep"}
+
+]}

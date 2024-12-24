@@ -1,0 +1,23 @@
+{"items":[
+
+{"key":"Itm_Crowbar","value":"Crowbar"},
+{"key":"Desc_Crowbar","value":"Crowbar\nThis piece of contraband is helpful for tearing down those pesky coin doors, one way doors\n and lockdown doors!"},
+
+{"key":"Itm_ThiefMask","value":"Thief Mask"},
+{"key":"Desc_ThiefMask","value":"Thief Mask\nUse this mask to make the Principal recognize you as a different person!\nUntil it wears off that is..."},
+
+{"key":"Itm_IOU","value":"I.O.U"},
+{"key":"Desc_IOU","value":"I.O.U\nUse this throwable page on anything that requires an item,\n such as tape players, yellow doors, soda machines and more!\nBe careful though... Principal doesn't like fraud..."},
+
+{"key":"Itm_DealerPouch","value":"Dealer Pouch"},
+{"key":"Itm_EmptyDealerPouch","value":"Empty Dealer Pouch"},
+{"key":"Desc_EmptyDealerPouch","value":"Empty Dealer Pouch\nSomehow, the contents magically vanished..."},
+
+{"key":"Itm_Pickaxe_3","value":"Pickaxe (3)"},
+{"key":"Desc_Pickaxe_3","value":"Pickaxe (3)\nDig new hallways and break down walls with this handy dandy pickaxe!"},
+{"key":"Itm_Pickaxe_2","value":"Pickaxe (2)"},
+{"key":"Desc_Pickaxe_2","value":"Pickaxe (2)\nDig new hallways and break down walls with this handy dandy pickaxe!"},
+{"key":"Itm_Pickaxe_1","value":"Pickaxe (1)"},
+{"key":"Desc_Pickaxe_1","value":"Pickaxe (1)\nDig new hallways and break down walls with this handy dandy pickaxe!"}
+
+]}

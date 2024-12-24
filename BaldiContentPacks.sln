@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33213.308
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CarnivalPack", "CarnivalPack\CarnivalPack.csproj", "{D9B96B3A-63EE-431A-ADDE-0CC58DF399A7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CriminalPack", "CriminalPack\CriminalPack.csproj", "{2C24A263-7180-4481-AAF7-418EFF3CA7DF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D9B96B3A-63EE-431A-ADDE-0CC58DF399A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D9B96B3A-63EE-431A-ADDE-0CC58DF399A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D9B96B3A-63EE-431A-ADDE-0CC58DF399A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D9B96B3A-63EE-431A-ADDE-0CC58DF399A7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C24A263-7180-4481-AAF7-418EFF3CA7DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C24A263-7180-4481-AAF7-418EFF3CA7DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C24A263-7180-4481-AAF7-418EFF3CA7DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C24A263-7180-4481-AAF7-418EFF3CA7DF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E2CB145F-0E7D-406A-B707-BDA9B756CE35}
+	EndGlobalSection
+EndGlobal
