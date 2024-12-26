@@ -146,7 +146,7 @@ namespace CarnivalPack
                 .SetShopPrice(480)
                 .SetGeneratorCost(40)
                 .SetItemComponent<ITM_CottonCandy>()
-                .SetMeta(ItemFlags.Persists, new string[0])
+                .SetMeta(ItemFlags.Persists, new string[] { "food" })
                 .Build();
             assetMan.Add<ItemObject>("CottonCandy", cottonCandy);
         }

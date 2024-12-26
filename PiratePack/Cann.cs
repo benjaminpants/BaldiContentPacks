@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using MTM101BaldAPI;
+using MTM101BaldAPI.Components;
 using MTM101BaldAPI.Registers;
 using System.Collections.Generic;
 using System.EnterpriseServices;
@@ -15,14 +16,39 @@ namespace PiratePack
         public SoundObject soundObject;
         public SoundType soundType;
         public Color overrideColor = Color.white;
+        public bool subtitleOverride = false;
+        public float soundPitch = 1f;
+        public float minDistance = 10f;
+        public float maxDistance = 10f;
+
+        private static readonly FieldInfo _subtitleColor = AccessTools.Field(typeof(AudioManager), "subtitleColor");
+        private static readonly FieldInfo _overrideSubtitleColor = AccessTools.Field(typeof(AudioManager), "overrideSubtitleColor");
+        private static readonly FieldInfo _minDistance = AccessTools.Field(typeof(PropagatedAudioManager), "minDistance");
+        private static readonly FieldInfo _maxDistance = AccessTools.Field(typeof(PropagatedAudioManager), "maxDistance");
 
         public CannSoundEntry(SoundObject obj, AudioManager audMan)
         {
             soundObject = obj;
+            soundPitch = audMan.audioDevice.pitch;
             if (audMan.GetComponent<NPC>()) { soundType = SoundType.NPC; }
             else if (audMan.GetComponent<Item>()) { soundType = SoundType.Item; }
             else if ((audMan.transform.parent != null) && audMan.transform.parent.GetComponent<Door>()) { soundType = SoundType.Door; }
             else { soundType = SoundType.Other; }
+            if (((bool)_overrideSubtitleColor.GetValue(audMan)))
+            {
+                subtitleOverride = true;
+                overrideColor = (Color)_subtitleColor.GetValue(audMan);
+            }
+            if (audMan is PropagatedAudioManager)
+            {
+                minDistance = (float)_minDistance.GetValue(audMan);
+                maxDistance = (float)_maxDistance.GetValue(audMan);
+            }
+            else
+            {
+                minDistance = audMan.audioDevice.minDistance;
+                maxDistance = audMan.audioDevice.maxDistance;
+            }
         }
 
         public enum SoundType
@@ -47,15 +73,37 @@ namespace PiratePack
             OnSoundObjectPlayed(obj, man);
         }
 
-        public float standardSpeed = 17f;
+        public float standardSpeed = 24f;
+        public float fleeSpeed = 38f;
+        public float addonPerSound = 0.4f;
         public int maxSounds = 32;
         public float hearingMultiplier = 1.25f;
+        public int loopsAround = 1;
+        public int chanceToStickAround = 25;
+
+        public float minTimeToPlayRandom = 7f;
+        public float maxTimeToPlayRandom = 30f;
 
         public Entity entity;
         public List<CannSoundEntry> heardSounds = new List<CannSoundEntry>();
         public List<WeightedCannLoop> loops = new List<WeightedCannLoop>();
         public AudioManager audMan;
         bool hasMethodAdded = false;
+
+        public SoundObject[] squakSounds;
+        public SoundObject[] hungrySounds;
+        public SoundObject easterEggSound;
+        public SoundObject eatSound;
+        public RotatedSpriteAnimator animator;
+        public SpriteRotator rotator;
+        public CustomVolumeAnimator volumeAnimator;
+
+        protected static readonly FieldInfo _subtitleColor = AccessTools.Field(typeof(AudioManager), "subtitleColor");
+        protected static readonly FieldInfo _minDistance = AccessTools.Field(typeof(PropagatedAudioManager), "minDistance");
+        protected static readonly FieldInfo _maxDistance = AccessTools.Field(typeof(PropagatedAudioManager), "maxDistance");
+        public float defaultMinDistance = 10f;
+        public float defaultMaxDistance = 500f;
+        public Color defaultSubtitleColor;
 
         public Dictionary<RoomCategory, int> roomValueAddons = new Dictionary<RoomCategory, int>()
         {
@@ -73,15 +121,84 @@ namespace PiratePack
 
         public override void Initialize()
         {
+            // why the fuck is SpriteRotator null
+            animator.affectedObject = GetComponent<SpriteRotator>();
+            volumeAnimator.animator = animator;
+            animator.animations = new Dictionary<string, CustomAnimation<Sprite[]>>()
+            {
+                { "fly", new CustomAnimation<Sprite[]>(10, PiratePlugin.Instance.cannFlyFrames) },
+                { "talk1", new CustomAnimation<Sprite[]>(1, new Sprite[1][] { new Sprite[1] { PiratePlugin.Instance.cannTalkFrames[0] } })},
+                { "talk2", new CustomAnimation<Sprite[]>(1, new Sprite[1][] { new Sprite[1] { PiratePlugin.Instance.cannTalkFrames[1] } })},
+                { "talk3", new CustomAnimation<Sprite[]>(1, new Sprite[1][] { new Sprite[1] { PiratePlugin.Instance.cannTalkFrames[2] } })},
+            };
+            animator.SetDefaultAnimation("fly", 1f);
             base.Initialize();
             FindLoops();
-            behaviorStateMachine.ChangeState(new Cann_FlyLoop(this, 3));
+            behaviorStateMachine.ChangeState(new Cann_FlyLoop(this, loopsAround));
             entity = GetComponent<Entity>();
-            ec.map.AddArrow(entity, UnityEngine.Color.yellow);
-            Navigator.maxSpeed = standardSpeed;
-            Navigator.SetSpeed(standardSpeed);
+            //ec.map.AddArrow(entity, Color.yellow);
             OnSoundObjectPlayed += OnSoundPlayed;
             hasMethodAdded = true;
+            SetFleeing(false);
+            defaultSubtitleColor = (Color)_subtitleColor.GetValue(audMan);
+            defaultMinDistance = (float)_minDistance.GetValue(audMan);
+            defaultMaxDistance = (float)_maxDistance.GetValue(audMan);
+            volumeAnimator.audioSource = audMan.audioDevice;
+            SetVolumeAnimatorState(false);
+        }
+
+        public bool fleeing = false;
+
+        public void SetFleeing(bool flee)
+        {
+            fleeing = flee;
+            UpdateSpeed();
+        }
+
+        public void UpdateSpeed()
+        {
+            float speedAddon = addonPerSound * heardSounds.Count;
+            if (fleeing)
+            {
+                Navigator.maxSpeed = fleeSpeed + speedAddon;
+                Navigator.SetSpeed(fleeSpeed + speedAddon);
+            }
+            else
+            {
+                Navigator.maxSpeed = standardSpeed + speedAddon;
+                Navigator.SetSpeed(standardSpeed + speedAddon);
+            }
+        }
+
+        public void PlayCuteSound()
+        {
+            audMan.FlushQueue(true);
+            ResetSoundSettings();
+            audMan.QueueRandomAudio(hungrySounds);
+        }
+
+        public void PlayEatSound()
+        {
+            audMan.FlushQueue(true);
+            ResetSoundSettings();
+            audMan.QueueAudio(eatSound);
+        }
+
+        public void ResetSoundSettings()
+        {
+            audMan.pitchModifier = 1f;
+            _subtitleColor.SetValue(audMan, defaultSubtitleColor);
+            _minDistance.SetValue(audMan, defaultMinDistance);
+            _maxDistance.SetValue(audMan, defaultMaxDistance);
+
+        }
+
+        public void SquakAndAlert()
+        {
+            audMan.FlushQueue(true);
+            ResetSoundSettings();
+            audMan.QueueRandomAudio(squakSounds);
+            ec.MakeNoise(transform.position, 2);
         }
 
         public void AddSound(CannSoundEntry sound)
@@ -100,19 +217,22 @@ namespace PiratePack
                 if (uselessDoorSounds.Length > 0)
                 {
                     heardSounds.Remove(uselessDoorSounds[Random.Range(0, uselessDoorSounds.Length)]);
+                    UpdateSpeed();
                     return;
                 }
                 heardSounds.RemoveAt(Random.Range(0, Mathf.Min(3, maxSounds - 1)));
             }
+            UpdateSpeed();
         }
 
 
         void OnSoundPlayed(SoundObject obj, AudioManager man)
         {
+            if (ec.CellFromPosition(transform.position).Silent) return; // can't hear if everything is silent...
             if (man == audMan) return; // No infinite loops in the halls...
             // sound is too far away for cam to have heard
             // todo: account for sound propagation?
-            if (Vector3.Distance(transform.position, man.transform.position) > (man.audioDevice.maxDistance * hearingMultiplier)) return;
+            if (Vector3.Distance(transform.position, man.transform.position) > (((man is PropagatedAudioManager) ? (float)_maxDistance.GetValue(audMan) : man.audioDevice.maxDistance) * hearingMultiplier)) return;
             if (behaviorStateMachine.currentState is Cann_StateBase)
             {
                 ((Cann_StateBase)behaviorStateMachine.currentState).HeardSound(obj, man);
@@ -126,13 +246,51 @@ namespace PiratePack
             hasMethodAdded = false;
         }
 
-        public bool PlayRandomSound()
+        public bool PlayRandomSound(bool isObvious = false)
         {
             if (heardSounds.Count == 0) return false;
             CannSoundEntry entry = heardSounds[Random.Range(0, heardSounds.Count)];
             heardSounds.Remove(entry);
-            audMan.PlaySingle(entry.soundObject);
+            PlaySoundEntry(entry, isObvious);
+            UpdateSpeed();
             return true;
+        }
+
+        public bool ItemIsCannFood(ItemObject obj)
+        {
+            ItemMetaData meta = obj.GetMeta();
+            if (meta == null) return false;
+            return (((meta.tags.Contains("food") && !meta.tags.Contains("drink")) || (meta.tags.Contains("cann_like"))) && (!meta.tags.Contains("cann_hate")));
+        }
+
+        public void PlaySoundEntry(CannSoundEntry entry, bool isObvious = false)
+        {
+            if (!isObvious)
+            {
+                if (entry.subtitleOverride)
+                {
+                    _subtitleColor.SetValue(audMan, entry.overrideColor);
+                }
+                else
+                {
+                    _subtitleColor.SetValue(audMan, entry.soundObject.color);
+                }
+                _minDistance.SetValue(audMan, entry.minDistance);
+                _maxDistance.SetValue(audMan, entry.maxDistance);
+            }
+            else
+            {
+                ResetSoundSettings();
+            }
+            audMan.pitchModifier = (isObvious ? 1.5f : 1f) * entry.soundPitch;
+            if (Random.Range(1, 999) == 99)
+            {
+                audMan.QueueAudio(easterEggSound);
+            }
+            else
+            {
+                audMan.QueueAudio(entry.soundObject);
+            }
         }
 
         void OnDestroy()
@@ -164,7 +322,13 @@ namespace PiratePack
             Cell targetTile = ec.CellFromPosition(tile.position + directionB.ToIntVector2());
             tile.NavBin = 15;
             ec.FindPath(startTile, targetTile, PathType.Nav, out finalList, out _);
-            finalList = finalList.ToList();
+            if (finalList == null)
+            {
+                finalList = new List<Cell>();
+            }
+            {
+                finalList = finalList.ToList();
+            }
             tile.NavBin = navBin;
         }
 
@@ -182,6 +346,21 @@ namespace PiratePack
             return Mathf.Max(baseWeight - (hasCompletedActivity ? 100 : 0), 50);
         }
 
+        public void SetVolumeAnimatorState(bool useVolumeAnimator)
+        {
+            volumeAnimator.enabled = useVolumeAnimator;
+            if (!useVolumeAnimator)
+            {
+                animator.SetDefaultAnimation("fly", 1f);
+                animator.Play("fly", 1f);
+            }
+            else
+            {
+                animator.SetDefaultAnimation("talk1", 1f);
+                animator.Play("talk1", 1f);
+            }
+        }
+
         public void FindLoops(bool useClassrooms = true)
         {
             loops.Clear();
@@ -189,7 +368,7 @@ namespace PiratePack
             List<RoomController> roomsWithItems = ec.rooms.Where(x => (GetItemsInRoom(x).Length > 0)).ToList();
 
 
-            List<RoomController> classRooms = ec.rooms.Where(x => _activity.GetValue(x) == null).ToList();
+            List<RoomController> classRooms = ec.rooms.Where(x => _activity.GetValue(x) != null).ToList();
             if (!useClassrooms)
             {
                 classRooms = roomsWithItems;
@@ -355,17 +534,46 @@ namespace PiratePack
     {
         CannLoop currentLoop = null;
         int loops = 0;
+        float timeTilRandomAmbience;
 
         public Cann_FlyLoop(NPC npc, int loops) : base(npc)
         {
             currentLoop = WeightedCannLoop.RandomSelection(cann.loops.ToArray());
+            timeTilRandomAmbience = Random.Range(cann.minTimeToPlayRandom, cann.maxTimeToPlayRandom);
+            this.loops = loops;
+        }
+
+        public Cann_FlyLoop(NPC npc, CannLoop loop, int loops) : base(npc)
+        {
+            currentLoop = loop;
             this.loops = loops;
         }
 
         public override void Enter()
         {
             base.Enter();
-            npc.navigationStateMachine.ChangeState(new NavigationState_PredeterminedPath(cann, 0, currentLoop.cellsInLoop));
+            ChangeNavigationState(new NavigationState_PredeterminedPath(cann, 0, currentLoop.cellsInLoop));
+            cann.SetFleeing(false);
+        }
+
+        public override void Update()
+        {
+            base.Update();
+            if (timeTilRandomAmbience > 0 && (cann.heardSounds.Count > 0))
+            {
+                timeTilRandomAmbience -= Time.deltaTime * cann.TimeScale;
+                if (timeTilRandomAmbience <= 0)
+                {
+                    timeTilRandomAmbience = 0f;
+                    cann.PlayRandomSound(false);
+                }
+            }
+            if (loops <= 0) return;
+            if (cann.heardSounds.Count >= cann.maxSounds)
+            {
+                loops = 0;
+                DestinationEmpty();
+            }
         }
 
         public override void DestinationEmpty()
@@ -380,7 +588,7 @@ namespace PiratePack
             }
             else
             {
-                npc.navigationStateMachine.ChangeState(new NavigationState_PredeterminedPath(cann, 0, currentLoop.cellsInLoop));
+                ChangeNavigationState(new NavigationState_PredeterminedPath(cann, 0, currentLoop.cellsInLoop));
             }
         }
 
@@ -391,16 +599,119 @@ namespace PiratePack
         }
     }
 
+    public class Cann_Flee : Cann_StateBase
+    {
+        protected PlayerManager player;
+        protected float fleeTime = 0f;
+        protected int fleePriority = 0;
+        public Cann_Flee(NPC npc, PlayerManager player, float fleeTime) : base(npc)
+        {
+            this.player = player;
+            this.fleeTime = fleeTime;
+        }
+
+        public override void Enter()
+        {
+            base.Enter();
+            ChangeNavigationState(new NavigationState_WanderFlee(cann, fleePriority, player.DijkstraMap));
+            cann.SetFleeing(true);
+        }
+
+        public override void Update()
+        {
+            fleeTime -= Time.deltaTime * cann.TimeScale;
+            if (fleeTime <= 0f)
+            {
+                int closestDistance = int.MaxValue;
+                CannLoop closestLoop = null;
+                foreach (CannLoop loop in cann.loops.Select(x => x.selection))
+                {
+                    cann.ec.FindPath(cann.ec.CellFromPosition(cann.transform.position), loop.cellsInLoop[0], PathType.Nav, out List<Cell> result, out bool success);
+                    if (!success) continue;
+                    if (result.Count < closestDistance)
+                    {
+                        closestDistance = result.Count;
+                        closestLoop = loop;
+                    }
+                }
+                if (closestLoop == null)
+                {
+                    PiratePlugin.Log.LogWarning("Cann couldn't find shortest loop??? wtf?!?");
+                    cann.behaviorStateMachine.ChangeState(new Cann_FlyLoop(npc, cann.loopsAround));
+                    return;
+                }
+                cann.behaviorStateMachine.ChangeState(new Cann_FlyLoop(npc, closestLoop, cann.loopsAround));
+                return;
+            }
+        }
+
+        public override void HeardSound(SoundObject sound, AudioManager audMan)
+        {
+            base.HeardSound(sound, audMan);
+            cann.AddSound(new CannSoundEntry(sound, audMan));
+        }
+    }
+
+    public class Cann_Distract : Cann_Flee
+    {
+
+        float timeUntilNextPlay = 0f;
+
+        public Cann_Distract(NPC npc, PlayerManager player, float initialWait) : base(npc, player, float.PositiveInfinity)
+        {
+            timeUntilNextPlay = initialWait;
+            fleePriority = 32; // so we bypass the party's calling
+        }
+
+        public override void Update()
+        {
+            base.Update();
+            if (!cann.audMan.AnyAudioIsPlaying)
+            {
+                timeUntilNextPlay -= Time.deltaTime * cann.TimeScale;
+            }
+            if (timeUntilNextPlay <= 0f)
+            {
+                if (!cann.PlayRandomSound(true))
+                {
+                    timeUntilNextPlay = float.PositiveInfinity;
+                    fleeTime = 5f;
+                }
+                else
+                {
+                    cann.ec.MakeNoise(cann.transform.position, 9);
+                    timeUntilNextPlay = Random.Range(0.5f,2f);
+                }
+            }
+        }
+
+        // dont want cann picking up on new sounds during the distraction phase, as this makes it last forever
+        public override void HeardSound(SoundObject sound, AudioManager audMan)
+        {
+            //base.HeardSound(sound, audMan);
+        }
+    }
+
+    // todo: handle if the player gets a new item while in the room cann is in
     public class Cann_Perch : Cann_StateBase
     {
         Pickup chosenPickup = null;
+        RoomController pickupRoom = null;
 
-        public float timeUntilBoredomCheck = 0f;
-        public int chanceToLeave = 0;
+        float timeUntilBoredomCheck = 0f;
+        int chanceToLeave = 0;
 
-        public Cann_Perch(NPC npc, Pickup toPerchUpon) : base(npc)
+        static FieldInfo _stillHasItem = AccessTools.Field(typeof(Pickup), "stillHasItem");
+
+        // the player that cann is trying to appease
+        // will open his mouth when the player approaches and will play cute sounds when the player is in the room
+        PlayerManager appeasingPlayer = null;
+        bool hasPlayedCuteSound = false;
+
+        public Cann_Perch(NPC npc, Pickup toPerchUpon, RoomController room) : base(npc)
         {
             chosenPickup = toPerchUpon;
+            pickupRoom = room;
         }
         public override void Enter()
         {
@@ -410,6 +721,32 @@ namespace PiratePack
             cann.entity.OnTeleport += Teleported;
             chosenPickup.OnItemCollected += ItemCollected;
             timeUntilBoredomCheck = Random.Range(5f,10f);
+            ChangeNavigationState(new NavigationState_DoNothing(cann, 0));
+            cann.SetVolumeAnimatorState(true);
+        }
+
+
+        public override void PlayerInSight(PlayerManager pm)
+        {
+            if (appeasingPlayer != null) return;
+            foreach (ItemObject itm in pm.itm.items)
+            {
+                if (cann.ItemIsCannFood(itm))
+                {
+                    appeasingPlayer = pm;
+                    break;
+                }
+            }
+            if (appeasingPlayer == null) return;
+            if (hasPlayedCuteSound) return;
+            cann.PlayCuteSound();
+            hasPlayedCuteSound = true;
+        }
+
+        public override void PlayerLost(PlayerManager pm)
+        {
+            if (pm != appeasingPlayer) return;
+            appeasingPlayer = null;
         }
 
         public override void Update()
@@ -418,23 +755,32 @@ namespace PiratePack
             if (chosenPickup == null) // incase some mod does something weird?
             {
                 // todo: swap for flee state
-                cann.behaviorStateMachine.ChangeState(new Cann_FlyLoop(cann, 3));
+                cann.behaviorStateMachine.ChangeState(new Cann_FlyLoop(cann, cann.loopsAround));
                 return;
             }
-            cann.spriteRenderer[0].gameObject.transform.position = chosenPickup.transform.GetComponentInChildren<SpriteRenderer>().transform.position + (Vector3.up * 1.28f);
-            timeUntilBoredomCheck -= Time.deltaTime * cann.TimeScale;
+            cann.spriteRenderer[0].gameObject.transform.position = chosenPickup.transform.GetComponentInChildren<SpriteRenderer>().transform.position + (Vector3.up * (1.28f / 2f));
+            if (!cann.audMan.AnyAudioIsPlaying)
+            {
+                timeUntilBoredomCheck -= Time.deltaTime * cann.TimeScale;
+            }
             if (timeUntilBoredomCheck <= 0f)
             {
-                timeUntilBoredomCheck = Random.Range(5f, 10f);
-                if (!cann.PlayRandomSound())
+                timeUntilBoredomCheck = Random.Range(2f, 8f);
+                if (!cann.PlayRandomSound(appeasingPlayer != null))
                 {
                     chanceToLeave = 100;
                 }
-                chanceToLeave += 5;
+                chanceToLeave += 8;
                 if (UnityEngine.Random.Range(1, 100) <= chanceToLeave)
                 {
-                    // todo: add random chance to just switch to item in same room
-                    cann.behaviorStateMachine.ChangeState(new Cann_FlyLoop(cann, 3));
+                    if (!appeasingPlayer)
+                    {
+                        cann.behaviorStateMachine.ChangeState(new Cann_FlyLoop(cann, cann.loopsAround));
+                    }
+                    else
+                    {
+                        cann.behaviorStateMachine.ChangeState(new Cann_AttemptPerch(npc, npc.ec.CellFromPosition(npc.transform.position).room, chosenPickup));
+                    }
                 }
             }
         }
@@ -449,22 +795,94 @@ namespace PiratePack
             }
             cann.spriteRenderer[0].gameObject.transform.localPosition = Vector3.zero;
             cann.entity.OnTeleport -= Teleported;
+            cann.SetVolumeAnimatorState(false);
+        }
+
+
+        public override void HeardSound(SoundObject sound, AudioManager audMan)
+        {
+            base.HeardSound(sound, audMan);
+            // cann is too busy chirping to hear any sounds
+            if (!cann.audMan.AnyAudioIsPlaying)
+            {
+                cann.AddSound(new CannSoundEntry(sound, audMan));
+            }
         }
 
         void Teleported(Vector3 position)
         {
-            cann.behaviorStateMachine.ChangeState(new Cann_FlyLoop(cann, 3));
+            cann.behaviorStateMachine.ChangeState(new Cann_FlyLoop(cann, cann.loopsAround));
         }
 
         void ItemCollected(Pickup pickup, int player)
         {
-            cann.behaviorStateMachine.ChangeState(new Cann_FlyLoop(cann, 3));
+            PlayerManager pm = npc.ec.Players[player];
+            bool cannAppeased = false;
+            // players inventory isn't full and they tried to give cann food
+            if (cann.ItemIsCannFood(pm.itm.items[pm.itm.selectedItem]))
+            {
+                pm.itm.RemoveItem(pm.itm.selectedItem);
+                cannAppeased = true;
+            }
+            else
+            {
+                // maybe the players inventory was full and the item got swapped to underneath us, check.
+                if (pickup.isActiveAndEnabled && cann.ItemIsCannFood(pickup.item))
+                {
+                    _stillHasItem.SetValue(pickup, false);
+                    pickup.gameObject.SetActive(false);
+                    pickup.icon.spriteRenderer.enabled = false;
+                    cannAppeased = true;
+                }
+            }
+
+            if (cannAppeased)
+            {
+                cann.PlayEatSound();
+                cann.behaviorStateMachine.ChangeState(new Cann_WaitForSound(cann, new Cann_Distract(cann, pm, 3f)));
+                return;
+            }
+            cann.SquakAndAlert();
+            if (Random.Range(1, 101) <= cann.chanceToStickAround)
+            {
+                cann.SetFleeing(true);
+                cann.behaviorStateMachine.ChangeState(new Cann_AttemptPerch(npc, npc.ec.CellFromPosition(npc.transform.position).room, pickup));
+            }
+            else
+            {
+                cann.behaviorStateMachine.ChangeState(new Cann_Flee(cann, cann.ec.Players[player], 6f));
+            }
         }
 
     }
 
+    public class Cann_WaitForSound : Cann_StateBase
+    {
+        Cann_StateBase stateAfter;
+        public Cann_WaitForSound(NPC npc, Cann_StateBase stateAfter) : base(npc)
+        {
+            this.stateAfter = stateAfter;
+        }
+
+        public override void Enter()
+        {
+            base.Enter();
+            ChangeNavigationState(new NavigationState_DoNothing(npc, 32));
+        }
+
+        public override void Update()
+        {
+            base.Update();
+            if (cann.audMan.AnyAudioIsPlaying) return;
+            currentNavigationState.priority = 0;
+            cann.behaviorStateMachine.ChangeState(stateAfter);
+        }
+    }
+
     public class Cann_AttemptPerch : Cann_StateBase
     {
+
+        int perchFails = 0;
 
         static FieldInfo _value = AccessTools.Field(typeof(ITM_YTPs), "value");
 
@@ -481,6 +899,12 @@ namespace PiratePack
             SelectPickupFromRoom(chosenRoom);
         }
 
+        public Cann_AttemptPerch(NPC npc, RoomController chosenRoom, Pickup toIgnore) : base(npc)
+        {
+            this.chosenRoom = chosenRoom;
+            SelectPickupFromRoom(chosenRoom, toIgnore);
+        }
+
         public override void Enter()
         {
             base.Enter();
@@ -489,27 +913,41 @@ namespace PiratePack
                 npc.behaviorStateMachine.ChangeState(new Cann_FlyLoop(cann, 1));
                 return;
             }
-            npc.navigationStateMachine.ChangeState(new NavigationState_TargetPosition(npc, 32, selectedPickup.transform.position));
+            ChangeNavigationState(new NavigationState_TargetPosition(npc, 32, selectedPickup.transform.position));
+        }
+
+        public override void Update()
+        {
+            base.Update();
+            if ((selectedPickup == null) || ((!selectedPickup.isActiveAndEnabled)))
+            {
+                npc.behaviorStateMachine.ChangeState(new Cann_FlyLoop(cann, 1));
+            }
         }
 
         public override void DestinationEmpty()
         {
             if (Vector3.Distance(new Vector3(npc.transform.position.x, 0f, npc.transform.position.z), new Vector3(selectedPickup.transform.position.x, 0f, selectedPickup.transform.position.z)) < 10f)
             {
-                PiratePlugin.Log.LogInfo("Succesful perch!");
-                npc.behaviorStateMachine.ChangeState(new Cann_Perch(cann, selectedPickup));
+                npc.behaviorStateMachine.ChangeState(new Cann_Perch(cann, selectedPickup, chosenRoom));
+                cann.SetFleeing(false);
             }
             else
             {
-                SelectPickupFromRoom(chosenRoom);
-                npc.navigationStateMachine.ChangeState(new NavigationState_TargetPosition(npc, 32, selectedPickup.transform.position));
+                if (perchFails >= 10)
+                {
+                    npc.behaviorStateMachine.ChangeState(new Cann_FlyLoop(cann, 1));
+                }
+                SelectPickupFromRoom(chosenRoom, selectedPickup);
+                ChangeNavigationState(new NavigationState_TargetPosition(npc, 32, selectedPickup.transform.position));
+                perchFails++;
             }
         }
 
         void SelectPickupFromRoom(RoomController rc, Pickup toIgnore = null)
         {
             List<WeightedSelection<Pickup>> weightedPickups = new List<WeightedSelection<Pickup>>();
-            Pickup[] pickups = cann.GetItemsInRoom(rc);
+            Pickup[] pickups = cann.GetItemsInRoom(rc).Where(x => x != toIgnore).ToArray();
             if (pickups.Length == 0) return;
             foreach (Pickup p in pickups)
             {

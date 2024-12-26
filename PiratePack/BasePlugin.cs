@@ -3,11 +3,14 @@ using BepInEx.Logging;
 using HarmonyLib;
 using MTM101BaldAPI;
 using MTM101BaldAPI.AssetTools;
+using MTM101BaldAPI.Components;
 using MTM101BaldAPI.ObjectCreation;
+using MTM101BaldAPI.Reflection;
 using MTM101BaldAPI.Registers;
 using MTM101BaldAPI.SaveSystem;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace PiratePack
@@ -32,6 +35,10 @@ namespace PiratePack
 
         internal static ManualLogSource Log;
 
+        public Sprite[][] cannFlyFrames;
+
+        public Sprite[] cannTalkFrames;
+
         void Awake()
         {
             Harmony harmony = new Harmony("mtm101.rulerp.baldiplus.piratepack");
@@ -40,6 +47,7 @@ namespace PiratePack
             GeneratorManagement.Register(this, GenerationModType.Addend, GeneratorChanges);
             ModdedSaveGame.AddSaveHandler(Info);
             Log = this.Logger;
+            Instance = this;
         }
 
         void GeneratorChanges(string floorName, int levelId, SceneObject obj)
@@ -47,7 +55,7 @@ namespace PiratePack
             obj.potentialNPCs.Add(new WeightedNPC()
             {
                 selection= assetMan.Get<NPC>("Cann"),
-                weight=1000
+                weight=1000000
             });
             obj.MarkAsNeverUnload();
             obj.CustomLevelObject().MarkAsNeverUnload();
@@ -55,10 +63,23 @@ namespace PiratePack
 
         IEnumerator LoadEnumerator()
         {
-            yield return 1;
-            yield return "Loading...";
+            yield return 2;
+            yield return "Loading Cann...";
 
             assetMan.Add<Sprite>("CannPlaceholder", AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 50f, "CannPlaceholder.png"));
+
+            Color cannSubtitles = new Color(58f / 255f, 255f / 255f, 88f / 255f);
+
+            assetMan.Add<SoundObject>("CannScreech1", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "CannSquak1.ogg"), "Vfx_Cann_Squak", SoundType.Voice, cannSubtitles));
+            assetMan.Add<SoundObject>("CannScreech2", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "CannSquak2.ogg"), "Vfx_Cann_Squak", SoundType.Voice, cannSubtitles));
+            assetMan.Add<SoundObject>("CannScreech3", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "CannSquak3.ogg"), "Vfx_Cann_Squak", SoundType.Voice, cannSubtitles));
+            assetMan.Add<SoundObject>("CannEasterEgg", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "CannTheParrotSoundLikeMe.ogg"), "Vfx_Cann_EasterEgg", SoundType.Voice, cannSubtitles));
+
+            assetMan.Add<SoundObject>("CannHungry1", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "CannFood1.ogg"), "Vfx_Cann_Hungry", SoundType.Voice, cannSubtitles));
+            assetMan.Add<SoundObject>("CannHungry2", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "CannFood2.ogg"), "Vfx_Cann_Hungry", SoundType.Voice, cannSubtitles));
+            assetMan.Add<SoundObject>("CannHungry3", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "CannFood3.ogg"), "Vfx_Cann_Hungry", SoundType.Voice, cannSubtitles));
+
+            assetMan.Add<SoundObject>("CannEat", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "CannEat.ogg"), "Vfx_Cann_Eat", SoundType.Voice, cannSubtitles));
 
             Cann cann = new NPCBuilder<Cann>(Info)
                 .SetName("Cann")
@@ -69,13 +90,70 @@ namespace PiratePack
                 .AddTrigger()
                 .AddLooker()
                 .SetEnum("Cann")
+                .SetForcedSubtitleColor(cannSubtitles)
+                .SetMinMaxAudioDistance(10f,500f)
                 .Build();
+
 
             cann.spriteRenderer[0].sprite = assetMan.Get<Sprite>("CannPlaceholder");
             cann.spriteRenderer[0].transform.localPosition = Vector3.zero;
+
+            cann.squakSounds = new SoundObject[]
+            {
+                assetMan.Get<SoundObject>("CannScreech1"),
+                assetMan.Get<SoundObject>("CannScreech2"),
+                assetMan.Get<SoundObject>("CannScreech3"),
+            };
+            cann.easterEggSound = assetMan.Get<SoundObject>("CannEasterEgg");
+            cann.eatSound = assetMan.Get<SoundObject>("CannEat");
+            cann.hungrySounds = new SoundObject[]
+            {
+                assetMan.Get<SoundObject>("CannHungry1"),
+                assetMan.Get<SoundObject>("CannHungry2"),
+                assetMan.Get<SoundObject>("CannHungry3"),
+            };
+
             cann.audMan = cann.GetComponent<AudioManager>();
 
+
+            // now turn into an array of arrays so we can read it easier in the future
+            // the list is probably unnecessary actually, todo: remove list
+            int cannFrames = 3;
+            Vector2 cannPivot = new Vector2(0.5f, 0.2f);
+
+            Sprite[,] loadedSprites = AssetLoader.SpritesFromSpritesheet2D(cannFrames, 8, 50f, cannPivot, AssetLoader.TextureFromMod(this, "CannFrames", "CannFly.png"));
+
+            cannTalkFrames = AssetLoader.SpritesFromSpritesheet(3, 1, 50f, cannPivot, AssetLoader.TextureFromMod(this, "CannFrames", "CannTalk.png"));
+
+            List<Sprite[]> spriteFrames = new List<Sprite[]>();
+
+            for (int x = 0; x < cannFrames; x++)
+            {
+                Sprite[] directions = new Sprite[8];
+                for (int y = 0; y < directions.Length; y++)
+                {
+                    directions[y] = loadedSprites[x, (y + 5) % 8];
+                }
+                spriteFrames.Add(directions);
+            }
+
+            cannFlyFrames = spriteFrames.ToArray();
+
+            cann.animator = cann.gameObject.AddComponent<RotatedSpriteAnimator>();
+            SpriteRotator rotator = cann.gameObject.AddComponent<SpriteRotator>();
+            cann.animator.affectedObject = rotator;
+            cann.rotator = rotator;
+            rotator.ReflectionSetVariable("spriteRenderer", cann.spriteRenderer[0]);
+            cann.volumeAnimator = cann.gameObject.AddComponent<CustomVolumeAnimator>();
+            cann.volumeAnimator.sensitivity = AnimationCurve.Linear(0f,0f,1f,1f);
+            cann.volumeAnimator.animations = new string[3] { "talk1", "talk2", "talk3" };
+            cann.volumeAnimator.enabled = false;
+            cann.volumeAnimator.volumeMultipler = 1f;
+
             assetMan.Add<NPC>("Cann", cann);
+
+            yield return "Modifying meta...";
+            ItemMetaStorage.Instance.FindByEnum(Items.ZestyBar).tags.Add("cann_hate"); //chocolate is poisonous to parrots as minecraft taught me
         }
     }
 }
