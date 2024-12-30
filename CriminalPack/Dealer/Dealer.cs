@@ -65,6 +65,12 @@ namespace CriminalPack
         public bool hasActiveDelivery => playerCharacterPair != (null, null);
         public SoundObject audGrappled;
 
+        public override void Despawn()
+        {
+            behaviorStateMachine.currentState.Exit();
+            base.Despawn();
+        }
+
         public void SetGuilty()
         {
             base.SetGuilt(10f, "Bullying");

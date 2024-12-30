@@ -11,6 +11,7 @@ using MTM101BaldAPI.SaveSystem;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace PiratePack
@@ -30,6 +31,8 @@ namespace PiratePack
     public class PiratePlugin : BaseUnityPlugin
     {
         public AssetManager assetMan = new AssetManager();
+
+        public static RoomCategory sunkenFloorRoomCat;
 
         public static PiratePlugin Instance;
 
@@ -55,7 +58,12 @@ namespace PiratePack
             obj.potentialNPCs.Add(new WeightedNPC()
             {
                 selection= assetMan.Get<NPC>("Cann"),
-                weight=1000000
+                weight=10000
+            });
+            obj.CustomLevelObject().forcedStructures = obj.CustomLevelObject().forcedStructures.AddToArray(new StructureWithParameters()
+            {
+                parameters = new StructureParameters(),
+                prefab = assetMan.Get<StructureBuilder>("SunkenFloor")
             });
             obj.MarkAsNeverUnload();
             obj.CustomLevelObject().MarkAsNeverUnload();
@@ -63,7 +71,7 @@ namespace PiratePack
 
         IEnumerator LoadEnumerator()
         {
-            yield return 2;
+            yield return 3;
             yield return "Loading Cann...";
 
             assetMan.Add<Sprite>("CannPlaceholder", AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 50f, "CannPlaceholder.png"));
@@ -151,6 +159,39 @@ namespace PiratePack
             cann.volumeAnimator.volumeMultipler = 1f;
 
             assetMan.Add<NPC>("Cann", cann);
+
+            yield return "Loading SunkenFloor...";
+
+            sunkenFloorRoomCat = EnumExtensions.ExtendEnum<RoomCategory>("SunkenFloor");
+            GameObject sunkenFloorObject = new GameObject("SunkenFloorBuilder");
+            sunkenFloorObject.ConvertToPrefab(true);
+            Structure_SunkenFloor sunkenFloorStructure = sunkenFloorObject.AddComponent<Structure_SunkenFloor>();
+            sunkenFloorStructure.transparentTexture = AssetLoader.TextureFromMod(this, "FloodWaterTransparent.png");
+            assetMan.Add<Structure_SunkenFloor>("SunkenFloor", sunkenFloorStructure);
+
+            // create the SunkenFloorController prefab
+
+            GameObject sunkenControllerObject = new GameObject("SunkenController");
+            sunkenControllerObject.ConvertToPrefab(true);
+            SunkenFloorController sunkenController = sunkenControllerObject.AddComponent<SunkenFloorController>();
+
+
+            // set up the board
+            GameObject boardObject = new GameObject("Board");
+            boardObject.transform.SetParent(sunkenControllerObject.transform, false);
+            boardObject.AddComponent<MeshFilter>().mesh = Resources.FindObjectsOfTypeAll<Mesh>().First(x => x.name == "Quad" && x.GetInstanceID() >= 0);
+            Material boardMaterial = new Material(Resources.FindObjectsOfTypeAll<Material>().First(x => x.name == "TileBase_Alpha" && x.GetInstanceID() >= 0));
+            boardMaterial.SetMainTexture(AssetLoader.TextureFromMod(this, "Platform.png"));
+            boardObject.AddComponent<MeshRenderer>().material = boardMaterial;
+
+            boardObject.transform.localScale *= 10f;
+            boardObject.transform.eulerAngles = new Vector3(90f,0f,0f);
+
+            // assign board to the controller
+            sunkenController.board = boardObject;
+
+            // and finally assign the controller to the structure
+            sunkenFloorStructure.controllerPrefab = sunkenController;
 
             yield return "Modifying meta...";
             ItemMetaStorage.Instance.FindByEnum(Items.ZestyBar).tags.Add("cann_hate"); //chocolate is poisonous to parrots as minecraft taught me

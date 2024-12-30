@@ -103,6 +103,12 @@ namespace CarnivalPack
             MoveSpriteByAmount(-currentOffset, time);
         }
 
+        public override void Despawn()
+        {
+            behaviorStateMachine.currentState.Exit(); 
+            base.Despawn();
+        }
+
         public override void Initialize()
         {
             base.Initialize();
