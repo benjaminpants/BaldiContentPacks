@@ -98,7 +98,10 @@ namespace PiratePack
                     yield return null;
                 }
                 board.transform.position = cells[currentIndex].FloorWorldPosition;
-                overrider.entity.Teleport(board.transform.position);
+                if (overrider.entity != null)
+                {
+                    overrider.entity.Teleport(board.transform.position);
+                }
             }
             SetCurrentValidWalk(!goingToEnd, false);
             // we are no longer transitioning
@@ -110,7 +113,8 @@ namespace PiratePack
                 // block the direction we just came from navigation wise
                 // to prevent npcs from just turning around.
                 // todo: THIS STILL DOESN'T WORK! WHY?
-                BlockCell(cells[currentIndex - increment].position, directions[currentIndex - increment]); // wtf
+                PiratePlugin.Log.LogInfo("Blocking: " + directions[targetIndex] + "!");
+                BlockCell(cells[targetIndex].position, directions[targetIndex]); // wtf
                 waitingToLeaveForNavigation = overrider.entity;
             }
             overrider = null;
@@ -209,10 +213,12 @@ namespace PiratePack
 
         public void UnblockAllCells()
         {
+            PiratePlugin.Log.LogInfo("Unblocking all blocked cells!");
             foreach ((IntVector2, Direction) block in blocks)
             {
                 myRoom.ec.CellFromPosition(block.Item1).Block(block.Item2, false);
             }
+            PiratePlugin.Log.LogInfo("Unblocked " + blocks.Count + " blocks!");
             blocks.Clear();
         }
 
@@ -255,64 +261,92 @@ namespace PiratePack
     public class Structure_SunkenFloor : StructureBuilder
     {
 
-        RoomController sunkenFloorRoom;
-        public Texture2D transparentTexture; // should be assigned to "Transparent"
-        List<Cell> chosenCells = new List<Cell>();
-        List<Direction> followedDirections = new List<Direction>();
-        public SunkenFloorController controllerPrefab;
+        public class SunkenFloorInstance
+        {
+            public RoomController room;
+            public List<Cell> chosenCells = new List<Cell>();
+            public List<Direction> followedDirections = new List<Direction>();
+        }
 
-        int maxCells;
+        public Texture2D transparentTexture; // should be assigned to "Transparent"
+
+        public List<SunkenFloorInstance> createdInstances = new List<SunkenFloorInstance>();
+
+        public SunkenFloorController controllerPrefab;
 
         public override void Initialize(EnvironmentController ec, StructureParameters parameters)
         {
             base.Initialize(ec, parameters);
         }
 
-        public override void PostHallPrep(LevelGenerator lg, System.Random rng)
+        public SunkenFloorInstance AttemptBuild(Cell startingCell, LevelGenerator lg, System.Random rng)
         {
-            base.PostHallPrep(lg, rng);
+            SunkenFloorInstance instance = new SunkenFloorInstance();
 
             int maxPossibleSize = Mathf.Max(Mathf.Min(ec.levelSize.x, ec.levelSize.z) / 3, 7);
-            maxCells = rng.Next(6, maxPossibleSize + 1); // the max amount of cells this stream can cover
 
-            sunkenFloorRoom = GameObject.Instantiate<RoomController>(lg.roomControllerPre, ec.transform);
-            sunkenFloorRoom.type = RoomType.Room;
-            sunkenFloorRoom.category = PiratePlugin.sunkenFloorRoomCat;
-            sunkenFloorRoom.name = "Sunken Floor Room";
+            int maxCells = rng.Next(6, maxPossibleSize + 1); // the max amount of cells this stream can cover
 
-            sunkenFloorRoom.wallTex = ec.mainHall.wallTex;
-            sunkenFloorRoom.ceilTex = ec.mainHall.ceilTex;
-            sunkenFloorRoom.florTex = transparentTexture; //no floor! so water is VISIBLE!!
-            sunkenFloorRoom.ec = ec;
-            sunkenFloorRoom.color = new Color(214f/255f,232f/255f,255f/255f);
+            int attempts = 0;
 
-            ec.rooms.Add(sunkenFloorRoom);
+            while (attempts < 10)
+            {
+                attempts++;
+                instance.chosenCells.Clear();
+                instance.chosenCells.Add(startingCell);
+                Direction targetDirection = startingCell.RandomUncoveredDirection(rng);
 
-            sunkenFloorRoom.GenerateTextureAtlas();
+                if (AddCellsUntilLimitHit(instance, maxCells, targetDirection, rng))
+                {
+                    instance.room = GameObject.Instantiate<RoomController>(lg.roomControllerPre, ec.transform);
+                    instance.room.type = RoomType.Room;
+                    instance.room.category = PiratePlugin.sunkenFloorRoomCat;
+                    instance.room.name = "Sunken Floor Room";
 
-            Cell chosenStartingCell = ec.mainHall.RandomEntitySafeCellNoGarbage();
-            chosenCells.Add(chosenStartingCell);
-            Direction targetDirection = chosenStartingCell.RandomUncoveredDirection(rng); // this is the direction our water stream will try to maintain until we either hit our limit or can't anymore
-            Direction previousDirection = Direction.Null;
+                    instance.room.wallTex = ec.mainHall.wallTex;
+                    instance.room.ceilTex = ec.mainHall.ceilTex;
+                    instance.room.florTex = transparentTexture; //no floor! so water is VISIBLE!!
+                    instance.room.ec = ec;
+                    instance.room.color = new Color(214f / 255f, 232f / 255f, 255f / 255f);
+                    instance.room.GenerateTextureAtlas();
+
+                    ec.rooms.Add(instance.room);
+
+                    return instance;
+                }
+            }
+
+            PiratePlugin.Log.LogWarning("Couldn't create SunkenFloorInstance after 10 attempts! Bad spawn location at " + startingCell.position.x + ", " + startingCell.position.z + "?");
+
+            return null;
+
+        }
+
+        public bool AddCellsUntilLimitHit(SunkenFloorInstance instance, int cellLimit, Direction targetDirection, System.Random rng)
+        {
 
             List<Direction> availableDirections = new List<Direction>();
+            Direction previousDirection = Direction.Null;
 
-            // todo: prevent curling on self and moving into dead ends
-            // todo: reprogram to allow for more than one river to be generated per structure builder
-            while ((chosenCells.Count < maxCells))
+
+            while ((instance.chosenCells.Count < cellLimit))
             {
-                Cell currentCell = chosenCells[chosenCells.Count - 1];
-
-                availableDirections.Clear();
+                Cell currentCell = instance.chosenCells[instance.chosenCells.Count - 1];
                 Directions.FillOpenDirectionsFromBin(availableDirections, currentCell.NavBin | currentCell.ConstBin);
-                availableDirections.Remove(targetDirection.GetOpposite());
                 availableDirections.Remove(previousDirection.GetOpposite());
-                availableDirections.RemoveAll(x => ec.CellFromPosition(currentCell.position + x.ToIntVector2()).room.type != RoomType.Hall);
+                availableDirections.Remove(targetDirection.GetOpposite());
+                availableDirections.RemoveAll(x => ec.CellFromPosition(currentCell.position + x.ToIntVector2()).room.type != RoomType.Hall); // remove all non-hall tiles
+                availableDirections.RemoveAll(x => ec.CellFromPosition(currentCell.position + x.ToIntVector2()).HardCoverageBin == 15);
+                //availableDirections.RemoveAll(x => !ec.mainHall.entitySafeCells.Contains(currentCell.position + x.ToIntVector2())); // remove all non-entity safe cells
 
-                // todo: properly handle this
                 if (availableDirections.Count == 0)
                 {
-                    PiratePlugin.Log.LogWarning("Expect crashes, couldn't properly end SunkenFloor generation!");
+                    if (instance.chosenCells.Count <= 2)
+                    {
+                        PiratePlugin.Log.LogInfo("SunkenFloor generator got shoved into corner, failure...");
+                        return false;
+                    }
+                    PiratePlugin.Log.LogInfo("SunkenFloor generator got shoved into corner, exiting w/o failure...");
                     break;
                 }
 
@@ -326,24 +360,66 @@ namespace PiratePack
                 {
                     chosenDirection = availableDirections[rng.Next(0, availableDirections.Count)];
                 }
+
                 previousDirection = chosenDirection;
-                chosenCells.Add(ec.CellFromPosition(currentCell.position + chosenDirection.ToIntVector2()));
-                followedDirections.Add(chosenDirection);
+
+                instance.chosenCells.Add(ec.CellFromPosition(currentCell.position + chosenDirection.ToIntVector2()));
+                instance.followedDirections.Add(chosenDirection);
             }
 
-            //followedDirections.Add(followedDirections[followedDirections.Count - 1]);
-            followedDirections.Add(Direction.Null);
+            instance.followedDirections.Add(instance.followedDirections[instance.followedDirections.Count - 1]);
 
-            // create the room?
-            foreach (Cell chosenCell in chosenCells)
+            // perform sanity check
+
+            if (CheckCellForValidExits(instance, instance.chosenCells[0]))
             {
-                //ec.CreateCell(chosenCell.ConstBin, sunkenFloorRoom.transform, chosenCell.position, sunkenFloorRoom, true, false);
-                //ec.MergeCell(0, chosenCell.position, sunkenFloorRoom);
-                chosenCell.HardCoverEntirely();
-                chosenCell.offLimits = true;
-                chosenCell.room.potentialDoorPositions.Remove(chosenCell.position);
-                chosenCell.room.entitySafeCells.Remove(chosenCell.position);
-                chosenCell.room.eventSafeCells.Remove(chosenCell.position);
+                PiratePlugin.Log.LogInfo("SunkenFloor generator's entrance has no exits...");
+                return false;
+            }
+
+            if (CheckCellForValidExits(instance, instance.chosenCells[instance.chosenCells.Count - 1]))
+            {
+                PiratePlugin.Log.LogInfo("SunkenFloor generator's exit has no exits...");
+                return false;
+            }
+
+            return true;
+        }
+
+        public bool CheckCellForValidExits(SunkenFloorInstance instance, Cell cellToCheck)
+        {
+            List<Direction> availableDirections = new List<Direction>();
+            Directions.FillOpenDirectionsFromBin(availableDirections, cellToCheck.NavBin | cellToCheck.ConstBin);
+            availableDirections.RemoveAll(x => ec.CellFromPosition(cellToCheck.position + x.ToIntVector2()).room.type != RoomType.Hall); // remove all non-hall tiles
+            availableDirections.RemoveAll(x => !ec.mainHall.entitySafeCells.Contains(cellToCheck.position + x.ToIntVector2())); // remove all non-entity safe cells
+            availableDirections.RemoveAll(x => instance.chosenCells.Find(z => z.position == (cellToCheck.position + x.ToIntVector2())) != null); // remove all cells that we own
+
+            return availableDirections.Count > 0;
+        }
+
+        public override void PostHallPrep(LevelGenerator lg, System.Random rng)
+        {
+            base.PostHallPrep(lg, rng);
+
+            List<Cell> potentialCells = ec.AllCells().Where(x => x.room.type == RoomType.Hall && !x.offLimits).ToList();
+
+            for (int i = 0; i < 2; i++)
+            {
+                SunkenFloorInstance instance = AttemptBuild(potentialCells[rng.Next(0, potentialCells.Count)], lg, rng);
+                if (instance != null)
+                {
+                    createdInstances.Add(instance);
+                    foreach (Cell chosenCell in instance.chosenCells)
+                    {
+                        chosenCell.HardCoverEntirely();
+                        chosenCell.offLimits = true;
+                        // since room hasn't been changed yet to make sure the room connects to the hallways
+                        // .room here refers to the hallway
+                        chosenCell.room.potentialDoorPositions.Remove(chosenCell.position);
+                        chosenCell.room.entitySafeCells.Remove(chosenCell.position);
+                        chosenCell.room.eventSafeCells.Remove(chosenCell.position);
+                    }
+                }
             }
 
         }
@@ -352,16 +428,19 @@ namespace PiratePack
         {
             base.Generate(lg, rng);
 
-            foreach (Cell chosenCell in chosenCells)
+            foreach (SunkenFloorInstance instance in createdInstances)
             {
-                ec.CreateCell(chosenCell.ConstBin, sunkenFloorRoom.transform, chosenCell.position, sunkenFloorRoom, true, false);
-                chosenCell.offLimits = false;
+                foreach (Cell chosenCell in instance.chosenCells)
+                {
+                    ec.CreateCell(chosenCell.ConstBin, instance.room.transform, chosenCell.position, instance.room, true, false);
+                    chosenCell.offLimits = false;
+                }
+                SunkenFloorController sfc = GameObject.Instantiate<SunkenFloorController>(controllerPrefab, instance.room.transform);
+                sfc.cells = instance.chosenCells.ToArray();
+                sfc.directions = instance.followedDirections.ToArray();
+                sfc.myRoom = instance.room;
+                sfc.Initialize();
             }
-            SunkenFloorController sfc = GameObject.Instantiate<SunkenFloorController>(controllerPrefab, sunkenFloorRoom.transform);
-            sfc.cells = chosenCells.ToArray();
-            sfc.directions = followedDirections.ToArray();
-            sfc.myRoom = sunkenFloorRoom;
-            sfc.Initialize();
         }
     }
 }
