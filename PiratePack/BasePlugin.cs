@@ -44,6 +44,8 @@ namespace PiratePack
 
         public Sprite[] cannTalkFrames;
 
+        public Sprite[] shieldDissolveAngles;
+
         void Awake()
         {
             Harmony harmony = new Harmony("mtm101.rulerp.baldiplus.piratepack");
@@ -200,6 +202,7 @@ namespace PiratePack
             assetMan.Add<Sprite>("ShieldSmall", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "ShieldSmall.png"), 25f));
             assetMan.Add<Sprite>("ShieldBig", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "ShieldBig.png"), 50f));
             assetMan.Add<SoundObject>("ShieldBonk", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "ShieldBonk.wav"), "Sfx_Shield_Bonk", SoundType.Effect, Color.white));
+            assetMan.Add<SoundObject>("ShieldDissolve", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "ShieldBonkDissolve.wav"), "Sfx_Shield_Dissolve", SoundType.Effect, Color.white));
 
             shieldItemType = EnumExtensions.ExtendEnum<Items>("PirateShield");
             GameObject shieldObject = new GameObject("PirateShield");
@@ -236,6 +239,15 @@ namespace PiratePack
                 sprites[i] = rawSprites[Mathf.Abs((i + 5)) % 16];
             }
             sprites = sprites.Reverse().ToArray();
+
+            // handle dissolve sprites
+            Sprite[] rawDSprites = AssetLoader.SpritesFromSpritesheet(4, 4, 25.6f, Vector2.one / 2f, AssetLoader.TextureFromMod(this, "ShieldSheetDissolving.png"));
+            shieldDissolveAngles = new Sprite[rawDSprites.Length];
+
+            for (int i = 0; i < shieldDissolveAngles.Length; i++)
+            {
+                shieldDissolveAngles[i] = rawDSprites[Mathf.Abs((i + 5)) % 16];
+            }
 
             SpriteRotator shieldRotat = shieldRenderer.gameObject.AddComponent<SpriteRotator>();
             shieldRotat.ReflectionSetVariable("sprites", sprites);

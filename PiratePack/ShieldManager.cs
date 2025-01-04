@@ -1,5 +1,8 @@
-﻿using System;
+﻿using MTM101BaldAPI.Reflection;
+using MTM101BaldAPI.Registers;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using UnityEngine;
 
@@ -18,6 +21,8 @@ namespace PiratePack
         public float animationLength = 3f;
         public float wobbleStrength = 0f;
         public float timeWobbling = 0f;
+        public ShieldTracker myTracker;
+        public float dissolveTime = 0f;
 
         public class TemporaryTriggerDisable : MonoBehaviour
         {
@@ -39,10 +44,24 @@ namespace PiratePack
             }
         }
 
+        public void Dissolve()
+        {
+            // de-attach from our tracker
+            if (myTracker.currentInstance == this)
+            {
+                myTracker.currentInstance = null;
+                myTracker = null;
+            }
+            dissolveTime = 2.8f;
+            lastRotation = pm.transform.rotation;
+            GetComponentInChildren<SpriteRotator>().ReflectionSetVariable("sprites", PiratePlugin.Instance.shieldDissolveAngles); // this is the worst way to do this ever but ok
+        }
+
         public float cooldown = 0f;
 
         public void OnTriggerEnter(Collider other)
         {
+            if (dissolveTime > 0f) return;
             if (cooldown > 0f) return;
             Entity foundEntity = other.GetComponent<Entity>();
             if (foundEntity)
@@ -57,8 +76,24 @@ namespace PiratePack
                 cooldown = 0.25f;
                 animationTime = animationLength;
                 wobbleStrength = 30f;
-                Singleton<CoreGameManager>.Instance.audMan.PlaySingle(PiratePlugin.Instance.assetMan.Get<SoundObject>("ShieldBonk"));
                 facingQuaternion = Quaternion.FromToRotation(transform.forward, (foundEntity.transform.position - transform.position).normalized);
+
+                // reduce usages down until we can't anymore
+                ItemMetaData meta = ItemMetaStorage.Instance.FindByEnum(PiratePlugin.shieldItemType);
+                // find our current item index
+                int index = meta.itemObjects.ToList().IndexOf(pm.itm.items[pm.itm.selectedItem]);
+                if (index == 0)
+                {
+                    Dissolve(); // dissolve first so we dont get destroyed too fast
+                    pm.itm.SetItem(pm.itm.nothing, pm.itm.selectedItem);
+                    Singleton<CoreGameManager>.Instance.audMan.PlaySingle(PiratePlugin.Instance.assetMan.Get<SoundObject>("ShieldDissolve"));
+                    wobbleStrength += 7f;
+                }
+                else
+                {
+                    pm.itm.SetItem(meta.itemObjects[index - 1], pm.itm.selectedItem);
+                    Singleton<CoreGameManager>.Instance.audMan.PlaySingle(PiratePlugin.Instance.assetMan.Get<SoundObject>("ShieldBonk"));
+                }
             }
         }
 
@@ -78,13 +113,27 @@ namespace PiratePack
             cooldown = Mathf.Max(0f, cooldown - Time.deltaTime * pm.PlayerTimeScale);
         }
 
+        Quaternion lastRotation;
+
         public void LateUpdate()
         {
             //Vector3 oldPosition = transform.position;
-            transform.position = pm.transform.position;
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, pm.transform.rotation, degreesPerSecond * pm.PlayerTimeScale * Time.deltaTime);
-            transform.position += transform.forward * distanceFromPlayer;
-            renderer.rotation = pm.transform.rotation;
+            if (dissolveTime > 0f)
+            {
+                renderer.rotation = lastRotation;
+                dissolveTime -= Time.deltaTime * pm.ec.EnvironmentTimeScale; // switch to enviroment time scale now that we are no longer attached to the player
+                if (dissolveTime <= 0f)
+                {
+                    Destroy(gameObject); // bye bye
+                }
+            }
+            else
+            {
+                transform.position = pm.transform.position;
+                transform.rotation = Quaternion.RotateTowards(transform.rotation, pm.transform.rotation, degreesPerSecond * pm.PlayerTimeScale * Time.deltaTime);
+                transform.position += transform.forward * distanceFromPlayer;
+                renderer.rotation = pm.transform.rotation;
+            }
 
             animationTime = Mathf.Max(0f, animationTime - Time.deltaTime * pm.PlayerTimeScale);
             wobbleStrength = Mathf.Max(0f, wobbleStrength - Time.deltaTime * pm.PlayerTimeScale * 15f);

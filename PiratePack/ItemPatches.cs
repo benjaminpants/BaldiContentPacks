@@ -48,6 +48,14 @@ namespace PiratePack
 
         public void EquipShield(int itemId)
         {
+            if (itemId != currentShieldSlot)
+            {
+                if (currentInstance != null)
+                {
+                    Destroy(currentInstance.gameObject);
+                    currentInstance = null;
+                }
+            }
             currentShieldSlot = itemId;
             if (currentInstance == null)
             {
@@ -55,6 +63,7 @@ namespace PiratePack
                 currentInstance.transform.eulerAngles = itm.pm.transform.eulerAngles + new Vector3(0f,180f,0f);
                 currentInstance.pm = itm.pm;
                 currentInstance.gameObject.SetActive(!(bool)_disabled.GetValue(itm));
+                currentInstance.myTracker = this;
             }
             currentInstance.itemSlot = currentShieldSlot;
         }
@@ -63,6 +72,7 @@ namespace PiratePack
         {
             if (currentShieldSlot == -1) return;
             currentShieldSlot = -1;
+            if (currentInstance == null) return;
             Destroy(currentInstance.gameObject);
             currentInstance = null;
         }
