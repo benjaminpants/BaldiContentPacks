@@ -34,6 +34,8 @@ namespace PiratePack
 
         public static RoomCategory sunkenFloorRoomCat;
 
+        public static Items shieldItemType;
+
         public static PiratePlugin Instance;
 
         internal static ManualLogSource Log;
@@ -60,18 +62,18 @@ namespace PiratePack
                 selection= assetMan.Get<NPC>("Cann"),
                 weight=10000
             });
-            obj.CustomLevelObject().forcedStructures = obj.CustomLevelObject().forcedStructures.AddToArray(new StructureWithParameters()
+            /*obj.CustomLevelObject().forcedStructures = obj.CustomLevelObject().forcedStructures.AddToArray(new StructureWithParameters()
             {
                 parameters = new StructureParameters(),
                 prefab = assetMan.Get<StructureBuilder>("SunkenFloor")
-            });
+            });*/
             obj.MarkAsNeverUnload();
             obj.CustomLevelObject().MarkAsNeverUnload();
         }
 
         IEnumerator LoadEnumerator()
         {
-            yield return 3;
+            yield return 4;
             yield return "Loading Cann...";
 
             assetMan.Add<Sprite>("CannPlaceholder", AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 50f, "CannPlaceholder.png"));
@@ -192,6 +194,59 @@ namespace PiratePack
 
             // and finally assign the controller to the structure
             sunkenFloorStructure.controllerPrefab = sunkenController;
+
+            yield return "Loading Shield...";
+            assetMan.Add<Sprite>("ShieldPlaceholder", AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 12.8f, "ShieldPlaceholder.png"));
+            assetMan.Add<Sprite>("ShieldSmall", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "ShieldSmall.png"), 25f));
+            assetMan.Add<Sprite>("ShieldBig", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "ShieldBig.png"), 50f));
+            assetMan.Add<SoundObject>("ShieldBonk", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "ShieldBonk.wav"), "Sfx_Shield_Bonk", SoundType.Effect, Color.white));
+
+            shieldItemType = EnumExtensions.ExtendEnum<Items>("PirateShield");
+            GameObject shieldObject = new GameObject("PirateShield");
+            shieldObject.ConvertToPrefab(true);
+            shieldObject.layer = LayerMask.NameToLayer("Ignore Raycast");
+            ShieldManager shm = shieldObject.AddComponent<ShieldManager>();
+            GameObject spriteObject = new GameObject("Sprite");
+            spriteObject.layer = LayerMask.NameToLayer("Billboard");
+            spriteObject.transform.SetParent(shieldObject.transform);
+            SpriteRenderer shieldRenderer = spriteObject.AddComponent<SpriteRenderer>();
+            shieldRenderer.material = Resources.FindObjectsOfTypeAll<Material>().First(x => x.name == "SpriteStandard_Billboard" && x.GetInstanceID() >= 0);
+            shieldRenderer.sprite = assetMan.Get<Sprite>("ShieldPlaceholder");
+            assetMan.Add<ShieldManager>("ShieldManager", shm);
+
+            ItemMetaData shieldMeta = new ItemMetaData(Info, new ItemObject[0]);
+            shieldMeta.flags = ItemFlags.NoUses | ItemFlags.MultipleUse;
+
+            // i want 3 shield uses
+            for (int i = 0; i < 3; i++)
+            {
+                new ItemBuilder(Info)
+                    .SetSprites(assetMan.Get<Sprite>("ShieldSmall"), assetMan.Get<Sprite>("ShieldBig"))
+                    .SetEnum(shieldItemType)
+                    .SetMeta(shieldMeta)
+                    .SetNameAndDescription("Itm_PShield_" + (i + 1), "Desc_PShield")
+                    .Build();
+            }
+
+            Sprite[] rawSprites = AssetLoader.SpritesFromSpritesheet(4, 4, 25.6f, Vector2.one / 2f, AssetLoader.TextureFromMod(this, "ShieldSheet.png"));
+            Sprite[] sprites = new Sprite[rawSprites.Length];
+
+            for (int i = 0; i < sprites.Length; i++)
+            {
+                sprites[i] = rawSprites[Mathf.Abs((i + 5)) % 16];
+            }
+            sprites = sprites.Reverse().ToArray();
+
+            SpriteRotator shieldRotat = shieldRenderer.gameObject.AddComponent<SpriteRotator>();
+            shieldRotat.ReflectionSetVariable("sprites", sprites);
+            shieldRotat.ReflectionSetVariable("spriteRenderer", shieldRenderer);
+
+            CapsuleCollider shieldCapsule = shm.gameObject.AddComponent<CapsuleCollider>();
+            shieldCapsule.direction = 1;
+            shieldCapsule.height = 8;
+            shieldCapsule.radius = 3.5f;
+            shieldCapsule.isTrigger = true;
+            shm.renderer = shieldRenderer.transform;
 
             yield return "Modifying meta...";
             ItemMetaStorage.Instance.FindByEnum(Items.ZestyBar).tags.Add("cann_hate"); //chocolate is poisonous to parrots as minecraft taught me

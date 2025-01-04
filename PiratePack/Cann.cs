@@ -134,6 +134,11 @@ namespace PiratePack
             animator.SetDefaultAnimation("fly", 1f);
             base.Initialize();
             FindLoops();
+            if (loops.Count == 0)
+            {
+                PiratePlugin.Log.LogError("Cann unable to find any loops! Report the current seed to MTM101!");
+                Despawn();
+            }
             behaviorStateMachine.ChangeState(new Cann_FlyLoop(this, loopsAround));
             entity = GetComponent<Entity>();
             //ec.map.AddArrow(entity, Color.yellow);

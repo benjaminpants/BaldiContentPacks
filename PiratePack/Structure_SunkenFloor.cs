@@ -112,10 +112,14 @@ namespace PiratePack
                 overrider.entity.Teleport(board.transform.position);
                 // block the direction we just came from navigation wise
                 // to prevent npcs from just turning around.
-                // todo: THIS STILL DOESN'T WORK! WHY?
-                PiratePlugin.Log.LogInfo("Blocking: " + directions[targetIndex] + "!");
-                BlockCell(cells[targetIndex].position, directions[targetIndex]); // wtf
+                BlockCell(cells[targetIndex].position, directions[targetIndex].GetOpposite()); // wtf
                 waitingToLeaveForNavigation = overrider.entity;
+                Navigator foundNavigator = overrider.entity.GetComponentInChildren<Navigator>();
+                if (foundNavigator != null)
+                {
+                    foundNavigator.CheckPath(); //regenerate path
+                    PiratePlugin.Log.LogInfo("Found navigator! Forced path regeneration!");
+                }
             }
             overrider = null;
         }
@@ -213,12 +217,10 @@ namespace PiratePack
 
         public void UnblockAllCells()
         {
-            PiratePlugin.Log.LogInfo("Unblocking all blocked cells!");
             foreach ((IntVector2, Direction) block in blocks)
             {
                 myRoom.ec.CellFromPosition(block.Item1).Block(block.Item2, false);
             }
-            PiratePlugin.Log.LogInfo("Unblocked " + blocks.Count + " blocks!");
             blocks.Clear();
         }
 
