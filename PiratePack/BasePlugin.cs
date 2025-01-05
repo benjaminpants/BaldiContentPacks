@@ -69,29 +69,42 @@ namespace PiratePack
 
         void GeneratorChanges(string floorName, int levelId, SceneObject obj)
         {
-            obj.potentialNPCs.Add(new WeightedNPC()
-            {
-                selection= assetMan.Get<NPC>("Cann"),
-                weight=10000
-            });
             /*obj.CustomLevelObject().forcedStructures = obj.CustomLevelObject().forcedStructures.AddToArray(new StructureWithParameters()
             {
                 parameters = new StructureParameters(),
                 prefab = assetMan.Get<StructureBuilder>("SunkenFloor")
             });*/
-            if (levelId > 0) // no shields on floor 1
+            if ((levelId > 0) || (floorName == "END")) // no shields on floor 1
             {
                 obj.CustomLevelObject().potentialItems = obj.CustomLevelObject().potentialItems.AddToArray(new WeightedItemObject()
                 {
                     selection = assetMan.Get<ItemObject>("Shield3"),
-                    weight = 75
+                    weight = 80
                 });
-                obj.shopItems = obj.shopItems.AddToArray(new WeightedItemObject()
+                obj.shopItems = obj.shopItems.AddRangeToArray(new WeightedItemObject[]
                 {
-                    selection = assetMan.Get<ItemObject>("Shield3"),
-                    weight = 40
+                    new WeightedItemObject()
+                    {
+                        selection = assetMan.Get<ItemObject>("Shield3"),
+                        weight = 75
+                    },
+                    new WeightedItemObject()
+                    {
+                        selection = assetMan.Get<ItemObject>("Doubloon"),
+                        weight = 80
+                    },
+                });
+                obj.potentialNPCs.Add(new WeightedNPC()
+                {
+                    selection = assetMan.Get<NPC>("Cann"),
+                    weight = (floorName == "F3") ? 80 : 100
                 });
             }
+            obj.CustomLevelObject().potentialItems = obj.CustomLevelObject().potentialItems.AddToArray(new WeightedItemObject()
+            {
+                selection = assetMan.Get<ItemObject>("Doubloon"),
+                weight = 40 + (levelId * 10)
+            });
             obj.MarkAsNeverUnload();
             obj.CustomLevelObject().MarkAsNeverUnload();
         }
@@ -331,6 +344,8 @@ namespace PiratePack
                 .SetGeneratorCost(35)
                 .SetItemComponent<ITM_Doubloon>(coinComponent)
                 .Build();
+
+            assetMan.Add<ItemObject>("Doubloon", coin);
 
             // create the sparkle
 
