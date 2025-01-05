@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Text;
 using UnityEngine;
 
-namespace PiratePack
+namespace PiratePack.Patches
 {
 
     [HarmonyPatch(typeof(ItemManager))]
@@ -43,7 +43,7 @@ namespace PiratePack
         void Update()
         {
             if (currentInstance == null) return;
-            currentInstance.gameObject.SetActive((!(bool)_disabled.GetValue(itm)) && Singleton<CoreGameManager>.Instance.GetCamera(itm.pm.playerNumber).Controllable && itm.pm.plm.Entity.InBounds);
+            currentInstance.gameObject.SetActive(!(bool)_disabled.GetValue(itm) && Singleton<CoreGameManager>.Instance.GetCamera(itm.pm.playerNumber).Controllable && itm.pm.plm.Entity.InBounds);
         }
 
         public void EquipShield(int itemId)
@@ -59,8 +59,8 @@ namespace PiratePack
             currentShieldSlot = itemId;
             if (currentInstance == null)
             {
-                currentInstance = GameObject.Instantiate<ShieldManager>(PiratePlugin.Instance.assetMan.Get<ShieldManager>("ShieldManager"), transform.parent);
-                currentInstance.transform.eulerAngles = itm.pm.transform.eulerAngles + new Vector3(0f,180f,0f);
+                currentInstance = Instantiate(PiratePlugin.Instance.assetMan.Get<ShieldManager>("ShieldManager"), transform.parent);
+                currentInstance.transform.eulerAngles = itm.pm.transform.eulerAngles + new Vector3(0f, 180f, 0f);
                 currentInstance.pm = itm.pm;
                 currentInstance.gameObject.SetActive(!(bool)_disabled.GetValue(itm));
                 currentInstance.myTracker = this;

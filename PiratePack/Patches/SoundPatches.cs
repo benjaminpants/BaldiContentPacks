@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace PiratePack
+namespace PiratePack.Patches
 {
     // todo: this method has some annoying issues caused by things that disable subtitles.
     // fix me!

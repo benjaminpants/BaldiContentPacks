@@ -299,26 +299,56 @@ namespace PiratePack
 
             Sprite[] coinSprites = AssetLoader.SpritesFromSpritesheet(12,1, 25f, Vector2.one / 2f, AssetLoader.TextureFromMod(this, "CoinSpin.png"));
 
+            SoundObject bounceSound = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "CoinBounce.wav"), "Sfx_Doubloon_Bounce", SoundType.Effect, Color.white);
+            bounceSound.subtitle = false;
+            SoundObject noticeSound = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "NoticeSound.wav"), "Sfx_Doubloon_Notice", SoundType.Effect, Color.white);
+            noticeSound.subtitle = false;
+
             Entity coinEntity = new EntityBuilder()
                 .SetName("ITM_Doubloon")
                 .AddDefaultRenderBaseFunction(coinSprites[0])
                 .SetLayerCollisionMask(new LayerMask() { value = 2113541 }) //todo: wtf is this
                 .AddTrigger(1f)
+                .SetHeight(4f)
                 .Build();
 
             ITM_Doubloon coinComponent = coinEntity.gameObject.AddComponent<ITM_Doubloon>();
             coinComponent.entity = coinEntity;
 
             PropagatedAudioManager aum = coinEntity.gameObject.AddComponent<PropagatedAudioManager>();
-            aum.ReflectionSetVariable("maxDistance", 60f);
+            aum.ReflectionSetVariable("maxDistance", 120f);
             coinComponent.audMan = aum;
+            coinComponent.sprites = coinSprites;
+            coinComponent.bounceSound = bounceSound;
+            coinComponent.collectSound = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "CoinCollect.wav"), "Sfx_Doubloon_Collect", SoundType.Effect, Color.white);
+            coinComponent.noticeSound = noticeSound;
 
             ItemObject coin = new ItemBuilder(Info)
                 .SetSprites(AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 25f, "CoinSmall.png"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 50f, "CoinBig.png"))
                 .SetEnum("Doubloon")
                 .SetNameAndDescription("Itm_GoldDoubloon","Desc_GoldDoubloon")
+                .SetShopPrice(500)
+                .SetGeneratorCost(35)
                 .SetItemComponent<ITM_Doubloon>(coinComponent)
                 .Build();
+
+            // create the sparkle
+
+            GameObject sparkleObject = new GameObject("DoubloonSparkle");
+            sparkleObject.ConvertToPrefab(true);
+            SpriteRenderer sparkleRenderer = new GameObject("Sprite").AddComponent<SpriteRenderer>();
+            sparkleRenderer.transform.SetParent(sparkleObject.transform, false);
+            sparkleRenderer.material = Resources.FindObjectsOfTypeAll<Material>().First(x => x.name == "SpriteStandard_Billboard" && x.GetInstanceID() >= 0);
+            sparkleRenderer.gameObject.layer = LayerMask.NameToLayer("Billboard");
+            DoubloonSparkle spark = sparkleObject.AddComponent<DoubloonSparkle>();
+            spark.frames = new Sprite[]
+            {
+                AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 50f, "Sparkle1.png"),
+                AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 50f, "Sparkle2.png"),
+                AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 50f, "Sparkle3.png")
+            };
+            spark.renderer = sparkleRenderer;
+            coinComponent.sparklePrefab = spark;
 
             yield return "Modifying meta...";
             ItemMetaStorage.Instance.FindByEnum(Items.ZestyBar).tags.Add("cann_hate"); //chocolate is poisonous to parrots as minecraft taught me

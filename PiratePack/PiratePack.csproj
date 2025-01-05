@@ -57,7 +57,7 @@
 			<HintPath>..\Dependencies\MonoMod.Utils.dll</HintPath>
 		</Reference>
 		<Reference Include="MTM101BaldAPI">
-			<HintPath>..\Dependencies\MTM101BaldAPI.dll</HintPath>
+		  <HintPath>..\Dependencies\MTM101BaldAPI.dll</HintPath>
 		</Reference>
 		<Reference Include="NavMeshComponents">
 			<HintPath>..\Dependencies\NavMeshComponents.dll</HintPath>
