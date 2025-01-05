@@ -62,7 +62,7 @@ namespace PiratePack
         {
             loot.potentialItems.Add(new WeightedItemObject()
             {
-                selection= assetMan.Get<ItemObject>("Shield5"),
+                selection=assetMan.Get<ItemObject>("Shield5"),
                 weight=90
             });
         }
@@ -98,7 +98,7 @@ namespace PiratePack
 
         IEnumerator LoadEnumerator()
         {
-            yield return 5;
+            yield return 6;
             yield return "Loading Cann...";
 
             assetMan.Add<Sprite>("CannPlaceholder", AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 50f, "CannPlaceholder.png"));
@@ -243,7 +243,7 @@ namespace PiratePack
             ItemMetaData shieldMeta = new ItemMetaData(Info, new ItemObject[0]);
             shieldMeta.flags = ItemFlags.NoUses | ItemFlags.MultipleUse;
 
-            // i want 3 shield uses
+            // 5 shield uses for when you win it in a field trip, otherwise only give 3 to finding it naturally.
             for (int i = 0; i < 5; i++)
             {
                 ItemObject shield = new ItemBuilder(Info)
@@ -253,6 +253,7 @@ namespace PiratePack
                     .SetNameAndDescription("Itm_PShield_" + (i + 1), "Desc_PShield")
                     .SetShopPrice(750)
                     .SetGeneratorCost(70)
+                    .SetItemComponent<Item>()
                     .Build();
                 if (i == 2)
                 {
@@ -293,6 +294,31 @@ namespace PiratePack
             shieldCapsule.radius = 3.5f;
             shieldCapsule.isTrigger = true;
             shm.renderer = shieldRenderer.transform;
+
+            yield return "Loading Golden Dabloon...";
+
+            Sprite[] coinSprites = AssetLoader.SpritesFromSpritesheet(12,1, 25f, Vector2.one / 2f, AssetLoader.TextureFromMod(this, "CoinSpin.png"));
+
+            Entity coinEntity = new EntityBuilder()
+                .SetName("ITM_Doubloon")
+                .AddDefaultRenderBaseFunction(coinSprites[0])
+                .SetLayerCollisionMask(new LayerMask() { value = 2113541 }) //todo: wtf is this
+                .AddTrigger(1f)
+                .Build();
+
+            ITM_Doubloon coinComponent = coinEntity.gameObject.AddComponent<ITM_Doubloon>();
+            coinComponent.entity = coinEntity;
+
+            PropagatedAudioManager aum = coinEntity.gameObject.AddComponent<PropagatedAudioManager>();
+            aum.ReflectionSetVariable("maxDistance", 60f);
+            coinComponent.audMan = aum;
+
+            ItemObject coin = new ItemBuilder(Info)
+                .SetSprites(AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 25f, "CoinSmall.png"), AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 50f, "CoinBig.png"))
+                .SetEnum("Doubloon")
+                .SetNameAndDescription("Itm_GoldDoubloon","Desc_GoldDoubloon")
+                .SetItemComponent<ITM_Doubloon>(coinComponent)
+                .Build();
 
             yield return "Modifying meta...";
             ItemMetaStorage.Instance.FindByEnum(Items.ZestyBar).tags.Add("cann_hate"); //chocolate is poisonous to parrots as minecraft taught me
