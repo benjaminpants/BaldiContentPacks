@@ -31,7 +31,7 @@ namespace CriminalPack
 
         IEnumerator ResourcesLoaded()
         {
-            yield return 6;
+            yield return 7;
             yield return "Loading Sprites...";
             assetMan.Add<Texture2D>("LightMap", Resources.FindObjectsOfTypeAll<Texture2D>().First(x => x.name == "LightMap"));
             assetMan.Add<Sprite>("CrowbarSmall", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "CrowbarSmall.png"), 25f));
@@ -223,6 +223,7 @@ namespace CriminalPack
             digWindow.windowPre = assetMan.Get<Window>("PortalPosterPre");
             ItemMetaData pouchMeta = new ItemMetaData(Info, new ItemObject[0]);
             pouchMeta.flags = ItemFlags.CreatesEntity | ItemFlags.Persists;
+            pouchMeta.tags.Add("contraband");
             Items pouchEnum = EnumExtensions.ExtendEnum<Items>("DealerPouch");
 
 
@@ -251,7 +252,7 @@ namespace CriminalPack
 
             ItemObject pouchObject = new ItemBuilder(Info)
                 .SetEnum(pouchEnum)
-                .SetNameAndDescription("Itm_DealerPouch", "If you are seeing this you are a hacker or something has gone horribly wrong.")
+                .SetNameAndDescription("Itm_DealerPouch", "Desc_DealerPouch")
                 .SetShopPrice(25)
                 .SetGeneratorCost(int.MaxValue)
                 .SetItemComponent(dealerBag)
@@ -306,6 +307,7 @@ namespace CriminalPack
                 .SetShopPrice(600)
                 .SetGeneratorCost(55)
                 .SetItemComponent<ITM_Crowbar>()
+                .SetMeta(ItemFlags.None, new string[2] { "contraband", "sharp" })
                 .SetSprites(assetMan.Get<Sprite>("CrowbarSmall"), assetMan.Get<Sprite>("CrowbarBig"))
                 .Build();
             ITM_Crowbar crowbar = (ITM_Crowbar)crowbarObject.item;
@@ -330,6 +332,7 @@ namespace CriminalPack
                 .SetItemComponent<ITM_Mask>()
                 .SetSprites(assetMan.Get<Sprite>("ThiefMaskSmall"), assetMan.Get<Sprite>("ThiefMaskBig"))
                 .SetNameAndDescription("Itm_ThiefMask", "Desc_ThiefMask")
+                .SetMeta(ItemFlags.Persists, new string[1] { "contraband" })
                 .Build();
             gumCanvasClone.transform.SetParent(maskObject.item.transform);
             ((ITM_Mask)maskObject.item).maskCanvas = gumCanvasClone;
@@ -532,7 +535,12 @@ namespace CriminalPack
                 weight = 70,
                 selection = ItemMetaStorage.Instance.GetPointsObject(100, false)
             });
-            
+
+
+            yield return "Modifying meta...";
+            ItemMetaStorage.Instance.FindByEnum(Items.GrapplingHook).tags.Add("contraband"); // reasoning: dangerous
+            ItemMetaStorage.Instance.FindByEnum(Items.Teleporter).tags.Add("contraband"); // reasoning: dangerous
+            ItemMetaStorage.Instance.FindByEnum(Items.DetentionKey).tags.Add("contraband"); // reasoning: belongs to principal (they are called principal's keys)
         }
 
 

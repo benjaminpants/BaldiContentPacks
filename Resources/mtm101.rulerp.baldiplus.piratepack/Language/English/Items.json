@@ -1,0 +1,14 @@
+{"items":[
+
+{"key":"Itm_PShield_1","value":"Shield (1)"},
+{"key":"Itm_PShield_2","value":"Shield (2)"},
+{"key":"Itm_PShield_3","value":"Shield (3)"},
+{"key":"Itm_PShield_4","value":"Shield (4)"},
+{"key":"Itm_PShield_5","value":"Shield (5)"},
+
+{"key":"Desc_PShield","value":"Shield\nWhoever touches this plastic shield is sure to be pushed away! To carry it, just have it selected!"},
+
+{"key":"Sfx_Shield_Bonk","value":"*PONK!*"},
+{"key":"Sfx_Shield_Dissolve","value":"*PONK...*"}
+
+]}

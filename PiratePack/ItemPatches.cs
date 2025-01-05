@@ -43,7 +43,7 @@ namespace PiratePack
         void Update()
         {
             if (currentInstance == null) return;
-            currentInstance.gameObject.SetActive(!(bool)_disabled.GetValue(itm));
+            currentInstance.gameObject.SetActive((!(bool)_disabled.GetValue(itm)) && Singleton<CoreGameManager>.Instance.GetCamera(itm.pm.playerNumber).Controllable && itm.pm.plm.Entity.InBounds);
         }
 
         public void EquipShield(int itemId)

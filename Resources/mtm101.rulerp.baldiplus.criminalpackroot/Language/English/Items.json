@@ -10,8 +10,9 @@
 {"key":"Desc_IOU","value":"I.O.U\nUse this throwable page on anything that requires an item,\n such as tape players, yellow doors, soda machines and more!\nBe careful though... Principal doesn't like fraud..."},
 
 {"key":"Itm_DealerPouch","value":"Dealer Pouch"},
+{"key":"Desc_DealerPouch","value":"Dealer Pouch\nWho knows what is inside?\nP.S: Stop reading this and deliver it!"},
 {"key":"Itm_EmptyDealerPouch","value":"Empty Dealer Pouch"},
-{"key":"Desc_EmptyDealerPouch","value":"Empty Dealer Pouch\nSomehow, the contents magically vanished..."},
+{"key":"Desc_EmptyDealerPouch","value":"Empty Dealer Pouch\nSomehow, the contents magically vanished...\nP.S: Nice try."},
 
 {"key":"Itm_Pickaxe_3","value":"Pickaxe (3)"},
 {"key":"Desc_Pickaxe_3","value":"Pickaxe (3)\nDig new hallways and break down walls with this handy dandy pickaxe!"},

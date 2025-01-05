@@ -66,6 +66,7 @@ namespace PiratePack
             Entity foundEntity = other.GetComponent<Entity>();
             if (foundEntity)
             {
+                if (foundEntity.Frozen) return; // don't try to push away frozen entities
                 MovementModifier slowSlightly = new MovementModifier(Vector3.zero, 0.5f);
                 foundEntity.SetTrigger(false);
                 foundEntity.ExternalActivity.moveMods.Add(slowSlightly);
@@ -122,6 +123,7 @@ namespace PiratePack
             {
                 renderer.rotation = lastRotation;
                 dissolveTime -= Time.deltaTime * pm.ec.EnvironmentTimeScale; // switch to enviroment time scale now that we are no longer attached to the player
+                transform.position += Vector3.down * Time.deltaTime * pm.ec.EnvironmentTimeScale * 2.7f;
                 if (dissolveTime <= 0f)
                 {
                     Destroy(gameObject); // bye bye

@@ -52,9 +52,19 @@ namespace PiratePack
             harmony.PatchAllConditionals();
             LoadingEvents.RegisterOnLoadingScreenStart(Info, LoadEnumerator());
             GeneratorManagement.Register(this, GenerationModType.Addend, GeneratorChanges);
+            GeneratorManagement.RegisterFieldTripLootChange(this, FieldtripChanges);
             ModdedSaveGame.AddSaveHandler(Info);
             Log = this.Logger;
             Instance = this;
+        }
+
+        void FieldtripChanges(FieldTrips tripEnum, FieldTripLoot loot)
+        {
+            loot.potentialItems.Add(new WeightedItemObject()
+            {
+                selection= assetMan.Get<ItemObject>("Shield5"),
+                weight=90
+            });
         }
 
         void GeneratorChanges(string floorName, int levelId, SceneObject obj)
@@ -69,13 +79,26 @@ namespace PiratePack
                 parameters = new StructureParameters(),
                 prefab = assetMan.Get<StructureBuilder>("SunkenFloor")
             });*/
+            if (levelId > 0) // no shields on floor 1
+            {
+                obj.CustomLevelObject().potentialItems = obj.CustomLevelObject().potentialItems.AddToArray(new WeightedItemObject()
+                {
+                    selection = assetMan.Get<ItemObject>("Shield3"),
+                    weight = 75
+                });
+                obj.shopItems = obj.shopItems.AddToArray(new WeightedItemObject()
+                {
+                    selection = assetMan.Get<ItemObject>("Shield3"),
+                    weight = 40
+                });
+            }
             obj.MarkAsNeverUnload();
             obj.CustomLevelObject().MarkAsNeverUnload();
         }
 
         IEnumerator LoadEnumerator()
         {
-            yield return 4;
+            yield return 5;
             yield return "Loading Cann...";
 
             assetMan.Add<Sprite>("CannPlaceholder", AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 50f, "CannPlaceholder.png"));
@@ -207,7 +230,7 @@ namespace PiratePack
             shieldItemType = EnumExtensions.ExtendEnum<Items>("PirateShield");
             GameObject shieldObject = new GameObject("PirateShield");
             shieldObject.ConvertToPrefab(true);
-            shieldObject.layer = LayerMask.NameToLayer("Ignore Raycast");
+            shieldObject.layer = LayerMask.NameToLayer("Ignore Raycast B");
             ShieldManager shm = shieldObject.AddComponent<ShieldManager>();
             GameObject spriteObject = new GameObject("Sprite");
             spriteObject.layer = LayerMask.NameToLayer("Billboard");
@@ -221,14 +244,24 @@ namespace PiratePack
             shieldMeta.flags = ItemFlags.NoUses | ItemFlags.MultipleUse;
 
             // i want 3 shield uses
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < 5; i++)
             {
-                new ItemBuilder(Info)
+                ItemObject shield = new ItemBuilder(Info)
                     .SetSprites(assetMan.Get<Sprite>("ShieldSmall"), assetMan.Get<Sprite>("ShieldBig"))
                     .SetEnum(shieldItemType)
                     .SetMeta(shieldMeta)
                     .SetNameAndDescription("Itm_PShield_" + (i + 1), "Desc_PShield")
+                    .SetShopPrice(750)
+                    .SetGeneratorCost(70)
                     .Build();
+                if (i == 2)
+                {
+                    assetMan.Add<ItemObject>("Shield3", shield);
+                }
+                if (i == 4)
+                {
+                    assetMan.Add<ItemObject>("Shield5", shield);
+                }
             }
 
             Sprite[] rawSprites = AssetLoader.SpritesFromSpritesheet(4, 4, 25.6f, Vector2.one / 2f, AssetLoader.TextureFromMod(this, "ShieldSheet.png"));
@@ -248,6 +281,7 @@ namespace PiratePack
             {
                 shieldDissolveAngles[i] = rawDSprites[Mathf.Abs((i + 5)) % 16];
             }
+            shieldDissolveAngles = shieldDissolveAngles.Reverse().ToArray();
 
             SpriteRotator shieldRotat = shieldRenderer.gameObject.AddComponent<SpriteRotator>();
             shieldRotat.ReflectionSetVariable("sprites", sprites);
@@ -262,6 +296,9 @@ namespace PiratePack
 
             yield return "Modifying meta...";
             ItemMetaStorage.Instance.FindByEnum(Items.ZestyBar).tags.Add("cann_hate"); //chocolate is poisonous to parrots as minecraft taught me
+
+            yield return "Loading Localization...";
+            AssetLoader.LocalizationFromMod(this);
         }
     }
 }
