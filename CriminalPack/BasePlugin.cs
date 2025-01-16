@@ -31,7 +31,7 @@ namespace CriminalPack
 
         IEnumerator ResourcesLoaded()
         {
-            yield return 7;
+            yield return 8;
             yield return "Loading Sprites...";
             assetMan.Add<Texture2D>("LightMap", Resources.FindObjectsOfTypeAll<Texture2D>().First(x => x.name == "LightMap"));
             assetMan.Add<Sprite>("CrowbarSmall", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "CrowbarSmall.png"), 25f));
@@ -536,6 +536,23 @@ namespace CriminalPack
                 selection = ItemMetaStorage.Instance.GetPointsObject(100, false)
             });
 
+            yield return "Creating Scanner...";
+
+            // load scanner materials
+            //Material baseMaterial = Resources.FindObjectsOfTypeAll<Material>().First(x => x.name = "TileBase")
+
+
+            GameObject scannerObject = AssetLoader.ModelFromMod(this, "Models", "scanner.obj");
+            scannerObject.transform.localScale = Vector3.one * 10f;
+            scannerObject.ConvertToPrefab(true);
+            ItemScanner scanner = scannerObject.AddComponent<ItemScanner>();
+
+            // create the structure builder
+            GameObject scannerBuilderObject = new GameObject("ScannerBuilder");
+            scannerBuilderObject.ConvertToPrefab(true);
+            Structure_Scanner scannerBuilder = scannerBuilderObject.AddComponent<Structure_Scanner>();
+            scannerBuilder.prefab = scanner;
+            assetMan.Add<Structure_Scanner>("scanner", scannerBuilder);
 
             yield return "Modifying meta...";
             ItemMetaStorage.Instance.FindByEnum(Items.GrapplingHook).tags.Add("contraband"); // reasoning: dangerous
@@ -551,6 +568,11 @@ namespace CriminalPack
                 scene.CustomLevelObject().forcedItems.Add(assetMan.Get<ItemObject>("IOUDecoy"));
             }
             scene.MarkAsNeverUnload();
+            scene.CustomLevelObject().forcedStructures = scene.CustomLevelObject().forcedStructures.AddToArray(new StructureWithParameters()
+            {
+                parameters = new StructureParameters(),
+                prefab = assetMan.Get<Structure_Scanner>("scanner")
+            });
             switch (levelName)
             {
                 case "F1":
