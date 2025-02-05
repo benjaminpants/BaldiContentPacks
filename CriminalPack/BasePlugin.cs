@@ -539,13 +539,32 @@ namespace CriminalPack
             yield return "Creating Scanner...";
 
             // load scanner materials
-            //Material baseMaterial = Resources.FindObjectsOfTypeAll<Material>().First(x => x.name = "TileBase")
+            Material materialBase = Resources.FindObjectsOfTypeAll<Material>().First(x => x.name == "TileBase" && x.GetInstanceID() >= 0);
 
+            Material scannerBaseMat = new Material(materialBase) { name = "ScannerBaseMat" };
+            scannerBaseMat.SetMainTexture(AssetLoader.TextureFromMod(this, "Models", "ScannerTex1.png"));
+            Material scannerLightGreenMat = new Material(materialBase) { name = "ScannerLightGreenMat" };
+            scannerLightGreenMat.SetMainTexture(AssetLoader.TextureFromMod(this, "Models", "ScannerTex2.png"));
+            scannerLightGreenMat.SetTexture("_LightGuide", AssetLoader.TextureFromMod(this, "Models", "ScannerTexLightmap.png"));
+            // todo: add other materials
 
-            GameObject scannerObject = AssetLoader.ModelFromMod(this, "Models", "scanner.obj");
+            Dictionary<string, Material> materials = new Dictionary<string, Material>
+            {
+                { "m_scannerbase", scannerBaseMat },
+                { "m_scannerlight", scannerLightGreenMat }
+            };
+
+            GameObject scannerObject = AssetLoader.ModelFromModManualMaterials(this, materials, "Models", "scanner.obj");
             scannerObject.transform.localScale = Vector3.one * 10f;
             scannerObject.ConvertToPrefab(true);
             ItemScanner scanner = scannerObject.AddComponent<ItemScanner>();
+            scanner.greenLight = scannerLightGreenMat;
+            scanner.lightMeshes = scannerObject.GetComponentsInChildren<MeshRenderer>().Where(x => x.materials.Count(z => z.name.Contains("ScannerLight")) > 0).ToArray();
+
+            // add trigger
+            BoxCollider scannerCollider = scannerObject.AddComponent<BoxCollider>();
+            scannerCollider.size = new Vector3(1f, 1f, 0.1f); // i forgot scale
+            scannerCollider.isTrigger = true; 
 
             // create the structure builder
             GameObject scannerBuilderObject = new GameObject("ScannerBuilder");

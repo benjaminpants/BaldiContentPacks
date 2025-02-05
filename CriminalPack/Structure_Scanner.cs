@@ -36,6 +36,17 @@ namespace CriminalPack
 
     public class ItemScanner : MonoBehaviour
     {
+        public MeshRenderer[] lightMeshes;
 
+        // this isn't a dictionary due to unity serialization
+        public Material greenLight;
+        public Material yellowLight;
+        public Material redLight;
+        public Material blackLight;
+
+        void OnTriggerEnter(Collider other)
+        {
+
+        }
     }
 }
