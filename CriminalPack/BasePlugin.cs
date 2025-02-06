@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using BepInEx;
 using BepInEx.Configuration;
+using BepInEx.Logging;
 using HarmonyLib;
 using MTM101BaldAPI;
 using MTM101BaldAPI.AssetTools;
@@ -22,6 +23,8 @@ namespace CriminalPack
     public class CriminalPackPlugin : BaseUnityPlugin
     {
         public static CriminalPackPlugin Instance;
+
+        public static ManualLogSource Log;
 
         public static Character dealerEnum;
 
@@ -108,6 +111,7 @@ namespace CriminalPack
             assetMan.Add<SoundObject>("TestThanks", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "CharacterHappy", "TheTest.wav"), "CharacterHappy_TheTest", SoundType.Effect, Color.white));
 
             assetMan.Add<SoundObject>("PrincipalFraud", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "PRI_NoFraud.wav"), "Vfx_PRI_NoFraud", SoundType.Voice, Color.white));
+            assetMan.Add<SoundObject>("PrincipalContraband", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "PRI_NoContraband.wav"), "Vfx_PRI_NoContraband", SoundType.Voice, Color.white));
 
             // load up the DeliveryMessages
             string[] paths = Directory.GetFiles(Path.Combine(AssetLoader.GetModPath(this), "Dealer", "DeliveryMessages"));
@@ -546,7 +550,6 @@ namespace CriminalPack
             Material scannerLightGreenMat = new Material(materialBase) { name = "ScannerLightGreenMat" };
             scannerLightGreenMat.SetMainTexture(AssetLoader.TextureFromMod(this, "Models", "ScannerTex2.png"));
             scannerLightGreenMat.SetTexture("_LightGuide", AssetLoader.TextureFromMod(this, "Models", "ScannerTexLightmap.png"));
-            // todo: add other materials
 
             Dictionary<string, Material> materials = new Dictionary<string, Material>
             {
@@ -559,6 +562,23 @@ namespace CriminalPack
             scannerObject.ConvertToPrefab(true);
             ItemScanner scanner = scannerObject.AddComponent<ItemScanner>();
             scanner.greenLight = scannerLightGreenMat;
+
+            scanner.yellowLight = new Material(scannerLightGreenMat) { 
+                name = "ScannerLightYellowMat"
+            };
+            scanner.yellowLight.SetMainTexture(AssetLoader.TextureFromMod(this, "Models", "ScannerTex2Yellow.png"));
+
+            scanner.redLight = new Material(scannerLightGreenMat)
+            {
+                name = "ScannerLightRedMat"
+            };
+            scanner.redLight.SetMainTexture(AssetLoader.TextureFromMod(this, "Models", "ScannerTex2Red.png"));
+
+            scanner.blackLight = new Material(scannerBaseMat)
+            {
+                name = "ScannerLightBlackMat"
+            };
+            scanner.blackLight.SetMainTexture(AssetLoader.TextureFromMod(this, "Models", "ScannerTex2Off.png"));
             scanner.lightMeshes = scannerObject.GetComponentsInChildren<MeshRenderer>().Where(x => x.materials.Count(z => z.name.Contains("ScannerLight")) > 0).ToArray();
 
             // add trigger
@@ -704,6 +724,7 @@ namespace CriminalPack
             youtuberModeEnabled = Config.Bind<bool>("General", "Youtuber Mode", false, "If true, Dealer will always appear on Floor 2.");
 
             ModdedSaveGame.AddSaveHandler(new CriminalPackSaveIO());
+            CriminalPackPlugin.Log = this.Logger;
         }
     }
 

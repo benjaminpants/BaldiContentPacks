@@ -16,6 +16,11 @@ namespace CriminalPack.Patches
                 ___audMan.QueueAudio(CriminalPackPlugin.Instance.assetMan.Get<SoundObject>("PrincipalFraud"));
                 return false;
             }
+            if (brokenRule == "Contraband")
+            {
+                ___audMan.QueueAudio(CriminalPackPlugin.Instance.assetMan.Get<SoundObject>("PrincipalContraband"));
+                return false;
+            }
             return true;
         }
     }
