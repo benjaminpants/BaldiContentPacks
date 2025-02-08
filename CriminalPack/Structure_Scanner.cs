@@ -1,9 +1,11 @@
 ﻿using HarmonyLib;
 using MTM101BaldAPI;
+using MTM101BaldAPI.PlusExtensions;
 using MTM101BaldAPI.Registers;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using UnityEngine;
@@ -41,6 +43,46 @@ namespace CriminalPack
                 Direction chosenDirection = potentialDirections[rng.Next(0, potentialDirections.Count)];
                 Place(chosenCell, chosenDirection);
             }
+        }
+
+        // time to generate posters!
+        public override void Generate(LevelGenerator lg, System.Random rng)
+        {
+            base.Generate(lg, rng);
+
+            List<ExtendedPosterObject> possiblePosters = new List<ExtendedPosterObject>(CriminalPackPlugin.itemPosters);
+            RoomController[] posterableRooms = ec.rooms.Where(x => x.HasFreeWall).ToArray();
+            if (ec.mainHall.HasFreeWall)
+            {
+                posterableRooms = posterableRooms.AddToArray(ec.mainHall);
+            }
+            List<WeightedRoomController> potentialPosterRooms = new List<WeightedRoomController>();
+            for (int i = 0; i < posterableRooms.Length; i++)
+            {
+                potentialPosterRooms.Add(new WeightedRoomController()
+                {
+                    selection = posterableRooms[i],
+                    weight = (posterableRooms[i].type == RoomType.Hall ? 600 : 25 + posterableRooms[i].cells.Count) / (posterableRooms[i].category == RoomCategory.Special ? 5 : 1)
+                });
+            }
+
+            int chosenPosterCount = rng.Next(parameters.minMax[1].x, parameters.minMax[1].z);
+
+            int placedPosters = 0;
+            while ((placedPosters != chosenPosterCount) && (potentialPosterRooms.Count > 0))
+            {
+                RoomController selectedRoom = WeightedRoomController.ControlledRandomSelectionList(WeightedRoomController.Convert(potentialPosterRooms), rng);
+                if (possiblePosters.Count == 0)
+                {
+                    possiblePosters = new List<ExtendedPosterObject>(CriminalPackPlugin.itemPosters);
+                }
+                ExtendedPosterObject chosenPoster = possiblePosters[rng.Next(0, possiblePosters.Count)];
+                possiblePosters.Remove(chosenPoster);
+                ec.BuildPosterInRoom(selectedRoom, chosenPoster, rng);
+                potentialPosterRooms.RemoveAll(x => !x.selection.HasFreeWall);
+                placedPosters++;
+            }
+            
         }
 
         public void Place(Cell cellAt, Direction dir)
@@ -259,7 +301,7 @@ namespace CriminalPack
                 if (meta == null) continue;
                 if (meta.id == Items.None) continue;
                 playerItemCount++;
-                if (meta.tags.Contains("contraband"))
+                if (meta.tags.Contains("crmp_contraband"))
                 {
                     foundContraband.Add(foundPlayer.itm.items[i].itemType);
                 }

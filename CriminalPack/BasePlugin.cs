@@ -65,6 +65,7 @@ namespace CriminalPack
             assetMan.Add<Texture2D>("IOU_WallFade", AssetLoader.TextureFromMod(this, "IOU_WallFade.png"));
             assetMan.Add<Texture2D>("dealer_poster", AssetLoader.TextureFromMod(this, "dealer_poster.png"));
             assetMan.Add<Texture2D>("WarningPosterImage", AssetLoader.TextureFromMod(this, "Posters", "Poster_Warning.png"));
+            assetMan.Add<Texture2D>("WarningCross", AssetLoader.TextureFromMod(this, "Posters", "Poster_WarningCross.png"));
 
             Texture2D[] textures = AssetLoader.TexturesFromMod(this, "*.png", "Dealer");
             assetMan.AddRange(textures.ToSprites(16f), (spr) =>
@@ -236,7 +237,6 @@ namespace CriminalPack
             digWindow.windowPre = assetMan.Get<Window>("PortalPosterPre");
             ItemMetaData pouchMeta = new ItemMetaData(Info, new ItemObject[0]);
             pouchMeta.flags = ItemFlags.CreatesEntity | ItemFlags.Persists;
-            pouchMeta.tags.Add("contraband");
             Items pouchEnum = EnumExtensions.ExtendEnum<Items>("DealerPouch");
 
 
@@ -320,7 +320,7 @@ namespace CriminalPack
                 .SetShopPrice(600)
                 .SetGeneratorCost(55)
                 .SetItemComponent<ITM_Crowbar>()
-                .SetMeta(ItemFlags.None, new string[2] { "contraband", "sharp" })
+                .SetMeta(ItemFlags.None, new string[2] { "crmp_contraband", "sharp" })
                 .SetSprites(assetMan.Get<Sprite>("CrowbarSmall"), assetMan.Get<Sprite>("CrowbarBig"))
                 .Build();
             ITM_Crowbar crowbar = (ITM_Crowbar)crowbarObject.item;
@@ -345,7 +345,7 @@ namespace CriminalPack
                 .SetItemComponent<ITM_Mask>()
                 .SetSprites(assetMan.Get<Sprite>("ThiefMaskSmall"), assetMan.Get<Sprite>("ThiefMaskBig"))
                 .SetNameAndDescription("Itm_ThiefMask", "Desc_ThiefMask")
-                .SetMeta(ItemFlags.Persists, new string[1] { "contraband" })
+                .SetMeta(ItemFlags.Persists, new string[1] { "crmp_contraband" })
                 .Build();
             gumCanvasClone.transform.SetParent(maskObject.item.transform);
             ((ITM_Mask)maskObject.item).maskCanvas = gumCanvasClone;
@@ -608,34 +608,67 @@ namespace CriminalPack
             assetMan.Add<Structure_Scanner>("scanner", scannerBuilder);
 
 
-            // poster generating logic goes here temporarily, move to a seperate loading event
-            ExtendedPosterObject testPoster = ScriptableObject.CreateInstance<ExtendedPosterObject>();
-            testPoster.baseTexture = assetMan.Get<Texture2D>("WarningPosterImage");
-            testPoster.overlayData = new PosterImageData[]
-            {
-                new PosterImageData(assetMan.Get<Sprite>("CrowbarBig").texture, new IntVector2(128,128), new IntVector2(64,64))
-            };
-            testPoster.name = "TestPoster";
-            testPoster.textData = new PosterTextData[]
-            {
-                new PosterTextData()
-                {
-                    font = BaldiFonts.ComicSans12.FontAsset(),
-                    fontSize = (int)BaldiFonts.ComicSans12.FontSize(),
-                    alignment = TMPro.TextAlignmentOptions.Center,
-                    color = Color.black,
-                    textKey = "TEST",
-                    style = TMPro.FontStyles.Normal,
-                    position = new IntVector2(0,0),
-                    size = new IntVector2(64,64)
-                }
-            };
-            assetMan.Add<PosterObject>("TestPoster", testPoster);
-
             yield return "Modifying meta...";
-            ItemMetaStorage.Instance.FindByEnum(Items.GrapplingHook).tags.Add("contraband"); // reasoning: dangerous
-            ItemMetaStorage.Instance.FindByEnum(Items.Teleporter).tags.Add("contraband"); // reasoning: dangerous
-            ItemMetaStorage.Instance.FindByEnum(Items.DetentionKey).tags.Add("contraband"); // reasoning: belongs to principal (they are called principal's keys)
+            ItemMetaStorage.Instance.FindByEnum(Items.GrapplingHook).tags.Add("crmp_contraband"); // reasoning: dangerous
+            ItemMetaStorage.Instance.FindByEnum(Items.Teleporter).tags.Add("crmp_contraband"); // reasoning: dangerous
+            ItemMetaStorage.Instance.FindByEnum(Items.DetentionKey).tags.Add("crmp_contraband"); // reasoning: belongs to principal (they are called principal's keys)
+        }
+
+        public static List<ExtendedPosterObject> itemPosters = new List<ExtendedPosterObject>();
+
+        IEnumerator ResourcesLoadedPost()
+        {
+            ItemMetaData[] allItems = ItemMetaStorage.Instance.FindAllWithTags(true, "crmp_contraband").ToArray();
+            yield return allItems.Length;
+            for (int i = 0; i < allItems.Length; i++)
+            {
+                yield return "Generating scanner poster for " + EnumExtensions.ToStringExtended(allItems[i].id);
+
+                ItemObject currentItem = allItems[i].value;
+
+                string itemName = currentItem.nameKey;
+
+                ExtendedPosterObject poster = ScriptableObject.CreateInstance<ExtendedPosterObject>();
+                poster.baseTexture = assetMan.Get<Texture2D>("WarningPosterImage");
+                poster.overlayData = new PosterImageData[]
+                {
+                    new PosterImageData(currentItem.itemSpriteLarge.texture, new IntVector2(100,-163 + 8), new IntVector2(64,64)),
+                    new PosterImageData(assetMan.Get<Texture2D>("WarningCross"), new IntVector2(100-32,-163 + 32 + 8), new IntVector2(128,128))
+                };
+                poster.name = "Scanner_Poster_" + EnumExtensions.ToStringExtended(allItems[i].id);
+                poster.textData = new PosterTextData[]
+                {
+                    new PosterTextData()
+                    {
+                        font = BaldiFonts.BoldComicSans24.FontAsset(),
+                        fontSize = (int)BaldiFonts.BoldComicSans24.FontSize(),
+                        alignment = TMPro.TextAlignmentOptions.Center,
+                        color = Color.black,
+                        textKey = "PST_Scn_Warn",
+                        style = TMPro.FontStyles.Underline,
+                        position = new IntVector2(57,195),
+                        size = new IntVector2(144,64)
+                    },
+                    new ExtendedPosterTextData()
+                    {
+                        font = BaldiFonts.ComicSans12.FontAsset(),
+                        fontSize = (int)BaldiFonts.ComicSans12.FontSize(),
+                        alignment = TMPro.TextAlignmentOptions.Center,
+                        color = Color.black,
+                        textKey = Singleton<LocalizationManager>.Instance.GetLocalizedText(itemName).EndsWith("s") ? "PST_Scn_Itm_S" : "PST_Scn_Itm_NoS",
+                        style = TMPro.FontStyles.Normal,
+                        position = new IntVector2(57,96),
+                        size = new IntVector2(144,128),
+                        formats = new string[1] { itemName },
+                        replacementRegex = new string[1][] // remove any (5) or other such counters if they exist
+                        {
+                            new string[2] { "\\([^)]*\\)", "" }
+                        }
+                    }
+                };
+
+                itemPosters.Add(poster);
+            }
         }
 
 
@@ -646,13 +679,7 @@ namespace CriminalPack
                 scene.CustomLevelObject().forcedItems.Add(assetMan.Get<ItemObject>("IOUDecoy"));
             }
             scene.MarkAsNeverUnload();
-            /*
-            scene.CustomLevelObject().posterChance = 100;
-            scene.CustomLevelObject().posters = scene.CustomLevelObject().posters.AddToArray(new WeightedPosterObject()
-            {
-                selection = assetMan.Get<PosterObject>("TestPoster"),
-                weight = 1000
-            });*/
+            
             switch (levelName)
             {
                 case "F1":
@@ -668,6 +695,18 @@ namespace CriminalPack
                             selection = assetMan.Get<ItemObject>("Mask"),
                             weight = 40
                         }
+                    });
+                    scene.CustomLevelObject().forcedStructures = scene.CustomLevelObject().forcedStructures.AddToArray(new StructureWithParameters()
+                    {
+                        parameters = new StructureParameters()
+                        {
+                            minMax = new IntVector2[]
+                                {
+                                    new IntVector2(1,3),
+                                    new IntVector2(12,16)
+                                }
+                        },
+                        prefab = assetMan.Get<Structure_Scanner>("scanner")
                     });
                     //obj.forcedNpcs = obj.forcedNpcs.AddToArray(assetMan.Get<NPC>("Dealer"));
                     break;
@@ -701,7 +740,8 @@ namespace CriminalPack
                             {
                                 minMax = new IntVector2[]
                                 {
-                                    new IntVector2(1,3)
+                                    new IntVector2(1,3),
+                                    new IntVector2(4,8)
                                 }
                             },
                             prefab = assetMan.Get<Structure_Scanner>("scanner")
@@ -757,7 +797,8 @@ namespace CriminalPack
                             {
                                 minMax = new IntVector2[]
                                 {
-                                    new IntVector2(2,6)
+                                    new IntVector2(2,6),
+                                    new IntVector2(12,16)
                                 }
                             },
                             prefab = assetMan.Get<Structure_Scanner>("scanner")
@@ -789,6 +830,7 @@ namespace CriminalPack
             harmony.PatchAllConditionals();
             Instance = this;
             LoadingEvents.RegisterOnAssetsLoaded(Info, ResourcesLoaded(), false);
+            LoadingEvents.RegisterOnAssetsLoaded(Info, ResourcesLoadedPost(), true);
             AssetLoader.LocalizationFromMod(this);
             GeneratorManagement.Register(this, GenerationModType.Addend, GeneratorModifications);
 
