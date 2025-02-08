@@ -11,9 +11,11 @@ using MTM101BaldAPI;
 using MTM101BaldAPI.AssetTools;
 using MTM101BaldAPI.Components;
 using MTM101BaldAPI.ObjectCreation;
+using MTM101BaldAPI.PlusExtensions;
 using MTM101BaldAPI.Reflection;
 using MTM101BaldAPI.Registers;
 using MTM101BaldAPI.SaveSystem;
+using MTM101BaldAPI.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -34,8 +36,13 @@ namespace CriminalPack
 
         IEnumerator ResourcesLoaded()
         {
-            yield return 8;
-            yield return "Loading Sprites...";
+            yield return 9;
+            yield return "Fetching existing assets...";
+            SoundObject[] foundSoundObjects = Resources.FindObjectsOfTypeAll<SoundObject>().Where(x => x.GetInstanceID() >= 0).ToArray();
+            assetMan.Add<SoundObject>("CorrectBuzz", foundSoundObjects.First(x => x.name == "Activity_Correct"));
+            assetMan.Add<SoundObject>("WrongBuzz", foundSoundObjects.First(x => x.name == "Activity_Incorrect"));
+
+            yield return "Loading Sprites and Textures...";
             assetMan.Add<Texture2D>("LightMap", Resources.FindObjectsOfTypeAll<Texture2D>().First(x => x.name == "LightMap"));
             assetMan.Add<Sprite>("CrowbarSmall", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "CrowbarSmall.png"), 25f));
             assetMan.Add<Sprite>("CrowbarBig", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "CrowbarBig.png"), 50f));
@@ -57,6 +64,7 @@ namespace CriminalPack
             assetMan.Add<Texture2D>("IOU_Wall", AssetLoader.TextureFromMod(this, "IOU_Wall.png"));
             assetMan.Add<Texture2D>("IOU_WallFade", AssetLoader.TextureFromMod(this, "IOU_WallFade.png"));
             assetMan.Add<Texture2D>("dealer_poster", AssetLoader.TextureFromMod(this, "dealer_poster.png"));
+            assetMan.Add<Texture2D>("WarningPosterImage", AssetLoader.TextureFromMod(this, "Posters", "Poster_Warning.png"));
 
             Texture2D[] textures = AssetLoader.TexturesFromMod(this, "*.png", "Dealer");
             assetMan.AddRange(textures.ToSprites(16f), (spr) =>
@@ -71,6 +79,7 @@ namespace CriminalPack
             assetMan.Add<SoundObject>("DecoyInflate", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "InflateDecoy.wav"), "Sfx_Inflate", SoundType.Effect, Color.white));
             assetMan.Add<SoundObject>("DecoyBoom", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "DecoyPop.wav"), "Sfx_Effects_Pop", SoundType.Effect, Color.white));
             assetMan.Add<SoundObject>("DealerScreech", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "Dealer", "ScreechToHalt.wav"), "Sfx_Screech", SoundType.Effect, Color.white));
+            assetMan.Add<SoundObject>("ScannerProcess", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "ScannerScan.wav"), "Sfx_Scan", SoundType.Effect, Color.white));
 
             assetMan.Add<SoundObject>("PaperCrumple", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "PaperCrumple.wav"), "Sfx_PaperCrumple", SoundType.Effect, Color.white));
             assetMan.Add<SoundObject>("PaperSlap", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "PaperSlap.wav"), "Sfx_Slap", SoundType.Effect, Color.white));
@@ -560,8 +569,13 @@ namespace CriminalPack
             GameObject scannerObject = AssetLoader.ModelFromModManualMaterials(this, materials, "Models", "scanner.obj");
             scannerObject.transform.localScale = Vector3.one * 10f;
             scannerObject.ConvertToPrefab(true);
+            scannerObject.name = "Scanner";
             ItemScanner scanner = scannerObject.AddComponent<ItemScanner>();
             scanner.greenLight = scannerLightGreenMat;
+            scanner.audMan = scannerObject.AddComponent<PropagatedAudioManager>();
+            scanner.scanGood = assetMan.Get<SoundObject>("CorrectBuzz");
+            scanner.scanBad = assetMan.Get<SoundObject>("WrongBuzz");
+            scanner.scanStart = assetMan.Get<SoundObject>("ScannerProcess");
 
             scanner.yellowLight = new Material(scannerLightGreenMat) { 
                 name = "ScannerLightYellowMat"
@@ -593,6 +607,31 @@ namespace CriminalPack
             scannerBuilder.prefab = scanner;
             assetMan.Add<Structure_Scanner>("scanner", scannerBuilder);
 
+
+            // poster generating logic goes here temporarily, move to a seperate loading event
+            ExtendedPosterObject testPoster = ScriptableObject.CreateInstance<ExtendedPosterObject>();
+            testPoster.baseTexture = assetMan.Get<Texture2D>("WarningPosterImage");
+            testPoster.overlayData = new PosterImageData[]
+            {
+                new PosterImageData(assetMan.Get<Sprite>("CrowbarBig").texture, new IntVector2(128,128), new IntVector2(64,64))
+            };
+            testPoster.name = "TestPoster";
+            testPoster.textData = new PosterTextData[]
+            {
+                new PosterTextData()
+                {
+                    font = BaldiFonts.ComicSans12.FontAsset(),
+                    fontSize = (int)BaldiFonts.ComicSans12.FontSize(),
+                    alignment = TMPro.TextAlignmentOptions.Center,
+                    color = Color.black,
+                    textKey = "TEST",
+                    style = TMPro.FontStyles.Normal,
+                    position = new IntVector2(0,0),
+                    size = new IntVector2(64,64)
+                }
+            };
+            assetMan.Add<PosterObject>("TestPoster", testPoster);
+
             yield return "Modifying meta...";
             ItemMetaStorage.Instance.FindByEnum(Items.GrapplingHook).tags.Add("contraband"); // reasoning: dangerous
             ItemMetaStorage.Instance.FindByEnum(Items.Teleporter).tags.Add("contraband"); // reasoning: dangerous
@@ -607,11 +646,13 @@ namespace CriminalPack
                 scene.CustomLevelObject().forcedItems.Add(assetMan.Get<ItemObject>("IOUDecoy"));
             }
             scene.MarkAsNeverUnload();
-            scene.CustomLevelObject().forcedStructures = scene.CustomLevelObject().forcedStructures.AddToArray(new StructureWithParameters()
+            /*
+            scene.CustomLevelObject().posterChance = 100;
+            scene.CustomLevelObject().posters = scene.CustomLevelObject().posters.AddToArray(new WeightedPosterObject()
             {
-                parameters = new StructureParameters(),
-                prefab = assetMan.Get<Structure_Scanner>("scanner")
-            });
+                selection = assetMan.Get<PosterObject>("TestPoster"),
+                weight = 1000
+            });*/
             switch (levelName)
             {
                 case "F1":
@@ -651,6 +692,21 @@ namespace CriminalPack
                             selection = assetMan.Get<ItemObject>("Mask"),
                             weight = 80
                         }
+                    });
+                    scene.CustomLevelObject().potentialStructures = scene.CustomLevelObject().potentialStructures.AddToArray(new WeightedStructureWithParameters()
+                    {
+                        selection= new StructureWithParameters()
+                        {
+                            parameters = new StructureParameters()
+                            {
+                                minMax = new IntVector2[]
+                                {
+                                    new IntVector2(1,3)
+                                }
+                            },
+                            prefab = assetMan.Get<Structure_Scanner>("scanner")
+                        },
+                        weight=60
                     });
                     if (!youtuberModeEnabled.Value)
                     {
@@ -692,6 +748,21 @@ namespace CriminalPack
                             selection = assetMan.Get<ItemObject>("Mask"),
                             weight = 65
                         }
+                    });
+                    scene.CustomLevelObject().potentialStructures = scene.CustomLevelObject().potentialStructures.AddToArray(new WeightedStructureWithParameters()
+                    {
+                        selection = new StructureWithParameters()
+                        {
+                            parameters = new StructureParameters()
+                            {
+                                minMax = new IntVector2[]
+                                {
+                                    new IntVector2(2,6)
+                                }
+                            },
+                            prefab = assetMan.Get<Structure_Scanner>("scanner")
+                        },
+                        weight = 60
                     });
                     if (!youtuberModeEnabled.Value)
                     {

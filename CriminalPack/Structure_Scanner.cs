@@ -1,10 +1,13 @@
 ﻿using HarmonyLib;
+using MTM101BaldAPI;
 using MTM101BaldAPI.Registers;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace CriminalPack
 {
@@ -16,16 +19,27 @@ namespace CriminalPack
         public override void PostOpenCalcGenerate(LevelGenerator lg, System.Random rng)
         {
             base.PostOpenCalcGenerate(lg, rng);
-            List<Cell> validCells = lg.Ec.mainHall.GetTilesOfShape(TileShapeMask.Straight, false);
-            for (int i = 0; i < 6; i++)
+            List<List<Cell>> halls = lg.Ec.FindHallways();
+            for (int i = 0; i < halls.Count; i++)
             {
-                int chosenCellIndex = rng.Next(0, validCells.Count);
-                Cell chosenCell = validCells[chosenCellIndex];
-                validCells.RemoveAt(chosenCellIndex);
+                halls[i].RemoveAll(x => Directions.OpenDirectionsFromBin(x.ConstBin).Count > 2);
+                halls[i].RemoveAll(x => x.shape == TileShapeMask.Corner);
+            }
+            halls.RemoveAll(x => x.Count == 0);
+            int scannerCount = rng.Next(parameters.minMax[0].x, parameters.minMax[0].z);
+            for (int i = 0; i < scannerCount; i++)
+            {
+                if (halls.Count == 0)
+                {
+                    Debug.LogWarning("Couldn't find hall for scanner #" + i + "!");
+                    return;
+                }
+                int chosenHallIndex = rng.Next(0, halls.Count);
+                Cell chosenCell = halls[chosenHallIndex][rng.Next(0, halls[chosenHallIndex].Count)];
+                halls.RemoveAt(chosenHallIndex);
                 List<Direction> potentialDirections = Directions.OpenDirectionsFromBin(chosenCell.ConstBin);
                 Direction chosenDirection = potentialDirections[rng.Next(0, potentialDirections.Count)];
                 Place(chosenCell, chosenDirection);
-                chosenCell.HardCoverEntirely();
             }
         }
 
@@ -35,16 +49,26 @@ namespace CriminalPack
             scanner.transform.position = cellAt.FloorWorldPosition;
             scanner.transform.rotation = dir.ToRotation();
             scanner.ec = ec;
+            scanner.room = cellAt.room;
+            cellAt.HardCoverEntirely();
         }
     }
 
     public class ItemScanner : MonoBehaviour
     {
+
+        public AudioManager audMan;
+        public SoundObject scanStart;
+        public SoundObject scanGood;
+        public SoundObject scanBad;
+
         public MeshRenderer[] lightMeshes;
 
         // how much time it should take for items to process
-        public float timeToProcess = 1f;
+        public float minTimeToProcess = 0.3f;
+        public float maxTimeToProcess = 2f;
         public EnvironmentController ec;
+        public RoomController room;
 
         // this isn't a dictionary due to unity serialization
         public Material greenLight;
@@ -63,9 +87,46 @@ namespace CriminalPack
             }
         }
 
+        public bool powered { get; protected set; } = true;
+
+        IEnumerator currentWaitingForPowerNumerator = null;
+
+        public void SetPower(bool power)
+        {
+            if (power == powered) return; // dont do logic if the attempted state is our current one
+            if (!power && (currentWaitingForPowerNumerator != null)) return; // dont do logic if we are being shut down and currently have one queued.
+            if (power)
+            {
+                powered = true;
+                SwapMaterial(greenLight);
+                if (currentWaitingForPowerNumerator != null)
+                {
+                    StopCoroutine(currentWaitingForPowerNumerator);
+                    currentWaitingForPowerNumerator = null;
+                }
+            }
+            else
+            {
+                currentWaitingForPowerNumerator = WaitTilValidPowerdownableState();
+                StartCoroutine(currentWaitingForPowerNumerator);
+            }
+        }
+
+        IEnumerator WaitTilValidPowerdownableState()
+        {
+            while ((timeTilReset != 0f) && (timeTilProcess != 0f))
+            {
+                yield return null;
+            }
+            audMan.FlushQueue(true);
+            SwapMaterial(blackLight);
+            powered = false;
+        }
+
         float timeTilProcess = 0f;
         PlayerManager targetPlayer;
         List<Items> foundContraband = new List<Items>();
+        int playerItemCount = 0;
 
         float timeTilReset = 0f;
 
@@ -75,8 +136,29 @@ namespace CriminalPack
             npc.GetComponent<AudioManager>().FlushQueue(true);
         }
 
+        bool initiatedShutoff = false;
+
+        IEnumerator PowerOffAfterTime(float time)
+        {
+            yield return new WaitForSecondsEnvironmentTimescale(ec, time);
+            SetPower(false);
+        }
+
         void Update()
         {
+            if (!powered) return;
+            if (room.type == RoomType.Hall)
+            {
+                if (ec.timeOut && !initiatedShutoff)
+                {
+                    StartCoroutine(PowerOffAfterTime(UnityEngine.Random.Range(15f, 120f)));
+                    initiatedShutoff = true;
+                }
+            }
+            else
+            {
+                SetPower(room.Powered);
+            }
             if (timeTilReset > 0f)
             {
                 timeTilReset -= Time.deltaTime * ec.EnvironmentTimeScale;
@@ -98,9 +180,33 @@ namespace CriminalPack
                         CriminalPackPlugin.Log.LogWarning("Scanner went off without targetPlayer?? What the fuck?");
                         return;
                     }
+
+                    Image[] itemImages = (Image[])_itemSprites.GetValue(Singleton<CoreGameManager>.Instance.GetHud(targetPlayer.playerNumber));
+                    for (int i = 0; i < targetPlayer.itm.maxItem + 1; i++)
+                    {
+                        if (((bool[])_slotLocked.GetValue(targetPlayer.itm))[i]) continue;
+                        if (itemImages[i] != null)
+                        {
+                            if (itemImages[i].GetComponent<ScannerItemSpriteFade>())
+                            {
+                                Destroy(itemImages[i].GetComponent<ScannerItemSpriteFade>());
+                            }
+                            itemImages[i].gameObject.AddComponent<ScannerItemSpriteFade>().myColor = foundContraband.Contains(targetPlayer.itm.items[i].itemType) ? Color.red : Color.green;
+                        }
+                    }
+
+                    if (playerItemCount == 0)
+                    {
+                        targetPlayer = null;
+                        audMan.FlushQueue(true);
+                        timeTilReset = 0.1f;
+                        return;
+                    }
                     if (foundContraband.Count > 0)
                     {
                         SwapMaterial(redLight);
+                        audMan.FlushQueue(true);
+                        audMan.PlaySingle(scanBad);
                         ec.MakeNoise(transform.position, 11);
                         timeTilReset = 5f;
                         targetPlayer.RuleBreak("Contraband", 6f);
@@ -116,6 +222,8 @@ namespace CriminalPack
                     else
                     {
                         targetPlayer = null;
+                        audMan.FlushQueue(true);
+                        audMan.PlaySingle(scanGood);
                         SwapMaterial(greenLight);
                     }
                 }
@@ -125,19 +233,23 @@ namespace CriminalPack
         void ActivateForPlayer(PlayerManager pm)
         {
             SwapMaterial(yellowLight);
+            audMan.PlaySingle(scanStart);
             targetPlayer = pm;
-            timeTilProcess = timeToProcess;
+            timeTilProcess = Mathf.Lerp(minTimeToProcess,maxTimeToProcess, playerItemCount / (float)(pm.itm.maxItem + 1f));
         }
 
 
         static FieldInfo _slotLocked = AccessTools.Field(typeof(ItemManager), "slotLocked");
+        static FieldInfo _itemSprites = AccessTools.Field(typeof(HudManager), "itemSprites");
 
         void OnTriggerEnter(Collider other)
         {
+            if (!powered) return;
             if (timeTilReset != 0f) return;
             if (timeTilProcess != 0f) return;
             if (!other.gameObject.CompareTag("Player")) return;
             foundContraband.Clear();
+            playerItemCount = 0;
             PlayerManager foundPlayer = other.GetComponent<PlayerManager>();
             for (int i = 0; i < foundPlayer.itm.maxItem + 1; i++)
             {
@@ -145,6 +257,8 @@ namespace CriminalPack
                 if (((bool[])_slotLocked.GetValue(foundPlayer.itm))[i]) continue;
                 ItemMetaData meta = foundPlayer.itm.items[i].GetMeta();
                 if (meta == null) continue;
+                if (meta.id == Items.None) continue;
+                playerItemCount++;
                 if (meta.tags.Contains("contraband"))
                 {
                     foundContraband.Add(foundPlayer.itm.items[i].itemType);
