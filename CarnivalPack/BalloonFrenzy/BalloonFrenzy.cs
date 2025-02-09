@@ -205,9 +205,11 @@ namespace CarnivalPack
             {
                 safeCells = rc.AllTilesNoGarbage(false, true);
             }
+            if (safeCells.Count == 0) yield break;
             int balloonCount = crng.Next(Mathf.RoundToInt(safeCells.Count / 2f), safeCells.Count);
             for (int i = 0; i < balloonCount; i++)
             {
+                if (safeCells.Count == 0) yield break;
                 Cell chosenCell = safeCells[crng.Next(0, safeCells.Count)];
                 safeCells.Remove(chosenCell);
                 FrenzyBalloon spawned = GameObject.Instantiate<FrenzyBalloon>(WeightedSelection<FrenzyBalloon>.ControlledRandomSelectionList(standardBalloons,crng), this.transform);

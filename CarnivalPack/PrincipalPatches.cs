@@ -14,7 +14,14 @@ namespace CarnivalPack
         {
             if (brokenRule == "FrenzyBalloonNoPop")
             {
-                ___audMan.QueueAudio(CarnivalPackBasePlugin.Instance.assetMan.Get<SoundObject>("PrincipalNotPopBalloon"));
+                if (___audMan.filesQueued < 4)
+                {
+                    ___audMan.QueueAudio(CarnivalPackBasePlugin.Instance.assetMan.Get<SoundObject>("PrincipalNotPopBalloon"));
+                }
+                else
+                {
+                    Debug.LogWarning("Principal tried to scold for balloon frenzy with 4 files already in queue! Ceasing further queues to prevent clogging!");
+                }
                 return false;
             }
             return true;
