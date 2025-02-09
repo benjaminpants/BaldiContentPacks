@@ -9,12 +9,15 @@ using MTM101BaldAPI.ObjectCreation;
 using MTM101BaldAPI.Reflection;
 using MTM101BaldAPI.Registers;
 using MTM101BaldAPI.SaveSystem;
+using MTM101BaldAPI.UI;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace CarnivalPack
 {
@@ -149,6 +152,113 @@ namespace CarnivalPack
                 .SetMeta(ItemFlags.Persists, new string[] { "food" })
                 .Build();
             assetMan.Add<ItemObject>("CottonCandy", cottonCandy);
+
+
+            // setup the balloon
+            Balloon balloonTemplate = Resources.FindObjectsOfTypeAll<Balloon>().First(x => x.GetInstanceID() >= 0 && x.name == "Balloon_Purple");
+            FrenzyBalloon balloonFrenzyBalloon = GameObject.Instantiate<Balloon>(balloonTemplate, MTM101BaldiDevAPI.prefabTransform).gameObject.AddComponent<FrenzyBalloon>();
+            balloonFrenzyBalloon.name = "BalloonFrenzyBalloonStandard";
+            balloonFrenzyBalloon.gameObject.layer = LayerMask.NameToLayer("ClickableCollidableEntities");
+            balloonFrenzyBalloon.audMan = balloonFrenzyBalloon.gameObject.AddComponent<PropagatedAudioManager>();
+            balloonFrenzyBalloon.popSound = Resources.FindObjectsOfTypeAll<SoundObject>().First(x => x.name == "Gen_Pop");
+            balloonFrenzyBalloon.inflateSound = assetMan.Get<SoundObject>("Inflate");
+            balloonFrenzyBalloon.potentialSprites = new Sprite[]
+            {
+                AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 25f, "Balloons", "BalloonRegularRed.png"),
+                AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 25f, "Balloons", "BalloonRegularGreen.png"),
+                AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 25f, "Balloons", "BalloonRegularBlue.png")
+            };
+            assetMan.Add<FrenzyBalloon>("FrenzyBalloon", balloonFrenzyBalloon);
+
+            BalloonFrenzy frenzyEvent = new RandomEventBuilder<BalloonFrenzy>(Info)
+                .SetEnum("BalloonFrenzy")
+                .SetMinMaxTime(60f, 120f)
+                .SetName("Balloon Frenzy")
+                .SetSound(Zorp.badSubjectSounds[0])
+                .Build();
+            frenzyEvent.standardBalloons.Add(new WeightedSelection<FrenzyBalloon>()
+            {
+                selection = balloonFrenzyBalloon,
+                weight = 300
+            });
+
+            assetMan.Add<BalloonFrenzy>("FrenzyEvent", frenzyEvent);
+
+            FrenzyBalloonPoints bpBalloon = CreateBalloonVariant<FrenzyBalloonPoints>(AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 25f, "Balloons", "BalloonPoints.png"));
+            bpBalloon.popSound = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "Gen_PopPoints.wav"), "Sfx_Effects_Pop", SoundType.Effect, Color.white);
+            frenzyEvent.standardBalloons.Add(new WeightedSelection<FrenzyBalloon>()
+            {
+                selection= bpBalloon,
+                weight = 40
+            });
+            FrenzyBalloonExplosion explodeBalloon = CreateBalloonVariant<FrenzyBalloonExplosion>(AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 25f, "Balloons", "BalloonBoom.png"));
+            explodeBalloon.popSound = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "Gen_PopExplosion.wav"), "Sfx_Effects_Pop", SoundType.Effect, Color.white);
+            frenzyEvent.standardBalloons.Add(new WeightedSelection<FrenzyBalloon>()
+            {
+                selection = explodeBalloon,
+                weight = 30
+            });
+
+            FrenzyBalloonSquish squishBalloon = CreateBalloonVariant<FrenzyBalloonSquish>(AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 25f, "Balloons", "BalloonSquish.png"));
+            squishBalloon.popSound = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "Gen_PopSquish.wav"), "Sfx_Effects_Pop", SoundType.Effect, Color.white);
+            frenzyEvent.standardBalloons.Add(new WeightedSelection<FrenzyBalloon>()
+            {
+                selection = squishBalloon,
+                weight = 25
+            });
+
+            FrenzyBalloonSpeedboost speedBalloon = CreateBalloonVariant<FrenzyBalloonSpeedboost>(AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 25f, "Balloons", "BalloonSpeedboost.png"));
+            speedBalloon.popSound = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "Gen_PopSpeed.wav"), "Sfx_Effects_Pop", SoundType.Effect, Color.white);
+            frenzyEvent.standardBalloons.Add(new WeightedSelection<FrenzyBalloon>()
+            {
+                selection = speedBalloon,
+                weight = 50
+            });
+
+
+            assetMan.Add<SoundObject>("PrincipalNotPopBalloon", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "PRI_NoNotPoppingBalloons.wav"), "Vfx_PRI_NoNotBalloonPop", SoundType.Voice, Color.white));
+
+            NPCMetaStorage.Instance.Get(Character.Principal).tags.Add("no_balloon_frenzy");
+            NPCMetaStorage.Instance.Get(Character.Crafters).tags.Add("no_balloon_frenzy");
+            NPCMetaStorage.Instance.Get(Character.Chalkles).tags.Add("no_balloon_frenzy");
+            NPCMetaStorage.Instance.Get(Character.LookAt).tags.Add("no_balloon_frenzy");
+            NPCMetaStorage.Instance.Get(Character.Bully).tags.Add("no_balloon_frenzy");
+            NPCMetaStorage.Instance.Get(Character.Sweep).tags.Add("no_balloon_frenzy");
+
+            HudManager hudM = Resources.FindObjectsOfTypeAll<HudManager>().First(x => x.GetInstanceID() >= 0 && x.name == "MainHud");
+            Image balloonFrenzyUIBalloon = UIHelpers.CreateImage(AssetLoader.SpriteFromMod(this, Vector2.zero, 30f, "BalloonUI.png"), hudM.transform, Vector3.zero, false);
+            balloonFrenzyUIBalloon.name = "BalloonFrenzyBalloon";
+            balloonFrenzyUIBalloon.rectTransform.anchorMax = Vector2.one;
+            balloonFrenzyUIBalloon.rectTransform.anchorMin = Vector2.one;
+            balloonFrenzyUIBalloon.rectTransform.anchoredPosition = new Vector2(50f, -225f);
+
+            TextMeshProUGUI text = UIHelpers.CreateText<TextMeshProUGUI>(BaldiFonts.ComicSans18, "0:00", balloonFrenzyUIBalloon.transform, Vector3.zero);
+            text.color = Color.white;
+            BalloonFrenzyUI frUI = hudM.gameObject.AddComponent<BalloonFrenzyUI>();
+            frUI.balloonImage = balloonFrenzyUIBalloon;
+            frUI.text = text;
+            text.rectTransform.anchorMin = Vector2.one / 2f;
+            text.rectTransform.anchorMax = Vector2.one;
+            text.rectTransform.anchoredPosition = new Vector2(85f, -75f);
+        }
+
+        public T CreateBalloonVariant<T>(Sprite sprite) where T : FrenzyBalloon
+        {
+            FrenzyBalloon baseBalloon = GameObject.Instantiate<FrenzyBalloon>(assetMan.Get<FrenzyBalloon>("FrenzyBalloon"), MTM101BaldiDevAPI.prefabTransform);
+            T newBalloon = baseBalloon.gameObject.AddComponent<T>();
+            newBalloon.audMan = baseBalloon.audMan;
+            newBalloon.inflateSound = baseBalloon.inflateSound;
+            newBalloon.popSound = baseBalloon.popSound;
+            newBalloon.potentialSprites = new Sprite[] { sprite };
+            Destroy(baseBalloon);
+            return newBalloon;
+        }
+
+        IEnumerator DisableFrenzyForPotentiallyProblematicNPCs()
+        {
+            yield return 1;
+            yield return "Detecting and tagging potentially problematic modded NPCs...";
+            NPCMetaStorage.Instance.FindAll(x => ((!x.flags.HasFlag(NPCFlags.CanMove) || (!x.flags.HasFlag(NPCFlags.HasTrigger))) && !x.tags.Contains("no_balloon_frenzy"))).Do(x => x.tags.Add("no_balloon_frenzy"));
         }
 
         void AddNPCs(string floorName, int floorNumber, SceneObject sceneObject)
@@ -204,6 +314,7 @@ namespace CarnivalPack
             assetMan.Add<Texture2D>("Texture_Zorpster_Idle", AssetLoader.TextureFromMod(this, "ZorpPlaceholder.png"));
             assetMan.Add<Sprite>("Zorpster_Idle", AssetLoader.SpriteFromTexture2D(assetMan.Get<Texture2D>("Texture_Zorpster_Idle"), 40));
             assetMan.Add<SoundObject>("Zorpster_Sound_Idle", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "weirdwahah.wav"), "Sfx_WeirdWahah", SoundType.Effect, Color.white));
+            assetMan.Add<SoundObject>("Inflate", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "Inflate.wav"), "Sfx_Inflate", SoundType.Effect, Color.white));
             assetMan.Add<Texture2D>("ZorpWall", AssetLoader.TextureFromMod(this, "Map", "ZorpWall.png"));
             assetMan.Add<Texture2D>("ZorpCeil", AssetLoader.TextureFromMod(this, "Map", "ZorpCeil.png"));
             assetMan.Add<Texture2D>("ZorpFloor", AssetLoader.TextureFromMod(this, "Map", "ZorpFloor.png"));
@@ -219,6 +330,7 @@ namespace CarnivalPack
             //AddAudioFolderToAssetMan(new Color(107f/255f,193f/255f,27/255f), AssetLoader.GetModPath(this), "ZorpLines");
             LoadingEvents.RegisterOnAssetsLoaded(Info, RegisterImportant, false);
             LoadingEvents.RegisterOnLoadingScreenStart(Info, PreLoadBulk());
+            LoadingEvents.RegisterOnAssetsLoaded(Info, DisableFrenzyForPotentiallyProblematicNPCs(), true);
             GeneratorManagement.Register(this, GenerationModType.Addend, AddNPCs);
             Instance = this;
 

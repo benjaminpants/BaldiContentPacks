@@ -221,7 +221,7 @@ namespace CriminalPack
             dealer.Navigator.SetSpeed(dealer.chargeBaseSpeed);
             dealer.Navigator.maxSpeed = dealer.chargeBaseSpeed;
             dealer.entity.AddForce(myForce);
-            dealer.navigationStateMachine.ChangeState(new NavigationState_TargetPlayer(dealer, 126, player.transform.position));
+            ChangeNavigationState(new NavigationState_TargetPlayer(dealer, 126, player.transform.position));
         }
 
         public override void Update()
@@ -282,7 +282,7 @@ namespace CriminalPack
         public override void DestinationEmpty()
         {
             base.DestinationEmpty();
-            dealer.navigationStateMachine.ChangeState(new NavigationState_TargetPlayer(dealer, 126, player.transform.position));
+            ChangeNavigationState(new NavigationState_TargetPlayer(dealer, 126, player.transform.position));
         }
     }
 
@@ -322,7 +322,7 @@ namespace CriminalPack
         {
             base.Enter();
             dealer.SetLookerLimitation(true);
-            dealer.navigationStateMachine.ChangeState(new NavigationState_DoNothing(dealer, 127));
+            ChangeNavigationState(new NavigationState_DoNothing(dealer, 127));
             dealer.audMan.FlushQueue(true);
             myPlayer.Am.moveMods.Add(myModifier);
             // technically this would malfunction if there was more than one player.
