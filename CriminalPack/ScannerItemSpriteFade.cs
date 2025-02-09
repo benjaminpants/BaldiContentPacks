@@ -9,6 +9,7 @@ namespace CriminalPack
     public class ScannerItemSpriteFade : MonoBehaviour
     {
         Image mySprite;
+        Sprite spriteAtStart;
 
         public Color myColor = Color.green;
         public float time = 1f;
@@ -25,11 +26,18 @@ namespace CriminalPack
         void Start()
         {
             mySprite.color = myColor;
+            spriteAtStart = mySprite.sprite;
             startTime = time;
         }
 
         void Update()
         {
+            if (mySprite.sprite != spriteAtStart)
+            {
+                mySprite.color = Color.white;
+                Destroy(this);
+                return;
+            }
             time = Mathf.Max(time - Time.deltaTime, 0f);
             if (time == 0f)
             {

@@ -696,18 +696,6 @@ namespace CriminalPack
                             weight = 40
                         }
                     });
-                    scene.CustomLevelObject().forcedStructures = scene.CustomLevelObject().forcedStructures.AddToArray(new StructureWithParameters()
-                    {
-                        parameters = new StructureParameters()
-                        {
-                            minMax = new IntVector2[]
-                                {
-                                    new IntVector2(1,3),
-                                    new IntVector2(12,16)
-                                }
-                        },
-                        prefab = assetMan.Get<Structure_Scanner>("scanner")
-                    });
                     //obj.forcedNpcs = obj.forcedNpcs.AddToArray(assetMan.Get<NPC>("Dealer"));
                     break;
                 case "F2":
@@ -803,7 +791,7 @@ namespace CriminalPack
                             },
                             prefab = assetMan.Get<Structure_Scanner>("scanner")
                         },
-                        weight = 60
+                        weight = 80
                     });
                     if (!youtuberModeEnabled.Value)
                     {
