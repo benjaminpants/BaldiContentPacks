@@ -462,7 +462,8 @@ namespace CarnivalPack
             {
                 if ((otherEnt.gameObject.layer == LayerMask.NameToLayer("NPCs")) || (otherEnt.gameObject.layer == LayerMask.NameToLayer("Player")))
                 {
-                    Zorp.Carry(otherEnt, otherEnt.GetComponent<PlayerManager>() != null);
+                    PlayerManager pm = otherEnt.GetComponent<PlayerManager>();
+                    Zorp.Carry(otherEnt, ((pm != null) && !pm.Tagged)); // zorpster won't recognize the player as his intended subject if the player has the nametag
                 }
                 else
                 {

@@ -844,7 +844,7 @@ namespace PiratePack
             if (cannAppeased)
             {
                 cann.PlayEatSound();
-                cann.behaviorStateMachine.ChangeState(new Cann_WaitForSound(cann, new Cann_Distract(cann, pm, 3f)));
+                cann.behaviorStateMachine.ChangeState(new Cann_WaitForSound(cann, new Cann_Distract(cann, pm, 3f), true));
                 return;
             }
             cann.SquakAndAlert();
@@ -864,15 +864,21 @@ namespace PiratePack
     public class Cann_WaitForSound : Cann_StateBase
     {
         Cann_StateBase stateAfter;
-        public Cann_WaitForSound(NPC npc, Cann_StateBase stateAfter) : base(npc)
+        bool shouldBeTalking = false;
+        public Cann_WaitForSound(NPC npc, Cann_StateBase stateAfter, bool shouldBeTalking) : base(npc)
         {
             this.stateAfter = stateAfter;
+            this.shouldBeTalking = shouldBeTalking;
         }
 
         public override void Enter()
         {
             base.Enter();
             ChangeNavigationState(new NavigationState_DoNothing(npc, 32));
+            if (shouldBeTalking)
+            {
+                cann.SetVolumeAnimatorState(true);
+            }
         }
 
         public override void Update()
@@ -881,6 +887,15 @@ namespace PiratePack
             if (cann.audMan.AnyAudioIsPlaying) return;
             currentNavigationState.priority = 0;
             cann.behaviorStateMachine.ChangeState(stateAfter);
+        }
+
+        public override void Exit()
+        {
+            base.Exit();
+            if (shouldBeTalking)
+            {
+                cann.SetVolumeAnimatorState(false);
+            }
         }
     }
 

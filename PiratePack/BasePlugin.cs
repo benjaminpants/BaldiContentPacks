@@ -57,6 +57,8 @@ namespace PiratePack
         }
     }
 
+    // todo: make cann flap faster if he is going slower than he normally is (and vise versa)
+
     [BepInPlugin("mtm101.rulerp.baldiplus.piratepack", "Pirate Pack", "1.0.0.0")]
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi")]
     public class PiratePlugin : BaseUnityPlugin
@@ -81,12 +83,12 @@ namespace PiratePack
         {
             Harmony harmony = new Harmony("mtm101.rulerp.baldiplus.piratepack");
             harmony.PatchAllConditionals();
+            Instance = this;
             LoadingEvents.RegisterOnLoadingScreenStart(Info, LoadEnumerator());
             GeneratorManagement.Register(this, GenerationModType.Addend, GeneratorChanges);
             GeneratorManagement.RegisterFieldTripLootChange(this, FieldtripChanges);
             ModdedSaveGame.AddSaveHandler(new PiratePackSaveGameIO());
             Log = this.Logger;
-            Instance = this;
             youtuberModeEnabled = Config.Bind<bool>("General", "Youtuber Mode", false, "If true, Cann will always appear on Floor 2.");
         }
 

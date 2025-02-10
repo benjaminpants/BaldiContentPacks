@@ -290,7 +290,8 @@ namespace CriminalPack
     {
         protected SoundObject[] toPlay;
         protected Dealer_Statebase toTransitionTo;
-        MovementModifier myModifier = new MovementModifier(Vector3.zero, 0.35f);
+        protected MovementModifier myModifier = new MovementModifier(Vector3.zero, 0.35f);
+        protected TimeScaleModifier tsModifier = new TimeScaleModifier(0.5f, 1f, 1f);
         protected PlayerManager myPlayer;
         protected virtual string introAnimation => "Talk";
         protected virtual string talkAnimation => "Talk";
@@ -325,6 +326,7 @@ namespace CriminalPack
             ChangeNavigationState(new NavigationState_DoNothing(dealer, 127));
             dealer.audMan.FlushQueue(true);
             myPlayer.Am.moveMods.Add(myModifier);
+            dealer.ec.AddTimeScale(tsModifier);
             // technically this would malfunction if there was more than one player.
             if (!dealer.looker.PlayerInSight())
             {
@@ -381,6 +383,7 @@ namespace CriminalPack
         public override void Exit()
         {
             base.Exit();
+            dealer.ec.RemoveTimeScale(tsModifier);
             myPlayer.Am.moveMods.Remove(myModifier);
         }
     }

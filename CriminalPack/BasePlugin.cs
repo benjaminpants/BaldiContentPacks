@@ -215,7 +215,7 @@ namespace CriminalPack
                 {
                     AudioManager audMan = (AudioManager)(((NoLateTeacher)npc).ReflectionGetVariable("audMan"));
                     audMan.FlushQueue(true);
-                    audMan.PlaySingle((SoundObject)(((GottaSweep)npc).ReflectionGetVariable("audInTime")));
+                    audMan.PlaySingle((SoundObject)(((NoLateTeacher)npc).ReflectionGetVariable("audInTime")));
                     return new NPCGiftState(npc, npc.behaviorStateMachine.currentState, 3f);
                 }),
                 weight = 95
