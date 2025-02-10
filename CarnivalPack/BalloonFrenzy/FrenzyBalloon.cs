@@ -16,6 +16,7 @@ namespace CarnivalPack
         public SoundObject popSound;
         public SpriteRenderer sprite;
         public BalloonFrenzy frenzy;
+        public bool canBeNPCPopped = true;
         public Sprite[] potentialSprites = new Sprite[0];
         protected bool popping = false;
 
@@ -99,7 +100,7 @@ namespace CarnivalPack
         static FieldInfo _pm = AccessTools.Field(typeof(Item), "pm");
         public void EntityTriggerEnter(Collider other)
         {
-            if (other.CompareTag("NPC"))
+            if (other.CompareTag("NPC") && canBeNPCPopped)
             {
                 Pop(other.GetComponent<Entity>());
                 return;

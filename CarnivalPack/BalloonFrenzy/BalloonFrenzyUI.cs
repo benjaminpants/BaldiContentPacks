@@ -13,12 +13,18 @@ namespace CarnivalPack
         public Image balloonImage;
         public TextMeshProUGUI text;
         public FrenzyCounter counterToTrack;
+        Vector2 textPosition = new Vector2(85f, -75f);
         bool currentlyActive = false;
 
         Vector2 activePosition = new Vector2(-50f, -225f);
         Vector2 offPosition = new Vector2(50f, -225f);
         IEnumerator currentTransition = null;
         float totalTime = 0f;
+
+        public string textOverride = "";
+
+        public bool textShaking = false;
+
         public void SetState(bool state)
         {
             if (currentlyActive != state)
@@ -29,8 +35,13 @@ namespace CarnivalPack
                 }
                 currentTransition = LerpToPosition(state ? activePosition : offPosition, 1f);
                 StartCoroutine(currentTransition);
-            }    
+            }
             currentlyActive = state;
+            if (!currentlyActive)
+            {
+                textShaking = false;
+                text.color = Color.white;
+            }
         }
 
         void Update()
@@ -43,8 +54,20 @@ namespace CarnivalPack
             if (counterToTrack != null)
             {
                 int minutesLeft = Mathf.FloorToInt(counterToTrack.timeRemaining / 60f);
-                int secondsLeft = Mathf.CeilToInt(counterToTrack.timeRemaining) % 60;
+                int secondsLeft = Mathf.FloorToInt(counterToTrack.timeRemaining) % 60;
                 text.text = minutesLeft + ":" + secondsLeft.ToString("D2");
+            }
+            if (textOverride != "")
+            {
+                text.text = textOverride;
+            }
+            if (textShaking)
+            {
+                text.rectTransform.anchoredPosition = textPosition + (Vector2.left * Mathf.Round(Mathf.Sin(totalTime * 60)));
+            }
+            else
+            {
+                text.rectTransform.anchoredPosition = textPosition;
             }
         }
 

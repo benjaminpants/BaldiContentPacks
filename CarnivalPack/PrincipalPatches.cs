@@ -38,7 +38,7 @@ namespace CarnivalPack
             {
                 if (___targetedNpc.TryGetComponent<FrenzyCounter>(out FrenzyCounter frenz))
                 {
-                    frenz.timeRemaining = 15f;
+                    frenz.OnDetention();
                 }
             }
         }
@@ -52,7 +52,7 @@ namespace CarnivalPack
         {
             if (___targetedPlayer.TryGetComponent<FrenzyCounter>(out FrenzyCounter frenz))
             {
-                frenz.timeRemaining = Mathf.Max(frenz.timeRemaining, 15f);
+                frenz.OnDetention();
             }
         }
     }

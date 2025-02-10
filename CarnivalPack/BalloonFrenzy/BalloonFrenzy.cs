@@ -31,6 +31,7 @@ namespace CarnivalPack
         public NPC myNPC;
         public BalloonFrenzy frenzy;
         public float timeRemaining = 5f;
+        public bool frozen = false;
 
         bool controllingNPC = false;
         FrenzyBalloon currentBalloon;
@@ -38,6 +39,16 @@ namespace CarnivalPack
 
         static MethodInfo _SetGuilt = AccessTools.Method(typeof(NPC), "SetGuilt");
 
+
+        public virtual void OnDetention()
+        {
+            if (myNPC)
+            {
+                timeRemaining = 15f;
+                return;
+            }
+            timeRemaining = Mathf.Max(timeRemaining, 15f);
+        }
 
         void OnDestroy()
         {
@@ -52,7 +63,17 @@ namespace CarnivalPack
             }
         }
 
-        public void OnBalloonPopped()
+
+        public virtual float Timescale()
+        {
+            if (myPlayer != null)
+            {
+                return myPlayer.PlayerTimeScale;
+            }
+            return myNPC.TimeScale;
+        }
+
+        public virtual void OnBalloonPopped()
         {
             timeRemaining = Mathf.Max(5f,timeRemaining);
             if (controllingNPC)
@@ -82,19 +103,30 @@ namespace CarnivalPack
             }
         }
 
+        public virtual void OnPlayerTimeFail()
+        {
+            myPlayer.RuleBreak("FrenzyBalloonNoPop", 0.1f);
+        }
+
         void Update()
         {
             if (myPlayer)
             {
-                timeRemaining -= Time.deltaTime * myPlayer.PlayerTimeScale;
+                if (!frozen)
+                {
+                    timeRemaining -= Time.deltaTime * Timescale();
+                }
                 if (timeRemaining <= 0f)
                 {
                     timeRemaining = 0f;
-                    myPlayer.RuleBreak("FrenzyBalloonNoPop", 0.1f);
+                    OnPlayerTimeFail();
                 }
                 return;
             }
-            timeRemaining -= Time.deltaTime * myNPC.TimeScale;
+            if (!frozen)
+            {
+                timeRemaining -= Time.deltaTime * Timescale();
+            }
             if (timeRemaining <= 0f)
             {
                 timeRemaining = 0f;
@@ -131,7 +163,15 @@ namespace CarnivalPack
     {
         public List<WeightedSelection<FrenzyBalloon>> standardBalloons = new List<WeightedSelection<FrenzyBalloon>>();
         public List<FrenzyBalloon> spawnedBalloons = new List<FrenzyBalloon>();
-        protected List<FrenzyCounter> createdCounters = new List<FrenzyCounter>();
+        public List<FrenzyCounter> createdCounters = new List<FrenzyCounter>();
+
+        public bool npcsNeedBalloons = true;
+
+        public virtual FrenzyCounter CreatePlayerCounter(PlayerManager pm)
+        {
+            return pm.gameObject.AddComponent<FrenzyCounter>();
+        }
+
 
         public override void Begin()
         {
@@ -141,17 +181,20 @@ namespace CarnivalPack
                 StartCoroutine(PopulateRoomWithBalloons(ec.rooms[i]));
             }
             StartCoroutine(PopulateRoomWithBalloons(ec.mainHall));
-            for (int i = 0; i < ec.Npcs.Count; i++)
+            if (npcsNeedBalloons)
             {
-                if (ec.Npcs[i].GetMeta().tags.Contains("no_balloon_frenzy")) continue;
-                FrenzyCounter npcCounter = ec.Npcs[i].gameObject.AddComponent<FrenzyCounter>();
-                npcCounter.frenzy = this;
-                npcCounter.myNPC = ec.Npcs[i];
-                createdCounters.Add(npcCounter);
+                for (int i = 0; i < ec.Npcs.Count; i++)
+                {
+                    if (ec.Npcs[i].GetMeta().tags.Contains("no_balloon_frenzy")) continue;
+                    FrenzyCounter npcCounter = ec.Npcs[i].gameObject.AddComponent<FrenzyCounter>();
+                    npcCounter.frenzy = this;
+                    npcCounter.myNPC = ec.Npcs[i];
+                    createdCounters.Add(npcCounter);
+                }
             }
             for (int i = 0; i < Singleton<CoreGameManager>.Instance.setPlayers; i++)
             {
-                FrenzyCounter playerCounter = Singleton<CoreGameManager>.Instance.GetPlayer(i).gameObject.AddComponent<FrenzyCounter>();
+                FrenzyCounter playerCounter = CreatePlayerCounter(Singleton<CoreGameManager>.Instance.GetPlayer(i));
                 playerCounter.myPlayer = Singleton<CoreGameManager>.Instance.GetPlayer(i);
                 playerCounter.frenzy = this;
                 createdCounters.Add(playerCounter);
@@ -169,6 +212,11 @@ namespace CarnivalPack
                 BalloonFrenzyUI frUI = Singleton<CoreGameManager>.Instance.GetHud(i).GetComponent<BalloonFrenzyUI>();
                 frUI.SetState(false);
             }
+        }
+
+        protected virtual int CalculateBalloonCountForRoom(RoomController rc, int max)
+        {
+            return crng.Next(Mathf.RoundToInt(max / 2f), max);
         }
 
         public override void End()
@@ -206,13 +254,14 @@ namespace CarnivalPack
                 safeCells = rc.AllTilesNoGarbage(false, true);
             }
             if (safeCells.Count == 0) yield break;
-            int balloonCount = crng.Next(Mathf.RoundToInt(safeCells.Count / 2f), safeCells.Count);
+            int balloonCount = CalculateBalloonCountForRoom(rc, safeCells.Count);
             for (int i = 0; i < balloonCount; i++)
             {
                 if (safeCells.Count == 0) yield break;
                 Cell chosenCell = safeCells[crng.Next(0, safeCells.Count)];
                 safeCells.Remove(chosenCell);
                 FrenzyBalloon spawned = GameObject.Instantiate<FrenzyBalloon>(WeightedSelection<FrenzyBalloon>.ControlledRandomSelectionList(standardBalloons,crng), this.transform);
+                spawned.canBeNPCPopped = npcsNeedBalloons;
                 spawned.Initialize(chosenCell.room);
                 spawned.frenzy = this;
                 spawned.myBalloon.Entity.Teleport(chosenCell.FloorWorldPosition);

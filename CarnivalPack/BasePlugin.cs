@@ -6,6 +6,7 @@ using MTM101BaldAPI.AssetTools;
 using MTM101BaldAPI.AssetTools.SpriteSheets;
 using MTM101BaldAPI.Components;
 using MTM101BaldAPI.ObjectCreation;
+using MTM101BaldAPI.OptionsAPI;
 using MTM101BaldAPI.Reflection;
 using MTM101BaldAPI.Registers;
 using MTM101BaldAPI.SaveSystem;
@@ -54,9 +55,22 @@ namespace CarnivalPack
             }
         }
 
+        public class CarnivalPackPage : CustomOptionsCategory
+        {
+            public override void Build()
+            {
+                CreateTextButton(() =>
+                {
+
+                },"TestPlay", "Balloon Frenzy", Vector3.zero, BaldiFonts.ComicSans18, TextAlignmentOptions.TopLeft, Vector2.one * 64, Color.black);
+            }
+        }
+
+        public static string balloonMayhamMidi;
+
         void RegisterImportant()
         {
-
+            balloonMayhamMidi = AssetLoader.MidiFromMod("balloonMayham", this, "Midi", "BalloonMayham.mid");
             StandardDoorMats doorMats = ObjectCreators.CreateDoorDataObject("ZorpDoor", AssetLoader.TextureFromMod(this, "Map", "ZorpDoor_Open.png"), AssetLoader.TextureFromMod(this, "Map", "ZorpDoor_Closed.png"));
             // create the room asset
             RoomAsset ZorpRoom = ScriptableObject.CreateInstance<RoomAsset>();
@@ -184,8 +198,8 @@ namespace CarnivalPack
 
             BalloonFrenzy frenzyEvent = new RandomEventBuilder<BalloonFrenzy>(Info)
                 .SetEnum("BalloonFrenzy")
-                .SetMinMaxTime(60f, 120f)
-                .SetName("Balloon Frenzy")
+                .SetMinMaxTime(90f, 120f)
+                .SetName("Balloon_Frenzy")
                 .SetSound(frenzyEventSound)
                 .Build();
             frenzyEvent.standardBalloons.Add(new WeightedSelection<FrenzyBalloon>()
@@ -252,6 +266,57 @@ namespace CarnivalPack
             text.rectTransform.anchorMin = Vector2.one / 2f;
             text.rectTransform.anchorMax = Vector2.one;
             text.rectTransform.anchoredPosition = new Vector2(85f, -75f);
+
+            BalloonMayhamEvent frenzyEventDedicated = new RandomEventBuilder<BalloonMayhamEvent>(Info)
+                .SetEnum("BalloonFrenzyDedicated")
+                .SetMinMaxTime(90f, 120f)
+                .SetName("Balloon_Frenzy_Dedicated")
+                .SetSound(frenzyEventSound)
+                .Build();
+
+            frenzyEventDedicated.npcsNeedBalloons = false;
+            frenzyEventDedicated.standardBalloons = new List<WeightedSelection<FrenzyBalloon>>()
+            {
+                new WeightedSelection<FrenzyBalloon>()
+                {
+                    selection = balloonFrenzyBalloon,
+                    weight = 100
+                },
+                new WeightedSelection<FrenzyBalloon>()
+                {
+                    selection = explodeBalloon,
+                    weight = 5
+                }
+            };
+
+            // setup balloon frenzy game manager
+            MainGameManager managerTemplate = GameObject.Instantiate<MainGameManager>(Resources.FindObjectsOfTypeAll<MainGameManager>().First(x => x.GetInstanceID() >= 0 && x.name == "Lvl3_MainGameManager 1"), MTM101BaldiDevAPI.prefabTransform);
+            BalloonMayhamManager frenzyManager = managerTemplate.gameObject.AddComponent<BalloonMayhamManager>();
+            frenzyManager.name = "BallooonFrenzyGameManager";
+            frenzyManager.ReflectionSetVariable("ambience", managerTemplate.ReflectionGetVariable("ambience"));
+            frenzyManager.ReflectionSetVariable("happyBaldiPre", managerTemplate.ReflectionGetVariable("happyBaldiPre"));
+            frenzyManager.ReflectionSetVariable("elevatorScreenPre", managerTemplate.ReflectionGetVariable("elevatorScreenPre"));
+            frenzyManager.ReflectionSetVariable("pitstop", managerTemplate.ReflectionGetVariable("pitstop"));
+            frenzyManager.ReflectionSetVariable("destroyOnLoad", true);
+            frenzyManager.eventPrefab = frenzyEventDedicated;
+            GameObject.Destroy(managerTemplate);
+
+
+            // below are the hacks used to playtest balloon mayham
+            /*
+            // hacky thing for testing
+            Resources.FindObjectsOfTypeAll<SceneObject>().Where(x => x.manager is MainGameManager).Do(x =>
+            {
+                x.manager = frenzyManager;
+            });
+
+            CustomOptionsCore.OnMenuInitialize += (opMen, cOh) =>
+            {
+                //GameLoader loader = GameObject.Instantiate<GameLoader>(Resources.FindObjectsOfTypeAll<GameLoader>().First(x => x.GetInstanceID() >= 0));
+                //loader.AssignElevatorScreen(Resources.FindObjectsOfTypeAll<ElevatorScreen>().First(x => x.GetInstanceID() >= 0 && x.isActiveAndEnabled));
+                cOh.AddCategory<CarnivalPackPage>("Balloon\nFrenzy");
+            };*/
+
         }
 
         public T CreateBalloonVariant<T>(Sprite sprite) where T : FrenzyBalloon
