@@ -1,4 +1,5 @@
 ﻿using BepInEx;
+using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
 using MTM101BaldAPI;
@@ -11,23 +12,53 @@ using MTM101BaldAPI.SaveSystem;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace PiratePack
 {
-    // Cann Plan
-    // When Cann initializes, he generates 1 loop for every classroom.
-    // He chooses a loop at random, and starts flying in that loop, gathering sounds.
-    // Once he has gathered a certain number of unique sounds, each door he passes he will choose if he will enter.
-    // Once he enters a room, he will chose an item to perch on.
-    // While perching, every 5-10 seconds he will check the chance for him to leave the room.
-    // The player entering and leaving, collecting the notebook if its a classroom, or the player picking up other items increases the chance for him to leave.
-    // There is a slim chance for him to stay in a room and just fly to another item.
-    // If he does leave, that room is removed from the loop and he repeats again. If the classroom is removed, and there are no other classrooms, remove that loop completely. (or decrease its weight?)
+    public class PiratePackSaveGameIO : ModdedSaveGameIOBinary
+    {
+        public override PluginInfo pluginInfo => PiratePlugin.Instance.Info;
 
+        public override void Load(BinaryReader reader)
+        {
+            reader.ReadByte();
+        }
 
-    [BepInPlugin("mtm101.rulerp.baldiplus.piratepack", "Pirate Pack", "0.0.0.0")]
+        public override void Reset()
+        {
+
+        }
+
+        public override void Save(BinaryWriter writer)
+        {
+            writer.Write((byte)0);
+        }
+
+        public override string[] GenerateTags()
+        {
+            if (PiratePlugin.Instance.youtuberModeEnabled.Value)
+            {
+                return new string[1] { "YoutuberMode" };
+            }
+            return new string[0];
+        }
+
+        public override string DisplayTags(string[] tags)
+        {
+            if (tags.Contains("YoutuberMode"))
+            {
+                return "Youtuber Mode";
+            }
+            return "Standard Mode";
+        }
+    }
+
+    [BepInPlugin("mtm101.rulerp.baldiplus.piratepack", "Pirate Pack", "1.0.0.0")]
+    [BepInDependency("mtm101.rulerp.bbplus.baldidevapi")]
     public class PiratePlugin : BaseUnityPlugin
     {
         public AssetManager assetMan = new AssetManager();
@@ -41,10 +72,10 @@ namespace PiratePack
         internal static ManualLogSource Log;
 
         public Sprite[][] cannFlyFrames;
-
         public Sprite[] cannTalkFrames;
-
         public Sprite[] shieldDissolveAngles;
+
+        public ConfigEntry<bool> youtuberModeEnabled;
 
         void Awake()
         {
@@ -53,9 +84,10 @@ namespace PiratePack
             LoadingEvents.RegisterOnLoadingScreenStart(Info, LoadEnumerator());
             GeneratorManagement.Register(this, GenerationModType.Addend, GeneratorChanges);
             GeneratorManagement.RegisterFieldTripLootChange(this, FieldtripChanges);
-            ModdedSaveGame.AddSaveHandler(Info);
+            ModdedSaveGame.AddSaveHandler(new PiratePackSaveGameIO());
             Log = this.Logger;
             Instance = this;
+            youtuberModeEnabled = Config.Bind<bool>("General", "Youtuber Mode", false, "If true, Cann will always appear on Floor 2.");
         }
 
         void FieldtripChanges(FieldTrips tripEnum, FieldTripLoot loot)
@@ -74,7 +106,7 @@ namespace PiratePack
                 parameters = new StructureParameters(),
                 prefab = assetMan.Get<StructureBuilder>("SunkenFloor")
             });*/
-            if ((levelId > 0) || (floorName == "END")) // no shields on floor 1
+            if (((levelId > 0) && floorName.StartsWith("F")) || (floorName == "END")) // no shields or cann on floor 1
             {
                 obj.CustomLevelObject().potentialItems = obj.CustomLevelObject().potentialItems.AddToArray(new WeightedItemObject()
                 {
@@ -94,11 +126,19 @@ namespace PiratePack
                         weight = 80
                     },
                 });
-                obj.potentialNPCs.Add(new WeightedNPC()
+                if (!youtuberModeEnabled.Value)
                 {
-                    selection = assetMan.Get<NPC>("Cann"),
-                    weight = (floorName == "F3") ? 80 : 100
-                });
+                    obj.potentialNPCs.Add(new WeightedNPC()
+                    {
+                        selection = assetMan.Get<NPC>("Cann"),
+                        weight = (floorName == "F3") ? 80 : 100
+                    });
+                }
+            }
+            if (youtuberModeEnabled.Value && floorName == "F2")
+            {
+                obj.additionalNPCs = Mathf.Max(obj.additionalNPCs - 1, 0);
+                obj.forcedNpcs = obj.forcedNpcs.AddToArray(assetMan.Get<NPC>("Cann"));
             }
             obj.CustomLevelObject().potentialItems = obj.CustomLevelObject().potentialItems.AddToArray(new WeightedItemObject()
             {

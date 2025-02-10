@@ -21,7 +21,8 @@ using UnityEngine.UI;
 
 namespace CriminalPack
 {
-    [BepInPlugin("mtm101.rulerp.baldiplus.criminalpackroot", "Criminal Pack Root Mod", "1.2.0.0")]
+    [BepInPlugin("mtm101.rulerp.baldiplus.criminalpackroot", "Criminal Pack Root Mod", "2.0.0.0")]
+    [BepInDependency("mtm101.rulerp.bbplus.baldidevapi")]
     public class CriminalPackPlugin : BaseUnityPlugin
     {
         public static CriminalPackPlugin Instance;

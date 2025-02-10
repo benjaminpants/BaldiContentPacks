@@ -22,7 +22,7 @@ using UnityEngine.UI;
 namespace CarnivalPack
 {
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi")]
-    [BepInPlugin("mtm101.rulerp.bbplus.carnivalpackroot", "Carnival Pack Root Mod", "1.4.0.0")]
+    [BepInPlugin("mtm101.rulerp.bbplus.carnivalpackroot", "Carnival Pack Root Mod", "2.0.0.0")]
     public class CarnivalPackBasePlugin : BaseUnityPlugin
     {
         public static CarnivalPackBasePlugin Instance;
@@ -170,11 +170,23 @@ namespace CarnivalPack
             };
             assetMan.Add<FrenzyBalloon>("FrenzyBalloon", balloonFrenzyBalloon);
 
+            SoundObject frenzyEventSound = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "BaldiAnnouncementBalloonFrenzy.wav"), "Vfx_BAL_Event_BalloonFrenzy_1", SoundType.Voice, Color.green);
+
+            frenzyEventSound.additionalKeys = new SubtitleTimedKey[]
+            {
+                new SubtitleTimedKey()
+                {
+                    encrypted=false,
+                    key="Vfx_BAL_Event_BalloonFrenzy_2",
+                    time=5.5f
+                }
+            };
+
             BalloonFrenzy frenzyEvent = new RandomEventBuilder<BalloonFrenzy>(Info)
                 .SetEnum("BalloonFrenzy")
                 .SetMinMaxTime(60f, 120f)
                 .SetName("Balloon Frenzy")
-                .SetSound(Zorp.badSubjectSounds[0])
+                .SetSound(frenzyEventSound)
                 .Build();
             frenzyEvent.standardBalloons.Add(new WeightedSelection<FrenzyBalloon>()
             {
@@ -280,12 +292,17 @@ namespace CarnivalPack
                 if (floorName == "F1")
                 {
                     sceneObject.forcedNpcs = sceneObject.levelObject.forcedNpcs.AddToArray(assetMan.Get<NPC>("Zorpster"));
-                    sceneObject.additionalNPCs = Mathf.Max(sceneObject.levelObject.additionalNPCs - 1, 0);
+                    sceneObject.additionalNPCs = Mathf.Max(sceneObject.additionalNPCs - 1, 0);
                 }
             }
             if (floorName.StartsWith("F"))
             {
                 sceneObject.levelObject.potentialItems = sceneObject.levelObject.potentialItems.AddItem(new WeightedItemObject() { selection = assetMan.Get<ItemObject>("CottonCandy"), weight = 80 }).ToArray();
+                sceneObject.levelObject.randomEvents.Add(new WeightedRandomEvent()
+                {
+                    selection=assetMan.Get<BalloonFrenzy>("FrenzyEvent"),
+                    weight=70
+                });
                 sceneObject.MarkAsNeverUnload();
             }
             if (floorNumber >= 1)
