@@ -206,8 +206,8 @@ namespace CarnivalPack
         {
             if (!allNotebooksFound)
             {
-                UI.textShaking = true;
-                myCounter.timescaleMultipler = 1.5f;
+                //UI.textShaking = true;
+                //myCounter.timescaleMultipler = 1.25f;
                 allNotebooksFound = true;
                 ec.SetElevators(true);
                 elevatorsToClose = ec.elevators.Count - 1;
