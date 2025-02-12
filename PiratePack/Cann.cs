@@ -878,6 +878,7 @@ namespace PiratePack
             if (shouldBeTalking)
             {
                 cann.SetVolumeAnimatorState(true);
+                cann.entity.SetFrozen(true);
             }
         }
 
@@ -895,6 +896,7 @@ namespace PiratePack
             if (shouldBeTalking)
             {
                 cann.SetVolumeAnimatorState(false);
+                cann.entity.SetFrozen(false);
             }
         }
     }

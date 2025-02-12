@@ -145,7 +145,7 @@ namespace PiratePack
             obj.CustomLevelObject().potentialItems = obj.CustomLevelObject().potentialItems.AddToArray(new WeightedItemObject()
             {
                 selection = assetMan.Get<ItemObject>("Doubloon"),
-                weight = 40 + (levelId * 10)
+                weight = 30 + (Mathf.Clamp(levelId,0,2) * 10)
             });
             obj.MarkAsNeverUnload();
             obj.CustomLevelObject().MarkAsNeverUnload();

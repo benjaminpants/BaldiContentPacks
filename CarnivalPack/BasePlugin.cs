@@ -303,20 +303,14 @@ namespace CarnivalPack
 
 
             // below are the hacks used to playtest balloon mayham
+            
             /*
             // hacky thing for testing
             Resources.FindObjectsOfTypeAll<SceneObject>().Where(x => x.manager is MainGameManager).Do(x =>
             {
                 x.manager = frenzyManager;
             });
-
-            CustomOptionsCore.OnMenuInitialize += (opMen, cOh) =>
-            {
-                //GameLoader loader = GameObject.Instantiate<GameLoader>(Resources.FindObjectsOfTypeAll<GameLoader>().First(x => x.GetInstanceID() >= 0));
-                //loader.AssignElevatorScreen(Resources.FindObjectsOfTypeAll<ElevatorScreen>().First(x => x.GetInstanceID() >= 0 && x.isActiveAndEnabled));
-                cOh.AddCategory<CarnivalPackPage>("Balloon\nFrenzy");
-            };*/
-
+            */
         }
 
         public T CreateBalloonVariant<T>(Sprite sprite) where T : FrenzyBalloon
@@ -366,7 +360,7 @@ namespace CarnivalPack
                 sceneObject.levelObject.randomEvents.Add(new WeightedRandomEvent()
                 {
                     selection=assetMan.Get<BalloonFrenzy>("FrenzyEvent"),
-                    weight=70
+                    weight=70 + (Mathf.Clamp(floorNumber, 0, 2) * 15)
                 });
                 sceneObject.MarkAsNeverUnload();
             }
@@ -396,7 +390,7 @@ namespace CarnivalPack
             assetMan.Add<Texture2D>("Texture_Zorpster_Idle", AssetLoader.TextureFromMod(this, "ZorpPlaceholder.png"));
             assetMan.Add<Sprite>("Zorpster_Idle", AssetLoader.SpriteFromTexture2D(assetMan.Get<Texture2D>("Texture_Zorpster_Idle"), 40));
             assetMan.Add<SoundObject>("Zorpster_Sound_Idle", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "weirdwahah.wav"), "Sfx_WeirdWahah", SoundType.Effect, Color.white));
-            assetMan.Add<SoundObject>("Inflate", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "Inflate.wav"), "Sfx_Inflate", SoundType.Effect, Color.white));
+            assetMan.Add<SoundObject>("Inflate", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "Inflate.wav"), "Sfx_InflateFrenzy", SoundType.Effect, Color.white));
             assetMan.Add<Texture2D>("ZorpWall", AssetLoader.TextureFromMod(this, "Map", "ZorpWall.png"));
             assetMan.Add<Texture2D>("ZorpCeil", AssetLoader.TextureFromMod(this, "Map", "ZorpCeil.png"));
             assetMan.Add<Texture2D>("ZorpFloor", AssetLoader.TextureFromMod(this, "Map", "ZorpFloor.png"));
