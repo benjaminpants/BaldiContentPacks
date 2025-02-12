@@ -167,20 +167,26 @@ namespace CarnivalPack
 
         public bool timeExpired;
 
+        public float baldiAngerAmount = 25f;
+
         public virtual void OnTimeExpire()
         {
             if (timeExpired) return;
             timeExpired = true;
-            ec.GetBaldi().GetAngry(20f);
-            ec.GetBaldi().Slap(); // release any built up energy
+            ec.GetBaldi().GetAngry(baldiAngerAmount);
             ec.MakeNoise(myCounter.transform.position, 100);
+            
+            // this PROPERLY forces baldi to slap instantly without delay.
+            // this fixes an issue where baldi would make a sudden leap to catch up with the old delay.
+            ec.GetBaldi().RestoreRuler();
+            ec.GetBaldi().Slap();
         }
 
         public virtual void OnTimeGained()
         {
             if (!timeExpired) return;
             timeExpired = false;
-            ec.GetBaldi().GetAngry(-20f);
+            ec.GetBaldi().GetAngry(-baldiAngerAmount);
             Singleton<MusicManager>.Instance.SetSpeed(1f);
         }
 
