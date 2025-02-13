@@ -324,7 +324,7 @@ namespace CriminalPack
             crowbar.doorPrySound = assetMan.Get<SoundObject>("PryDoor");
 
             // thief mask
-            Canvas gumCanvasClone = GameObject.Instantiate<Canvas>(Resources.FindObjectsOfTypeAll<Gum>().First().transform.Find("GumOverlay").GetComponent<Canvas>());
+            Canvas gumCanvasClone = GameObject.Instantiate<Canvas>(Resources.FindObjectsOfTypeAll<Gum>().First(x => x.GetInstanceID() >= 0).transform.Find("GumOverlay").GetComponent<Canvas>());
             gumCanvasClone.gameObject.SetActive(false);
             gumCanvasClone.name = "ThiefMaskCanvas";
             gumCanvasClone.gameObject.GetComponentInChildren<Image>().sprite = assetMan.Get<Sprite>("ThiefMaskOverlay");
