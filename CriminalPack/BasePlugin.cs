@@ -50,18 +50,12 @@ namespace CriminalPack
             assetMan.Add<Sprite>("ThiefMaskSmall", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "ThiefMaskSmall.png"), 25f));
             assetMan.Add<Sprite>("ThiefMaskBig", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "ThiefMaskBig.png"), 50f));
             assetMan.Add<Sprite>("ThiefMaskOverlay", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "ThiefMaskOverlay.png"), 1f));
-            assetMan.Add<Sprite>("PickaxeSmall", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "PickaxeSmall.png"), 25f));
-            assetMan.Add<Sprite>("PickaxeBig", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "PickaxeBig.png"), 50f));
             assetMan.Add<Sprite>("PouchSmall", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "PouchSmall.png"), 25f));
             assetMan.Add<Sprite>("PouchBig", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "PouchBig.png"), 50f));
             assetMan.Add<Sprite>("IOUSmall", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "IOU_Small.png"), 25f));
             assetMan.Add<Sprite>("IOUCrumpled", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "IOU_Crumpled.png"), 50f));
             assetMan.Add<Sprite>("IOUBig", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "IOU_Big.png"), 50f));
             assetMan.Add<Sprite>("IOUBOOM", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "IOU_BOOM.png"), 50f));
-            assetMan.Add<Sprite>("Icon_Dealer", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Icon_Dealer.png"), 16f));
-            assetMan.Add<Texture2D>("DigMask", AssetLoader.TextureFromMod(this, "DigMask.png"));
-            assetMan.Add<Texture2D>("DigTex", AssetLoader.TextureFromMod(this, "DigTexture.png"));
-            assetMan.Add<Texture2D>("Dirt", AssetLoader.TextureFromMod(this, "Dirt.png"));
             assetMan.Add<Texture2D>("IOU_Wall", AssetLoader.TextureFromMod(this, "IOU_Wall.png"));
             assetMan.Add<Texture2D>("IOU_WallFade", AssetLoader.TextureFromMod(this, "IOU_WallFade.png"));
             assetMan.Add<Texture2D>("dealer_poster", AssetLoader.TextureFromMod(this, "dealer_poster.png"));
@@ -234,8 +228,6 @@ namespace CriminalPack
             yield return "Creating pouch content...";
             assetMan.AddFromResources<RoomController>(); //Room Controller
             assetMan.AddFromResources<Window>();
-            WindowObject digWindow = ObjectCreators.CreateWindowObject("PickaxeDigWindow", assetMan.Get<Texture2D>("DigTex"), assetMan.Get<Texture2D>("DigTex"), assetMan.Get<Texture2D>("DigMask"));
-            digWindow.windowPre = assetMan.Get<Window>("PortalPosterPre");
             ItemMetaData pouchMeta = new ItemMetaData(Info, new ItemObject[0]);
             pouchMeta.flags = ItemFlags.CreatesEntity | ItemFlags.Persists;
             Items pouchEnum = EnumExtensions.ExtendEnum<Items>("DealerPouch");
@@ -351,32 +343,6 @@ namespace CriminalPack
             gumCanvasClone.transform.SetParent(maskObject.item.transform);
             ((ITM_Mask)maskObject.item).maskCanvas = gumCanvasClone;
             assetMan.Add<ItemObject>("Mask", maskObject);
-
-            /*
-            Items pickaxeEnum = EnumExtensions.ExtendEnum<Items>("Pickaxe");
-            ItemMetaData pickaxeMeta = new ItemMetaData(Info, new ItemObject[0]);
-            assetMan.Add<WindowObject>("digWindow", digWindow);
-            for (int i = 0; i < 3; i++)
-            {
-                int useCount = (i + 1);
-                ItemObject pickaxeObject = new ItemBuilder(Info)
-                    .SetMeta(pickaxeMeta)
-                    .SetEnum(pickaxeEnum)
-                    .SetNameAndDescription("Itm_Pickaxe_" + useCount, "Desc_Pickaxe_" + useCount)
-                    .SetSprites(assetMan.Get<Sprite>("PickaxeSmall"), assetMan.Get<Sprite>("PickaxeBig"))
-                    .SetItemComponent<ITM_Pickaxe>()
-                    .SetShopPrice(300)
-                    .SetGeneratorCost(55)
-                    .Build();
-                //ItemObject pickaxeObject = ObjectCreators.CreateItemObject("Itm_Pickaxe_" + useCount, "Desc_Pickaxe_" + useCount, assetMan.Get<Sprite>("PickaxeSmall"), assetMan.Get<Sprite>("PickaxeBig"), pickaxeEnum, 300, 60);
-                ITM_Pickaxe pickaxe = (ITM_Pickaxe)pickaxeObject.item;
-                pickaxe.windowToPlace = digWindow;
-                pickaxe.uses = i;
-                pickaxeObject.item = pickaxe;
-                assetMan.Add<ItemObject>("Pickaxe" + useCount, pickaxeObject);
-                pickaxe.gameObject.name = "Pickaxe Object " + useCount;
-            }
-            */
 
             //create IOU item
 
