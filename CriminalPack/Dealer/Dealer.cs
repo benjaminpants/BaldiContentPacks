@@ -457,6 +457,8 @@ namespace CriminalPack
             this.player = pm;
         }
 
+        static FieldInfo _slotLocked = AccessTools.Field(typeof(ItemManager), "slotLocked");
+
         public override void Enter()
         {
             base.Enter();
@@ -469,35 +471,32 @@ namespace CriminalPack
             if (dealer.stolenItem == Items.None)
             {
                 dealer.audMan.PlaySingle(dealer.audStealNoSpare);
-                for (int i = 0; i < player.itm.items.Length; i++)
-                {
-                    if (player.itm.items[i].itemType != Items.None)
-                    {
-                        dealer.stolenItems.Add(player.itm.items[i]);
-                    }
-                }
-                player.itm.ClearItems();
             }
             else
             {
                 dealer.audMan.PlaySingle(dealer.audSteal);
-                bool sparedItem = false;
-                for (int i = 0; i < player.itm.items.Length; i++)
-                {
-                    if ((!sparedItem) && player.itm.items[i].itemType == dealer.stolenItem)
-                    {
-                        sparedItem = true;
-                        continue;
-                    }
-                    if (player.itm.items[i].itemType != Items.None)
-                    {
-                        dealer.stolenItems.Add(player.itm.items[i]);
-                    }
-                    player.itm.items[i] = player.itm.nothing;
-                }
-                player.itm.UpdateItems();
-                player.itm.UpdateSelect();
             }
+            bool sparedItem = false;
+            List<int> validItemSlots = new List<int>();
+            for (int i = 0; i < player.itm.items.Length; i++)
+            {
+                if (((bool[])_slotLocked.GetValue(player.itm))[i]) continue;
+                if (player.itm.items[i].itemType == Items.None) continue;
+                if ((!sparedItem) && player.itm.items[i].itemType == dealer.stolenItem)
+                {
+                    sparedItem = true;
+                    continue;
+                }
+                validItemSlots.Add(i);
+            }
+            for (int i = 0; i < Mathf.Min(validItemSlots.Count, 3); i++)
+            {
+                int chosenSlotIndex = UnityEngine.Random.Range(0, validItemSlots.Count);
+                dealer.stolenItems.Add(player.itm.items[validItemSlots[chosenSlotIndex]]);
+                player.itm.RemoveItem(validItemSlots[chosenSlotIndex]);
+                validItemSlots.RemoveAt(chosenSlotIndex);
+            }
+            dealer.stolenItem = Items.None;
         }
 
         static FieldInfo _targetedNpc = AccessTools.Field(typeof(Principal_ChasingNpc), "targetedNpc");
