@@ -1,5 +1,7 @@
-﻿using System;
+﻿using HarmonyLib;
+using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 using UnityEngine;
 
@@ -61,6 +63,7 @@ namespace CarnivalPack
         public BalloonFrenzy eventPrefab;
         public BalloonFrenzy myEvent;
         public ComboFrenzyCounter myCounter;
+        public SoundObject timeUpSound;
         bool inCrisis = false;
 
         public BalloonFrenzyUI UI
@@ -93,6 +96,7 @@ namespace CarnivalPack
         protected override void VirtualUpdate()
         {
             base.VirtualUpdate();
+            if (myEvent == null) return;
             if (inCrisis)
             {
                 Singleton<MusicManager>.Instance.SetSpeed(0.1f);
@@ -167,7 +171,7 @@ namespace CarnivalPack
 
         public bool timeExpired;
 
-        public float baldiAngerAmount = 25f;
+        public float baldiAngerAmount = 22f;
 
         public virtual void OnTimeExpire()
         {
@@ -180,6 +184,16 @@ namespace CarnivalPack
             // this fixes an issue where baldi would make a sudden leap to catch up with the old delay.
             ec.GetBaldi().RestoreRuler();
             ec.GetBaldi().Slap();
+            Singleton<CoreGameManager>.Instance.audMan.PlaySingle(timeUpSound);
+        }
+
+        protected override void ExitedSpawn()
+        {
+            base.ExitedSpawn();
+            StartMode();
+            ec.GetBaldi().Praise(2f);
+            ec.GetBaldi().GetComponent<Entity>().Teleport(myCounter.transform.position);
+            ec.GetBaldi().AudMan.FlushQueue(true);
         }
 
         public virtual void OnTimeGained()
@@ -187,11 +201,21 @@ namespace CarnivalPack
             if (!timeExpired) return;
             timeExpired = false;
             ec.GetBaldi().GetAngry(-baldiAngerAmount);
-            Singleton<MusicManager>.Instance.SetSpeed(1f);
         }
 
+
+        static FieldInfo _events = AccessTools.Field(typeof(EnvironmentController), "events");
+        static FieldInfo _eventTimes = AccessTools.Field(typeof(EnvironmentController), "eventTimes");
         public override void Initialize()
         {
+            // remove any balloon frenzy events before they can potentially begin
+            List<RandomEvent> events = (List<RandomEvent>)_events.GetValue(ec);
+            int balloonIndex = events.FindIndex(x => x.Type == CarnivalPackBasePlugin.balloonFrenzyEventEnum);
+            if (balloonIndex != -1)
+            {
+                events.RemoveAt(balloonIndex);
+                ((List<float>)_eventTimes.GetValue(ec)).RemoveAt(balloonIndex);
+            }
             base.Initialize();
             GameObject.Destroy(GameObject.FindObjectOfType<HappyBaldi>().gameObject);
             spawnImmediately = true;
@@ -201,11 +225,17 @@ namespace CarnivalPack
         public override void BeginPlay()
         {
             base.BeginPlay();
+            Singleton<MusicManager>.Instance.SetSpeed(0.5f);
+        }
+
+        public virtual void StartMode()
+        {
             myEvent = GameObject.Instantiate<BalloonFrenzy>(eventPrefab);
             myEvent.Initialize(ec, new System.Random(Singleton<CoreGameManager>.Instance.Seed()));
             myEvent.Begin();
             myCounter = (ComboFrenzyCounter)myEvent.createdCounters[0];
             Singleton<MusicManager>.Instance.PlayMidi(CarnivalPackBasePlugin.balloonMayhamMidi, true);
+            ec.SetTimeLimit(comboTime);
         }
 
         protected override void AllNotebooks()

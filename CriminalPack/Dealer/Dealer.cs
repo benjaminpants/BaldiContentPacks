@@ -496,7 +496,7 @@ namespace CriminalPack
                     player.itm.items[i] = player.itm.nothing;
                 }
                 player.itm.UpdateItems();
-                Singleton<CoreGameManager>.Instance.GetHud(player.playerNumber).SetItemSelect(player.itm.selectedItem, player.itm.items[player.itm.selectedItem].nameKey);
+                player.itm.UpdateSelect();
             }
         }
 

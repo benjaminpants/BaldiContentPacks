@@ -31,6 +31,8 @@ namespace CarnivalPack
         public Dictionary<string, CustomAnimation<Sprite>> zorpsterAnimations;
 
         public ConfigEntry<bool> youtuberModeEnabled;
+        public ConfigEntry<bool> balloonFrenzyEnabled;
+        public ConfigEntry<bool> balloonMayhamTestEnabled;
 
         public AssetManager assetMan = new AssetManager();
 
@@ -67,9 +69,28 @@ namespace CarnivalPack
         }
 
         public static string balloonMayhamMidi;
-
+        public static RandomEventType balloonFrenzyEventEnum;
         void RegisterImportant()
         {
+            assetMan.Add<Texture2D>("Texture_Zorpster_Idle", AssetLoader.TextureFromMod(this, "ZorpPlaceholder.png"));
+            assetMan.Add<Sprite>("Zorpster_Idle", AssetLoader.SpriteFromTexture2D(assetMan.Get<Texture2D>("Texture_Zorpster_Idle"), 40));
+            assetMan.Add<SoundObject>("Zorpster_Sound_Idle", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "weirdwahah.wav"), "Sfx_WeirdWahah", SoundType.Effect, Color.white));
+            assetMan.Add<SoundObject>("Inflate", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "Inflate.wav"), "Sfx_InflateFrenzy", SoundType.Effect, Color.white));
+            assetMan.Add<Texture2D>("ZorpWall", AssetLoader.TextureFromMod(this, "Map", "ZorpWall.png"));
+            assetMan.Add<Texture2D>("ZorpCeil", AssetLoader.TextureFromMod(this, "Map", "ZorpCeil.png"));
+            assetMan.Add<Texture2D>("ZorpFloor", AssetLoader.TextureFromMod(this, "Map", "ZorpFloor.png"));
+            assetMan.Add<Sprite>("Tractor1", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "tractor1.png"), 30));
+            assetMan.Add<Sprite>("Tractor2", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "tractor2.png"), 30));
+            assetMan.Add<Sprite>("Tractor3", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "tractor3.png"), 30));
+            assetMan.Add<Sprite>("Tractor4", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "tractor4.png"), 30));
+            assetMan.Add<Sprite>("CottonCandySmall", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "CottonCandySmall.png"), 25f));
+            assetMan.Add<Sprite>("CottonCandyBig", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "CottonCandyBig.png"), 50f));
+            assetMan.Add<Sprite>("Staminometer_Cotton", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Staminometer_Cotton.png"), 50f));
+            AssetLoader.LocalizationFromMod(this);
+            if (balloonMayhamTestEnabled.Value)
+            {
+                AssetLoader.LocalizationFromFile(Path.Combine(AssetLoader.GetModPath(this), "BalloonMayham.json"), Language.English);
+            }
             balloonMayhamMidi = AssetLoader.MidiFromMod("balloonMayham", this, "Midi", "BalloonMayham.mid");
             StandardDoorMats doorMats = ObjectCreators.CreateDoorDataObject("ZorpDoor", AssetLoader.TextureFromMod(this, "Map", "ZorpDoor_Open.png"), AssetLoader.TextureFromMod(this, "Map", "ZorpDoor_Closed.png"));
             // create the room asset
@@ -196,8 +217,10 @@ namespace CarnivalPack
                 }
             };
 
+
+            balloonFrenzyEventEnum = EnumExtensions.ExtendEnum<RandomEventType>("BalloonFrenzy");
             BalloonFrenzy frenzyEvent = new RandomEventBuilder<BalloonFrenzy>(Info)
-                .SetEnum("BalloonFrenzy")
+                .SetEnum(balloonFrenzyEventEnum)
                 .SetMinMaxTime(90f, 120f)
                 .SetName("Balloon_Frenzy")
                 .SetSound(frenzyEventSound)
@@ -298,19 +321,21 @@ namespace CarnivalPack
             frenzyManager.ReflectionSetVariable("elevatorScreenPre", managerTemplate.ReflectionGetVariable("elevatorScreenPre"));
             frenzyManager.ReflectionSetVariable("pitstop", managerTemplate.ReflectionGetVariable("pitstop"));
             frenzyManager.ReflectionSetVariable("destroyOnLoad", true);
+            frenzyManager.timeUpSound = Resources.FindObjectsOfTypeAll<SoundObject>().First(x => x.GetInstanceID() >= 0 && x.name == "TimeLimitBell");
             frenzyManager.eventPrefab = frenzyEventDedicated;
             GameObject.Destroy(managerTemplate);
 
 
             // below are the hacks used to playtest balloon mayham
-            
-            /*
-            // hacky thing for testing
-            Resources.FindObjectsOfTypeAll<SceneObject>().Where(x => x.manager is MainGameManager).Do(x =>
+
+            if (balloonMayhamTestEnabled.Value)
             {
-                x.manager = frenzyManager;
-            });
-            */
+                // hacky thing for testing
+                Resources.FindObjectsOfTypeAll<SceneObject>().Where(x => x.manager is MainGameManager).Do(x =>
+                {
+                    x.manager = frenzyManager;
+                });
+            }
         }
 
         public T CreateBalloonVariant<T>(Sprite sprite) where T : FrenzyBalloon
@@ -357,11 +382,14 @@ namespace CarnivalPack
             if (floorName.StartsWith("F"))
             {
                 sceneObject.levelObject.potentialItems = sceneObject.levelObject.potentialItems.AddItem(new WeightedItemObject() { selection = assetMan.Get<ItemObject>("CottonCandy"), weight = 80 }).ToArray();
-                sceneObject.levelObject.randomEvents.Add(new WeightedRandomEvent()
+                if (balloonFrenzyEnabled.Value)
                 {
-                    selection=assetMan.Get<BalloonFrenzy>("FrenzyEvent"),
-                    weight=70 + (Mathf.Clamp(floorNumber, 0, 2) * 15)
-                });
+                    sceneObject.levelObject.randomEvents.Add(new WeightedRandomEvent()
+                    {
+                        selection = assetMan.Get<BalloonFrenzy>("FrenzyEvent"),
+                        weight = 70 + (Mathf.Clamp(floorNumber, 0, 2) * 15)
+                    });
+                }
                 sceneObject.MarkAsNeverUnload();
             }
             if (floorNumber >= 1)
@@ -387,21 +415,7 @@ namespace CarnivalPack
         {
             Harmony harmony = new Harmony("mtm101.rulerp.bbplus.carnivalpackroot");
             harmony.PatchAllConditionals();
-            assetMan.Add<Texture2D>("Texture_Zorpster_Idle", AssetLoader.TextureFromMod(this, "ZorpPlaceholder.png"));
-            assetMan.Add<Sprite>("Zorpster_Idle", AssetLoader.SpriteFromTexture2D(assetMan.Get<Texture2D>("Texture_Zorpster_Idle"), 40));
-            assetMan.Add<SoundObject>("Zorpster_Sound_Idle", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "weirdwahah.wav"), "Sfx_WeirdWahah", SoundType.Effect, Color.white));
-            assetMan.Add<SoundObject>("Inflate", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "Inflate.wav"), "Sfx_InflateFrenzy", SoundType.Effect, Color.white));
-            assetMan.Add<Texture2D>("ZorpWall", AssetLoader.TextureFromMod(this, "Map", "ZorpWall.png"));
-            assetMan.Add<Texture2D>("ZorpCeil", AssetLoader.TextureFromMod(this, "Map", "ZorpCeil.png"));
-            assetMan.Add<Texture2D>("ZorpFloor", AssetLoader.TextureFromMod(this, "Map", "ZorpFloor.png"));
-            assetMan.Add<Sprite>("Tractor1", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "tractor1.png"), 30));
-            assetMan.Add<Sprite>("Tractor2", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "tractor2.png"), 30));
-            assetMan.Add<Sprite>("Tractor3", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "tractor3.png"), 30));
-            assetMan.Add<Sprite>("Tractor4", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "tractor4.png"), 30));
-            assetMan.Add<Sprite>("CottonCandySmall", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "CottonCandySmall.png"), 25f));
-            assetMan.Add<Sprite>("CottonCandyBig", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "CottonCandyBig.png"), 50f));
-            assetMan.Add<Sprite>("Staminometer_Cotton", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Staminometer_Cotton.png"), 50f));
-            AssetLoader.LocalizationFromMod(this);
+            
             //AddSpriteFolderToAssetMan("", 40f, AssetLoader.GetModPath(this), "ZorpAnim");
             //AddAudioFolderToAssetMan(new Color(107f/255f,193f/255f,27/255f), AssetLoader.GetModPath(this), "ZorpLines");
             LoadingEvents.RegisterOnAssetsLoaded(Info, RegisterImportant, false);
@@ -411,6 +425,8 @@ namespace CarnivalPack
             Instance = this;
 
             youtuberModeEnabled = Config.Bind<bool>("General", "Youtuber Mode", false, "If true, Zorpster will always appear on Floor 1.");
+            balloonMayhamTestEnabled = Config.Bind<bool>("General", "Balloon Mayham", false, "If true, Hide and Seek will be replaced with Balloon Mayham.");
+            balloonFrenzyEnabled = Config.Bind<bool>("Generation", "Balloon Frenzy Enabled", true, "If false, the balloon frenzy event will be disabled. Use if it causes performance problems.");
 
             ModdedSaveGame.AddSaveHandler(new CarnivalPackSaveGameIO());
         }
@@ -437,20 +453,30 @@ namespace CarnivalPack
 
         public override string[] GenerateTags()
         {
+            List<string> generatedTags = new List<string>();
             if (CarnivalPackBasePlugin.Instance.youtuberModeEnabled.Value)
             {
-                return new string[1] { "YoutuberMode" };
+                generatedTags.Add("YoutuberMode");
             }
-            return new string[0];
+            if (CarnivalPackBasePlugin.Instance.balloonMayhamTestEnabled.Value)
+            {
+                generatedTags.Add("BalloonMayham");
+            }
+            if (!CarnivalPackBasePlugin.Instance.balloonFrenzyEnabled.Value)
+            {
+                generatedTags.Add("NoFrenzy");
+            }
+            return generatedTags.ToArray();
         }
 
         public override string DisplayTags(string[] tags)
         {
-            if (tags.Contains("YoutuberMode"))
+            string baseMode = tags.Contains("YoutuberMode") ? "Youtuber Mode" : "Standard Mode";
+            if (tags.Contains("BalloonMayham"))
             {
-                return "Youtuber Mode";
+                baseMode += " + Balloon Mayham";
             }
-            return "Standard Mode";
+            return baseMode + (tags.Contains("NoFrenzy") ? "\nNo Balloon Frenzy" : "");
         }
     }
 }
