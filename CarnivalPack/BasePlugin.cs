@@ -267,6 +267,8 @@ namespace CarnivalPack
 
             assetMan.Add<SoundObject>("PrincipalNotPopBalloon", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "PRI_NoNotPoppingBalloons.wav"), "Vfx_PRI_NoNotBalloonPop", SoundType.Voice, Color.white));
 
+
+            NPCMetaStorage.Instance.Get(Character.Baldi).tags.Add("lower_balloon_frenzy_priority");
             NPCMetaStorage.Instance.Get(Character.Principal).tags.Add("no_balloon_frenzy");
             NPCMetaStorage.Instance.Get(Character.Crafters).tags.Add("no_balloon_frenzy");
             NPCMetaStorage.Instance.Get(Character.Chalkles).tags.Add("no_balloon_frenzy");

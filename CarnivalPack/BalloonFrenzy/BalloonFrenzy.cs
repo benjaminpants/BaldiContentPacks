@@ -32,6 +32,7 @@ namespace CarnivalPack
         public BalloonFrenzy frenzy;
         public float timeRemaining = 5f;
         public bool frozen = false;
+        public bool lowPriority = false;
 
         bool controllingNPC = false;
         FrenzyBalloon currentBalloon;
@@ -145,7 +146,7 @@ namespace CarnivalPack
                         }
                     }
 
-                    currentState = new NavigationState_Balloon(myNPC, 128, currentBalloon.transform.position);
+                    currentState = new NavigationState_Balloon(myNPC, lowPriority ? 126 : 128, currentBalloon.transform.position);
                     myNPC.navigationStateMachine.ChangeState(currentState);
                 }
                 else
@@ -189,6 +190,7 @@ namespace CarnivalPack
                     FrenzyCounter npcCounter = ec.Npcs[i].gameObject.AddComponent<FrenzyCounter>();
                     npcCounter.frenzy = this;
                     npcCounter.myNPC = ec.Npcs[i];
+                    npcCounter.lowPriority = ec.Npcs[i].GetMeta().tags.Contains("lower_balloon_frenzy_priority");
                     createdCounters.Add(npcCounter);
                 }
             }
