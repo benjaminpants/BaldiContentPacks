@@ -34,7 +34,7 @@ namespace PiratePack
 
             void Update()
             {
-                moveMod.movementMultiplier = 0.5f + (0.5f - timeRemaining);
+                moveMod.movementMultiplier = 0.3f + (0.7f - timeRemaining);
                 timeRemaining -= Time.deltaTime; // no timescaling here
                 if (timeRemaining <= 0f)
                 {

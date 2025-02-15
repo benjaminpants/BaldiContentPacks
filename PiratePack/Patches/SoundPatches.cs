@@ -15,6 +15,8 @@ namespace PiratePack.Patches
         {
             if (!soundObject.subtitle) return; // if this doesn't create a subtitle its probably not very important... todo: verify?
             if (__instance.loop) return; // dont want to play looping sounds (todo: make cann handle this)
+            if (soundObject.soundClip.length >= 5f) return; // don't want to play sounds that are too long
+            if (!__instance.positional) return; // don't want to play non-positional sounds
             Cann.InvokeSoundPlayed(soundObject, __instance);
         }
     }

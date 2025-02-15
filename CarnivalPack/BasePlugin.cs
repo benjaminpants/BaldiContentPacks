@@ -297,6 +297,7 @@ namespace CarnivalPack
                 .SetMinMaxTime(90f, 120f)
                 .SetName("Balloon_Frenzy_Dedicated")
                 .SetSound(frenzyEventSound)
+                .SetMeta(RandomEventFlags.Special)
                 .Build();
 
             frenzyEventDedicated.npcsNeedBalloons = false;
