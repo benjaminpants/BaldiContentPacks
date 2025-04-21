@@ -108,13 +108,30 @@ namespace PiratePack
                 parameters = new StructureParameters(),
                 prefab = assetMan.Get<StructureBuilder>("SunkenFloor")
             });*/
+            CustomLevelObject[] objects = obj.GetCustomLevelObjects();
+            for (int i = 0; i < objects.Length; i++)
+            {
+                CustomLevelObject levelObj = objects[i];
+                if (levelObj.type != LevelType.Maintenance)
+                {
+                    levelObj.potentialItems = levelObj.potentialItems.AddToArray(new WeightedItemObject()
+                    {
+                        selection = assetMan.Get<ItemObject>("Doubloon"),
+                        weight = 30 + (Mathf.Clamp(levelId, 0, 2) * 10)
+                    });
+                }
+                if (((levelId > 0) && floorName.StartsWith("F")) || (floorName == "END")) // no shields or cann on floor 1
+                {
+                    levelObj.potentialItems = levelObj.potentialItems.AddToArray(new WeightedItemObject()
+                    {
+                        selection = assetMan.Get<ItemObject>("Shield3"),
+                        weight = 80
+                    });
+                }
+                levelObj.MarkAsNeverUnload();
+            }
             if (((levelId > 0) && floorName.StartsWith("F")) || (floorName == "END")) // no shields or cann on floor 1
             {
-                obj.CustomLevelObject().potentialItems = obj.CustomLevelObject().potentialItems.AddToArray(new WeightedItemObject()
-                {
-                    selection = assetMan.Get<ItemObject>("Shield3"),
-                    weight = 80
-                });
                 obj.shopItems = obj.shopItems.AddRangeToArray(new WeightedItemObject[]
                 {
                     new WeightedItemObject()
@@ -133,7 +150,7 @@ namespace PiratePack
                     obj.potentialNPCs.Add(new WeightedNPC()
                     {
                         selection = assetMan.Get<NPC>("Cann"),
-                        weight = (floorName == "F3") ? 80 : 100
+                        weight = (levelId > 1) ? Mathf.Max(100 - (levelId * 10), 10) : 100
                     });
                 }
             }
@@ -142,13 +159,7 @@ namespace PiratePack
                 obj.additionalNPCs = Mathf.Max(obj.additionalNPCs - 1, 0);
                 obj.forcedNpcs = obj.forcedNpcs.AddToArray(assetMan.Get<NPC>("Cann"));
             }
-            obj.CustomLevelObject().potentialItems = obj.CustomLevelObject().potentialItems.AddToArray(new WeightedItemObject()
-            {
-                selection = assetMan.Get<ItemObject>("Doubloon"),
-                weight = 30 + (Mathf.Clamp(levelId,0,2) * 10)
-            });
             obj.MarkAsNeverUnload();
-            obj.CustomLevelObject().MarkAsNeverUnload();
         }
 
         IEnumerator LoadEnumerator()

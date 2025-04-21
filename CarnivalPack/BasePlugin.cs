@@ -137,10 +137,9 @@ namespace CarnivalPack
             ZorpRoom.entitySafeCells.Add(new IntVector2(2, 1));
             ZorpRoom.eventSafeCells.Add(new IntVector2(0, 0));
             ZorpRoom.eventSafeCells.Add(new IntVector2(0, 0));
-            ZorpRoom.lightPre = MTM101BaldiDevAPI.roomAssetMeta.Get("Room_ReflexOffice_0").value.lightPre;
+            ZorpRoom.lightPre = Resources.FindObjectsOfTypeAll<RoomAsset>().First(x => ((UnityEngine.Object)x).name == "Room_ReflexOffice_0").lightPre;
             ZorpRoom.color = new Color(172f / 255f, 0f, 252f / 255f);
             ZorpRoom.category = ZorpCat;
-            MTM101BaldiDevAPI.roomAssetMeta.Add(new RoomAssetMeta(this.Info, ZorpRoom));
             assetMan.Add<RoomAsset>("Zorp_Room", ZorpRoom);
 
 
@@ -362,6 +361,7 @@ namespace CarnivalPack
 
         void AddNPCs(string floorName, int floorNumber, SceneObject sceneObject)
         {
+            CustomLevelObject[] levelObjects = sceneObject.GetCustomLevelObjects();
             if (!youtuberModeEnabled.Value)
             {
                 if (floorName == "F1")
@@ -378,20 +378,23 @@ namespace CarnivalPack
             {
                 if (floorName == "F1")
                 {
-                    sceneObject.forcedNpcs = sceneObject.levelObject.forcedNpcs.AddToArray(assetMan.Get<NPC>("Zorpster"));
+                    sceneObject.forcedNpcs = sceneObject.forcedNpcs.AddToArray(assetMan.Get<NPC>("Zorpster"));
                     sceneObject.additionalNPCs = Mathf.Max(sceneObject.additionalNPCs - 1, 0);
                 }
             }
             if (floorName.StartsWith("F"))
             {
-                sceneObject.levelObject.potentialItems = sceneObject.levelObject.potentialItems.AddItem(new WeightedItemObject() { selection = assetMan.Get<ItemObject>("CottonCandy"), weight = 80 }).ToArray();
-                if (balloonFrenzyEnabled.Value)
+                for (int i = 0; i < levelObjects.Length; i++)
                 {
-                    sceneObject.levelObject.randomEvents.Add(new WeightedRandomEvent()
+                    levelObjects[i].potentialItems = levelObjects[i].potentialItems.AddItem(new WeightedItemObject() { selection = assetMan.Get<ItemObject>("CottonCandy"), weight = 80 }).ToArray();
+                    if (balloonFrenzyEnabled.Value)
                     {
-                        selection = assetMan.Get<BalloonFrenzy>("FrenzyEvent"),
-                        weight = 70 + (Mathf.Clamp(floorNumber, 0, 2) * 15)
-                    });
+                        levelObjects[i].randomEvents.Add(new WeightedRandomEvent()
+                        {
+                            selection = assetMan.Get<BalloonFrenzy>("FrenzyEvent"),
+                            weight = 50
+                        });
+                    }
                 }
                 sceneObject.MarkAsNeverUnload();
             }

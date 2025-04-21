@@ -641,44 +641,13 @@ namespace CriminalPack
 
         void GeneratorModifications(string levelName, int levelId, SceneObject scene)
         {
-            if (levelId > 0)
-            {
-                scene.CustomLevelObject().forcedItems.Add(assetMan.Get<ItemObject>("IOUDecoy"));
-            }
+            CustomLevelObject[] objects = scene.GetCustomLevelObjects();
             scene.MarkAsNeverUnload();
-            
+
+            // not level object specific
             switch (levelName)
             {
-                case "F1":
-                    scene.CustomLevelObject().potentialItems = scene.CustomLevelObject().potentialItems.AddRangeToArray(new WeightedItemObject[]
-                    {
-                        new WeightedItemObject()
-                        {
-                            selection = assetMan.Get<ItemObject>("Crowbar"),
-                            weight = 20
-                        },
-                        new WeightedItemObject()
-                        {
-                            selection = assetMan.Get<ItemObject>("Mask"),
-                            weight = 40
-                        }
-                    });
-                    //obj.forcedNpcs = obj.forcedNpcs.AddToArray(assetMan.Get<NPC>("Dealer"));
-                    break;
                 case "F2":
-                    scene.CustomLevelObject().potentialItems = scene.CustomLevelObject().potentialItems.AddRangeToArray(new WeightedItemObject[]
-                    {
-                        new WeightedItemObject()
-                        {
-                            selection = assetMan.Get<ItemObject>("Crowbar"),
-                            weight = 70
-                        },
-                        new WeightedItemObject()
-                        {
-                            selection = assetMan.Get<ItemObject>("Mask"),
-                            weight = 60
-                        }
-                    });
                     scene.shopItems = scene.shopItems.AddRangeToArray(new WeightedItemObject[]
                     {
                         new WeightedItemObject()
@@ -686,22 +655,6 @@ namespace CriminalPack
                             selection = assetMan.Get<ItemObject>("Mask"),
                             weight = 80
                         }
-                    });
-                    scene.CustomLevelObject().potentialStructures = scene.CustomLevelObject().potentialStructures.AddToArray(new WeightedStructureWithParameters()
-                    {
-                        selection= new StructureWithParameters()
-                        {
-                            parameters = new StructureParameters()
-                            {
-                                minMax = new IntVector2[]
-                                {
-                                    new IntVector2(1,3),
-                                    new IntVector2(4,8)
-                                }
-                            },
-                            prefab = assetMan.Get<Structure_Scanner>("scanner")
-                        },
-                        weight=60
                     });
                     if (!youtuberModeEnabled.Value)
                     {
@@ -716,21 +669,16 @@ namespace CriminalPack
                         scene.forcedNpcs = scene.forcedNpcs.AddToArray(assetMan.Get<NPC>("Dealer"));
                         scene.additionalNPCs = Mathf.Max(scene.additionalNPCs - 1, 0);
                     }
-                    return;
+                    break;
                 case "F3":
-                    scene.CustomLevelObject().potentialItems = scene.CustomLevelObject().potentialItems.AddRangeToArray(new WeightedItemObject[]
+                    if (!youtuberModeEnabled.Value)
                     {
-                        new WeightedItemObject()
+                        scene.potentialNPCs.Add(new WeightedNPC()
                         {
-                            selection = assetMan.Get<ItemObject>("Crowbar"),
-                            weight = 68
-                        },
-                        new WeightedItemObject()
-                        {
-                            selection = assetMan.Get<ItemObject>("Mask"),
-                            weight = 80
-                        }
-                    });
+                            selection = assetMan.Get<NPC>("Dealer"),
+                            weight = 45
+                        });
+                    }
                     scene.shopItems = scene.shopItems.AddRangeToArray(new WeightedItemObject[]
                     {
                         new WeightedItemObject()
@@ -744,31 +692,107 @@ namespace CriminalPack
                             weight = 65
                         }
                     });
-                    scene.CustomLevelObject().potentialStructures = scene.CustomLevelObject().potentialStructures.AddToArray(new WeightedStructureWithParameters()
-                    {
-                        selection = new StructureWithParameters()
+                    break;
+            }
+
+            for (int i = 0; i < objects.Length; i++)
+            {
+                CustomLevelObject obj = objects[i];
+                if ((levelId > 0) && (obj.type == LevelType.Schoolhouse || obj.type == LevelType.Maintenance))
+                {
+                    obj.forcedItems.Add(assetMan.Get<ItemObject>("IOUDecoy"));
+                }
+
+                switch (levelName)
+                {
+                    case "F1":
+                        obj.potentialItems = obj.potentialItems.AddRangeToArray(new WeightedItemObject[]
                         {
-                            parameters = new StructureParameters()
+                        new WeightedItemObject()
+                        {
+                            selection = assetMan.Get<ItemObject>("Crowbar"),
+                            weight = 20
+                        },
+                        new WeightedItemObject()
+                        {
+                            selection = assetMan.Get<ItemObject>("Mask"),
+                            weight = 40
+                        }
+                        });
+                        //obj.forcedNpcs = obj.forcedNpcs.AddToArray(assetMan.Get<NPC>("Dealer"));
+                        break;
+                    case "F2":
+                        obj.potentialItems = obj.potentialItems.AddRangeToArray(new WeightedItemObject[]
+                        {
+                        new WeightedItemObject()
+                        {
+                            selection = assetMan.Get<ItemObject>("Crowbar"),
+                            weight = 70
+                        },
+                        new WeightedItemObject()
+                        {
+                            selection = assetMan.Get<ItemObject>("Mask"),
+                            weight = 60
+                        }
+                        });
+                        if (obj.type == LevelType.Schoolhouse)
+                        {
+                            obj.potentialStructures = obj.potentialStructures.AddToArray(new WeightedStructureWithParameters()
                             {
-                                minMax = new IntVector2[]
+                                selection = new StructureWithParameters()
                                 {
+                                    parameters = new StructureParameters()
+                                    {
+                                        minMax = new IntVector2[]
+                                        {
+                                        new IntVector2(1,3),
+                                        new IntVector2(4,8)
+                                        }
+                                    },
+                                    prefab = assetMan.Get<Structure_Scanner>("scanner")
+                                },
+                                weight = 60
+                            });
+                        }
+                        break;
+                    case "F3":
+                        obj.potentialItems = obj.potentialItems.AddRangeToArray(new WeightedItemObject[]
+                        {
+                            new WeightedItemObject()
+                            {
+                                selection = assetMan.Get<ItemObject>("Crowbar"),
+                                weight = 68
+                            },
+                            new WeightedItemObject()
+                            {
+                                selection = assetMan.Get<ItemObject>("Mask"),
+                                weight = 80
+                            }
+                        });
+                        if (obj.type == LevelType.Schoolhouse)
+                        {
+                            obj.potentialStructures = obj.potentialStructures.AddToArray(new WeightedStructureWithParameters()
+                            {
+                                selection = new StructureWithParameters()
+                                {
+                                    parameters = new StructureParameters()
+                                    {
+                                        minMax = new IntVector2[]
+                                        {
                                     new IntVector2(2,6),
                                     new IntVector2(12,16)
-                                }
-                            },
-                            prefab = assetMan.Get<Structure_Scanner>("scanner")
-                        },
-                        weight = 80
-                    });
-                    if (!youtuberModeEnabled.Value)
-                    {
-                        scene.potentialNPCs.Add(new WeightedNPC()
-                        {
-                            selection = assetMan.Get<NPC>("Dealer"),
-                            weight = 45
-                        });
-                    }
-                    return;
+                                        }
+                                    },
+                                    prefab = assetMan.Get<Structure_Scanner>("scanner")
+                                },
+                                weight = 80
+                            });
+                        }
+                        break;
+                    default:
+                        return;
+                }
+                objects[i].MarkAsNeverUnload();
             }
         }
 

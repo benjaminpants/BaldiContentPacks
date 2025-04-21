@@ -587,7 +587,7 @@ namespace CriminalPack
         public Dealer_FleePrincipal(NPC npc, Principal toFlee) : base(npc)
         {
             this.toFlee = toFlee;
-            principalFleeMap = new DijkstraMap(npc.ec, PathType.Nav, toFlee.transform);
+            principalFleeMap = new DijkstraMap(npc.ec, PathType.Nav, int.MaxValue, toFlee.transform);
         }
 
         public override void Enter()
