@@ -23,7 +23,7 @@ using UnityEngine.UI;
 namespace CarnivalPack
 {
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi")]
-    [BepInPlugin("mtm101.rulerp.bbplus.carnivalpackroot", "Carnival Pack Root Mod", "2.0.0.0")]
+    [BepInPlugin("mtm101.rulerp.bbplus.carnivalpackroot", "Carnival Pack Root Mod", "2.1.0.0")]
     public class CarnivalPackBasePlugin : BaseUnityPlugin
     {
         public static CarnivalPackBasePlugin Instance;
@@ -185,6 +185,7 @@ namespace CarnivalPack
                 .SetItemComponent<ITM_CottonCandy>()
                 .SetMeta(ItemFlags.Persists, new string[] { "food" })
                 .Build();
+            ((ITM_CottonCandy)cottonCandy.item).eatSound = (SoundObject)((ITM_ZestyBar)ItemMetaStorage.Instance.FindByEnum(Items.ZestyBar).value.item).ReflectionGetVariable("audEat");
             assetMan.Add<ItemObject>("CottonCandy", cottonCandy);
 
 
@@ -434,7 +435,26 @@ namespace CarnivalPack
             balloonMayhamTestEnabled = Config.Bind<bool>("General", "Balloon Mayham", false, "If true, Hide and Seek will be replaced with Balloon Mayham.");
             balloonFrenzyEnabled = Config.Bind<bool>("Generation", "Balloon Frenzy Enabled", true, "If false, the balloon frenzy event will be disabled. Use if it causes performance problems.");
 
+            if (balloonMayhamTestEnabled.Value)
+            {
+                GeneratorManagement.Register(this, GenerationModType.Finalizer, BalloonMayhamFinalizer);
+            }
+
             ModdedSaveGame.AddSaveHandler(new CarnivalPackSaveGameIO());
+        }
+
+        void BalloonMayhamFinalizer(string floorName, int floorNumber, SceneObject sceneObject)
+        {
+            CustomLevelObject[] cml = sceneObject.GetCustomLevelObjects();
+            for (int i = 0; i < cml.Length; i++)
+            {
+                CustomLevelObject level = cml[i];
+                StructureWithParameters[] strucWithParms = level.forcedStructures.Where(x => x.prefab is Structure_PowerLever).ToArray();
+                for (int j = 0; j < strucWithParms.Length; j++)
+                {
+                    strucWithParms[j].parameters.minMax[0] = new IntVector2(1, 1); // significantly nerf power out because with balloon frenzy its nightmare
+                }
+            }
         }
     }
 

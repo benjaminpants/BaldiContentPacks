@@ -62,9 +62,15 @@ namespace CarnivalPack
 
     public class ITM_CottonCandy : Item
     {
+        public SoundObject eatSound;
         public override bool Use(PlayerManager pm)
         {
-            if (pm.gameObject.GetComponent<CottonCandyManager>() != null) return false; // we already doing performing the cotton candy!
+            if (pm.gameObject.GetComponent<CottonCandyManager>() != null)
+            {
+                Destroy(this.gameObject);
+                return false; // we already doing performing the cotton candy!
+            }
+            Singleton<CoreGameManager>.Instance.audMan.PlaySingle(eatSound);
             pm.plm.stamina = Math.Max(pm.plm.stamina, pm.plm.staminaMax);
             CottonCandyManager cm = pm.gameObject.AddComponent<CottonCandyManager>();
             HudManager hudMan = Singleton<CoreGameManager>.Instance.GetHud(0);
@@ -76,6 +82,7 @@ namespace CarnivalPack
             reverter.myManager = cm;
             reverter.originalSprite = cm.originalStaminoSprite;
             reverter.staminoMeter = cm.staminoMeter;
+            Destroy(this.gameObject);
             return true;
         }
     }

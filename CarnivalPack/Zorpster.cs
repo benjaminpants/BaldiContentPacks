@@ -34,12 +34,13 @@ namespace CarnivalPack
         public SpriteRenderer[] tractorBeams = new SpriteRenderer[0];
         public PlayerManager currentTarget;
 
-        public float timeBeforeNoSeeGiveUp = 10f;
+        public float timeBeforeNoSeeGiveUp = 5f;
         public float startSuckPower = 7f;
         public float endSuckPower = 36f;
-        public float timeToReachMax = 26f;
+        public float timeToReachMax = 27f;
 
-        public int pointsToReward = 25;
+        public int pointsToReward = 20;
+        public int rewardAddon = 5;
 
         float timeUntilTractorBlink = 0.02f;
 
@@ -315,7 +316,7 @@ namespace CarnivalPack
             if (targetEnt.GetType() == typeof(PlayerEntity))
             {
                 Singleton<CoreGameManager>.Instance.AddPoints(Zorp.pointsToReward, targetEnt.GetComponent<PlayerManager>().playerNumber, true);
-                Zorp.pointsToReward += 5;
+                Zorp.pointsToReward += Zorp.rewardAddon;
             }
             Zorp.behaviorStateMachine.ChangeState(new Zorpster_Wait(Zorp, Zorp.cooldownTime));
         }

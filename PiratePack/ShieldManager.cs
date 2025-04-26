@@ -67,7 +67,9 @@ namespace PiratePack
             Entity foundEntity = other.GetComponent<Entity>();
             if (foundEntity)
             {
+                if (foundEntity.gameObject.GetComponent<Balloon>()) return; // don't try to push balloons
                 if (foundEntity.Frozen) return; // don't try to push away frozen entities
+                if (foundEntity.Squished && !pm.plm.Entity.Squished) return; // can't push away entities that are squished while we aren't.
                 MovementModifier slowSlightly = new MovementModifier(Vector3.zero, 0.5f);
                 foundEntity.SetTrigger(false);
                 foundEntity.ExternalActivity.moveMods.Add(slowSlightly);
@@ -153,11 +155,6 @@ namespace PiratePack
             {
                 renderer.rotation = Quaternion.LerpUnclamped(renderer.rotation, renderer.rotation * facingQuaternion, EaseOutBack(animationTime / animationLength)) * Quaternion.Euler(0f, Mathf.Sin(timeWobbling * 10f) * wobbleStrength, 0f);
             }
-
-            /*targetAngle = pm.transform.eulerAngles.y - targetAngle;
-            angle += Mathf.Sign(targetAngle - angle) * Mathf.Min(degreesPerSecond * Time.deltaTime * pm.PlayerTimeScale, Mathf.Abs(targetAngle - angle));
-            transform.rotation = Quaternion.Euler(0f, angle, 0f);
-            transform.position += transform.forward * distanceFromPlayer;*/
         }
     }
 }
