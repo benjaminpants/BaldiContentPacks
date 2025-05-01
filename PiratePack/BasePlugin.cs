@@ -59,7 +59,7 @@ namespace PiratePack
 
     // todo: make cann flap faster if he is going slower than he normally is (and vise versa)
 
-    [BepInPlugin("mtm101.rulerp.baldiplus.piratepack", "Pirate Pack", "1.0.0.0")]
+    [BepInPlugin("mtm101.rulerp.baldiplus.piratepack", "Pirate Pack", "1.1.0.0")]
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi")]
     public class PiratePlugin : BaseUnityPlugin
     {

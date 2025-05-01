@@ -30,6 +30,7 @@ namespace CriminalPack
         public static ManualLogSource Log;
 
         public static Character dealerEnum;
+        public static LevelType prisonType;
 
         public AssetManager assetMan = new AssetManager();
 
@@ -37,7 +38,7 @@ namespace CriminalPack
 
         IEnumerator ResourcesLoaded()
         {
-            yield return 9;
+            yield return 10;
             yield return "Fetching existing assets...";
             SoundObject[] foundSoundObjects = Resources.FindObjectsOfTypeAll<SoundObject>().Where(x => x.GetInstanceID() >= 0).ToArray();
             assetMan.Add<SoundObject>("CorrectBuzz", foundSoundObjects.First(x => x.name == "Activity_Correct"));
@@ -574,6 +575,99 @@ namespace CriminalPack
             scannerBuilder.prefab = scanner;
             assetMan.Add<Structure_Scanner>("scanner", scannerBuilder);
 
+            yield return "Loading Prison Style assets...";
+            assetMan.Add<Transform>("CagedLight", Resources.FindObjectsOfTypeAll<Transform>().First(x => x.GetInstanceID() >= 0 && x.name == "CagedLight"));
+            prisonType = EnumExtensions.ExtendEnum<LevelType>("Prison");
+            assetMan.Add<Texture2D>("PrisonWall", AssetLoader.TextureFromMod(this, "Prison", "PrisonWall.png"));
+            assetMan.Add<Texture2D>("PrisonFloor", AssetLoader.TextureFromMod(this, "Prison", "PrisonFloor.png"));
+            assetMan.AddFromResourcesNoClones<RoomAsset>();
+
+            StandardDoorMats cellMat = ObjectCreators.CreateDoorDataObject("CellDoor", AssetLoader.TextureFromMod(this, "Prison", "CellDoor_Open.png"), AssetLoader.TextureFromMod(this, "Prison", "CellDoor_Closed.png"));
+
+            RoomAsset officeAsset = assetMan.Get<RoomAsset>("Room_Office_0");
+
+            RoomFunctionContainer prisonCellContainer = GameObject.Instantiate<RoomFunctionContainer>(Resources.FindObjectsOfTypeAll<RoomFunctionContainer>().First(x => x.GetInstanceID() >= 0 && x.name == "OfficeRoomFunction"), MTM101BaldiDevAPI.prefabTransform);
+
+            prisonCellContainer.name = "CellOfficeRoomFunction";
+            Destroy(prisonCellContainer.GetComponent<CharacterPostersRoomFunction>());
+            ((List<RoomFunction>)prisonCellContainer.ReflectionGetVariable("functions")).RemoveAll(x => x is CharacterPostersRoomFunction);
+            JailDoorRoomFunction jdrf = prisonCellContainer.gameObject.AddComponent<JailDoorRoomFunction>();
+            jdrf.doorMat = cellMat;
+            prisonCellContainer.AddFunction(jdrf);
+
+            // create cellblock
+            RoomAsset cellRoom = ScriptableObject.CreateInstance<RoomAsset>();
+
+            cellRoom.mapMaterial = officeAsset.mapMaterial;
+            cellRoom.color = officeAsset.color;
+
+            cellRoom.name = "CellBlock";
+            ((UnityEngine.Object)cellRoom).name = "CellBlock";
+            cellRoom.category = RoomCategory.Office;
+            cellRoom.hasActivity = false;
+            cellRoom.activity = new ActivityData();
+            cellRoom.ceilTex = assetMan.Get<Texture2D>("PrisonFloor");
+            cellRoom.florTex = assetMan.Get<Texture2D>("PrisonFloor");
+            cellRoom.wallTex = assetMan.Get<Texture2D>("PrisonWall");
+            cellRoom.itemSpawnPoints = new List<ItemSpawnPoint>
+            {
+                new ItemSpawnPoint()
+                {
+                    chance = 0.5f,
+                    minValue = 1,
+                    maxValue = 25,
+                    position = new Vector2(5f, 5f),
+                    weight = 25
+                }
+            };
+            cellRoom.maxItemValue = 25;
+            cellRoom.minItemValue = 1;
+            cellRoom.doorMats = cellMat;
+            cellRoom.roomFunctionContainer = prisonCellContainer;
+            cellRoom.potentialDoorPositions = new List<IntVector2>() { new IntVector2(1, 0), new IntVector2(2, 0) };
+            cellRoom.cells.Add(new CellData()
+            {
+                pos = new IntVector2(0, 0),
+                type = 12
+            });
+            cellRoom.cells.Add(new CellData()
+            {
+                pos = new IntVector2(0, 1),
+                type = 9
+            });
+            cellRoom.cells.Add(new CellData()
+            {
+                pos = new IntVector2(1, 0),
+                type = 4
+            });
+            cellRoom.cells.Add(new CellData()
+            {
+                pos = new IntVector2(1, 1),
+                type = 1
+            });
+            cellRoom.cells.Add(new CellData()
+            {
+                pos = new IntVector2(2, 0),
+                type = 6
+            });
+            cellRoom.cells.Add(new CellData()
+            {
+                pos = new IntVector2(2, 1),
+                type = 3
+            });
+            cellRoom.standardLightCells.Add(new IntVector2(2, 1));
+            cellRoom.entitySafeCells.Add(new IntVector2(2, 1));
+            cellRoom.eventSafeCells.Add(new IntVector2(2, 1));
+            assetMan.Add<RoomAsset>("CellBlock", cellRoom);
+
+
+            GameObject lockedClassesObject = new GameObject("LockedClassesBuilder");
+            lockedClassesObject.transform.SetParent(MTM101BaldiDevAPI.prefabTransform);
+            Structure_LockedClasses lockedClasses = lockedClassesObject.AddComponent<Structure_LockedClasses>();
+            LockedRoomFunction lrfTemplate = Resources.FindObjectsOfTypeAll<LockedRoomFunction>().First(x => x.GetInstanceID() >= 0 && x.gameObject.name == "LockedFacultyRoomFunction_NoItems");
+            lockedClasses.keys = (ItemObject[])((ItemObject[])Structure_LockedClasses._key.GetValue(lrfTemplate)).Where(x => x.itemType == Items.SquareKey).ToArray();
+            lockedClasses.lockPrefabs = (GameLock[])((GameLock[])Structure_LockedClasses._lockPrefab.GetValue(lrfTemplate)).Clone();
+            assetMan.Add<Structure_LockedClasses>("LockedClasses", lockedClasses);
 
             yield return "Modifying meta...";
             ItemMetaStorage.Instance.FindByEnum(Items.GrapplingHook).tags.Add("crmp_contraband"); // reasoning: dangerous
@@ -638,6 +732,190 @@ namespace CriminalPack
             }
         }
 
+        /// <summary>
+        /// Turns the specified LevelObject into a prison variant.
+        /// </summary>
+        /// <param name="toModify"></param>
+        /// <returns></returns>
+        public void ModifyIntoPrison(LevelObject toModify)
+        {
+            toModify.roomGroup = toModify.roomGroup.Where(x => x.name != "LockedRoom").ToArray();
+
+            toModify.potentialPostPlotSpecialHalls = new WeightedRoomAsset[]
+            {
+                new WeightedRoomAsset()
+                {
+                    selection=assetMan.Get<RoomAsset>("Room_HallFormation_0"),
+                    weight=100
+                }
+            };
+
+            toModify.minPostPlotSpecialHalls = 15;
+            toModify.maxPostPlotSpecialHalls = 25;
+
+            toModify.potentialPrePlotSpecialHalls = new WeightedRoomAsset[]
+            {
+                new WeightedRoomAsset()
+                {
+                    selection=assetMan.Get<RoomAsset>("Room_HallFormation_0"),
+                    weight=100
+                }
+            };
+
+
+            toModify.maxItemValue += 50;
+
+            RoomGroup facultyGroup = toModify.roomGroup.First(x => x.name == "Faculty");
+            facultyGroup.maxRooms += 4;
+            facultyGroup.minRooms += 2;
+            facultyGroup.stickToHallChance = 1f;
+
+            RoomGroup officeGroup = toModify.roomGroup.First(x => x.name == "Office");
+            officeGroup.name = "CellBlocks"; // so other mods don't fuck it up
+            officeGroup.minRooms = 25;
+            officeGroup.maxRooms = 40;
+            officeGroup.potentialRooms = new WeightedRoomAsset[1]
+            {
+                new WeightedRoomAsset()
+                {
+                    selection = assetMan.Get<RoomAsset>("CellBlock"),
+                    weight = 100
+                }
+            };
+
+            officeGroup.wallTexture = new WeightedTexture2D[]
+            {
+                new WeightedTexture2D()
+                {
+                    selection=assetMan.Get<Texture2D>("PrisonWall"),
+                    weight=100
+                }
+            };
+
+            officeGroup.floorTexture = new WeightedTexture2D[]
+            {
+                new WeightedTexture2D()
+                {
+                    selection=assetMan.Get<Texture2D>("PrisonFloor"),
+                    weight=100
+                }
+            };
+
+            officeGroup.ceilingTexture = new WeightedTexture2D[]
+            {
+                new WeightedTexture2D()
+                {
+                    selection=assetMan.Get<Texture2D>("PrisonFloor"),
+                    weight=100
+                }
+            };
+
+            toModify.minPrePlotSpecialHalls = 5;
+            toModify.maxPrePlotSpecialHalls = 5;
+
+            toModify.minPlots = 8;
+            toModify.maxPlots = 12;
+
+            toModify.standardLightColor = new Color(249f/255f, 241f/255f, 199f/255f);
+            toModify.standardLightStrength = 6;
+
+            toModify.hallLights = new WeightedTransform[]
+            {
+                new WeightedTransform()
+                {
+                    selection=assetMan.Get<Transform>("CagedLight"),
+                    weight=100,
+                }
+            };
+
+            for (int i = 0; i < toModify.roomGroup.Length; i++)
+            {
+                toModify.roomGroup[i].light = new WeightedTransform[]
+                {
+                    new WeightedTransform()
+                    {
+                        selection=assetMan.Get<Transform>("CagedLight"),
+                        weight=100,
+                    }
+                };
+            }
+
+            toModify.hallFloorTexs = new WeightedTexture2D[]
+            {
+                new WeightedTexture2D()
+                {
+                    selection=assetMan.Get<Texture2D>("PrisonFloor"),
+                    weight=100
+                }
+            };
+            toModify.hallCeilingTexs = new WeightedTexture2D[]
+            {
+                new WeightedTexture2D()
+                {
+                    selection=assetMan.Get<Texture2D>("PrisonFloor"),
+                    weight=100
+                }
+            };
+            toModify.hallWallTexs = new WeightedTexture2D[]
+            {
+                new WeightedTexture2D()
+                {
+                    selection=assetMan.Get<Texture2D>("PrisonWall"),
+                    weight=100
+                }
+            };
+
+            List<StructureWithParameters> structures = toModify.forcedStructures.ToList();
+            structures.Add(new StructureWithParameters()
+            {
+                parameters = new StructureParameters()
+                {
+                    minMax = new IntVector2[]
+                    {
+                        new IntVector2(6,12),
+                        new IntVector2(12,16)
+                    }
+                },
+                prefab = assetMan.Get<Structure_Scanner>("scanner")
+            });
+
+            /*
+            structures.Add(new StructureWithParameters()
+            {
+                parameters = new StructureParameters(),
+                prefab = assetMan.Get<Structure_LockedClasses>("LockedClasses")
+            });*/
+
+            toModify.forcedStructures = structures.ToArray();
+        }
+
+
+        void PrisonLevelTypeCreator(string levelName, int levelId, SceneObject scene)
+        {
+            if (scene.GetMeta().info != MTM101BaldiDevAPI.Instance.Info) return; // ignore modded scenes
+            if (levelName != "F4" && levelName != "F5") return; // we dont want to add this type to anything we dont want to
+            CustomLevelObject[] supportedObjects = scene.GetCustomLevelObjects();
+            CustomLevelObject factoryLevel = supportedObjects.First(x => x.type == LevelType.Factory);
+            if (factoryLevel == null) return;
+            CustomLevelObject prisonCopy = factoryLevel.MakeClone();
+            prisonCopy.type = prisonType;
+            prisonCopy.name = prisonCopy.name.Replace("(Clone)", "").Replace("Factory", "Prison");
+            List<StructureWithParameters> structures = prisonCopy.forcedStructures.ToList();
+            structures.RemoveAll(x => x.prefab is Structure_Rotohalls);
+            structures.RemoveAll(x => x.prefab is Structure_ConveyorBelt);
+            structures.RemoveAll(x => x.prefab.name == "LockdownDoorConstructor");
+            structures.RemoveAll(x => x.prefab is Structure_LevelBox);
+            prisonCopy.forcedStructures = structures.ToArray();
+            prisonCopy.potentialSpecialRooms = new WeightedRoomAsset[0];
+            prisonCopy.minSpecialRooms = 0;
+            prisonCopy.maxSpecialRooms = 0;
+            ModifyIntoPrison(prisonCopy);
+            scene.randomizedLevelObject = scene.randomizedLevelObject.AddToArray(new WeightedLevelObject()
+            {
+                selection = prisonCopy,
+                weight = 999999
+            });
+        }
 
         void GeneratorModifications(string levelName, int levelId, SceneObject scene)
         {
@@ -735,6 +1013,7 @@ namespace CriminalPack
                             weight = 60
                         }
                         });
+                        /*
                         if (obj.type == LevelType.Schoolhouse)
                         {
                             obj.potentialStructures = obj.potentialStructures.AddToArray(new WeightedStructureWithParameters()
@@ -753,7 +1032,7 @@ namespace CriminalPack
                                 },
                                 weight = 60
                             });
-                        }
+                        }*/
                         break;
                     case "F3":
                         obj.potentialItems = obj.potentialItems.AddRangeToArray(new WeightedItemObject[]
@@ -769,6 +1048,7 @@ namespace CriminalPack
                                 weight = 80
                             }
                         });
+                        /*
                         if (obj.type == LevelType.Schoolhouse)
                         {
                             obj.potentialStructures = obj.potentialStructures.AddToArray(new WeightedStructureWithParameters()
@@ -779,15 +1059,15 @@ namespace CriminalPack
                                     {
                                         minMax = new IntVector2[]
                                         {
-                                    new IntVector2(2,6),
-                                    new IntVector2(12,16)
+                                        new IntVector2(2,6),
+                                        new IntVector2(12,16)
                                         }
                                     },
                                     prefab = assetMan.Get<Structure_Scanner>("scanner")
                                 },
                                 weight = 80
                             });
-                        }
+                        }*/
                         break;
                     default:
                         return;
@@ -812,6 +1092,7 @@ namespace CriminalPack
             LoadingEvents.RegisterOnAssetsLoaded(Info, ResourcesLoadedPost(), true);
             AssetLoader.LocalizationFromMod(this);
             GeneratorManagement.Register(this, GenerationModType.Addend, GeneratorModifications);
+            GeneratorManagement.Register(this, GenerationModType.Preparation, PrisonLevelTypeCreator);
 
             youtuberModeEnabled = Config.Bind<bool>("General", "Youtuber Mode", false, "If true, Dealer will always appear on Floor 2.");
 
