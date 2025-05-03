@@ -749,6 +749,8 @@ namespace CriminalPack
                 keycardBuilder.keycardItems[i] = cardObject;
             }
 
+            keycardBuilder.windowObj = Resources.FindObjectsOfTypeAll<WindowObject>().First(x => x.name == "WoodWindow" && x.GetInstanceID() >= 0);
+
             yield return "Modifying meta...";
             ItemMetaStorage.Instance.FindByEnum(Items.GrapplingHook).tags.Add("crmp_contraband"); // reasoning: dangerous
             ItemMetaStorage.Instance.FindByEnum(Items.Teleporter).tags.Add("crmp_contraband"); // reasoning: dangerous

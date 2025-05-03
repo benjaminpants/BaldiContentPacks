@@ -12,10 +12,16 @@ namespace CriminalPack
 
         public bool openForever = false;
 
+        public override void Open(bool cancelTimer, bool makeNoise)
+        {
+            if (openForever) return;
+            base.Open(cancelTimer, makeNoise);
+        }
+
         public void OpenForever()
         {
-            openForever = true;
             Open(true, false);
+            openForever = true;
         }
 
         public override void Shut()

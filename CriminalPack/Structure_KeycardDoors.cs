@@ -24,6 +24,7 @@ namespace CriminalPack
     {
         public KeycardLockdownDoor[] doorPrefabs = new KeycardLockdownDoor[3];
         public ItemObject[] keycardItems = new ItemObject[3];
+        public WindowObject windowObj;
 
         public List<List<RoomController>> lockedRooms = new List<List<RoomController>>()
         {
@@ -86,7 +87,7 @@ namespace CriminalPack
                 int chosenCard = availableCards[chosenIndex];
                 availableCards.RemoveAt(chosenIndex);
                 int chosenClassIndex = rng.Next(classRooms.Count);
-                BlockRoom(classRooms[chosenClassIndex], doorPrefabs[chosenCard]);
+                BlockRoom(classRooms[chosenClassIndex], doorPrefabs[chosenCard], rng);
                 classRooms.RemoveAt(chosenClassIndex);
                 if (availableCards.Count == 0) // if we've ran out of a available keycards, repopulate again
                 {
@@ -101,7 +102,7 @@ namespace CriminalPack
             {
                 if (facultyRooms.Count == 0) break;
                 int chosenIndex = rng.Next(0, facultyRooms.Count);
-                BlockRoom(facultyRooms[chosenIndex], doorPrefabs[i]);
+                BlockRoom(facultyRooms[chosenIndex], doorPrefabs[i], rng);
                 facultyRooms.RemoveAt(chosenIndex);
             }
 
@@ -163,7 +164,7 @@ namespace CriminalPack
             }
         }
 
-        public void BlockRoom(RoomController room, KeycardLockdownDoor kld)
+        public void BlockRoom(RoomController room, KeycardLockdownDoor kld, System.Random rng)
         {
             List<KeycardLockdownDoor> placedDoors = new List<KeycardLockdownDoor>();
             for (int j = 0; j < room.doors.Count; j++)
@@ -182,6 +183,15 @@ namespace CriminalPack
                 LockedKeycardRoomFunction rf = room.functionObject.AddComponent<LockedKeycardRoomFunction>();
                 rf.doors = placedDoors;
                 room.functions.AddFunction(rf); // to prevent softlocks
+                if (room.potentialDoorPositions.Count > 0)
+                {
+                    int potentialWindowPositionIndex = rng.Next(0, room.potentialDoorPositions.Count);
+                    WindowObject oldObject = room.windowObject;
+                    room.windowObject = windowObj;
+                    myBuilder.BuildWindowIfPossible(room.potentialDoorPositions[potentialWindowPositionIndex], room, out _, out _);
+                    room.RemoveFromDoorPositions(room.potentialDoorPositions[potentialWindowPositionIndex]);
+                    room.windowObject = oldObject;
+                }
             }
         }
 
