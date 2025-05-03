@@ -2,6 +2,7 @@
 
 {"key":"PST_Scn_Warn","value":"WARNING:"},
 {"key":"PST_Scn_Itm_S","value":"Remember that we have scanners all around the school that can detect {0}!\n<b>Don't carry contraband!</b>"},
-{"key":"PST_Scn_Itm_NoS","value":"Remember that we have scanners all around the school that can detect {0}s!\n<b>Don't carry contraband!</b>"}
+{"key":"PST_Scn_Itm_NoS","value":"Remember that we have scanners all around the school that can detect {0}s!\n<b>Don't carry contraband!</b>"},
+{"key":"PST_Scn_Itm_ShapeKeys","value":"Shape Keys"}
 
 ]}

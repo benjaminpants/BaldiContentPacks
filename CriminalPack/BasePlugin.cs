@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
@@ -38,7 +39,7 @@ namespace CriminalPack
 
         IEnumerator ResourcesLoaded()
         {
-            yield return 10;
+            yield return 11;
             yield return "Fetching existing assets...";
             SoundObject[] foundSoundObjects = Resources.FindObjectsOfTypeAll<SoundObject>().Where(x => x.GetInstanceID() >= 0).ToArray();
             assetMan.Add<SoundObject>("CorrectBuzz", foundSoundObjects.First(x => x.name == "Activity_Correct"));
@@ -660,45 +661,120 @@ namespace CriminalPack
             cellRoom.eventSafeCells.Add(new IntVector2(2, 1));
             assetMan.Add<RoomAsset>("CellBlock", cellRoom);
 
+            yield return "Setting up keycards...";
+            HudManager hudMan = Resources.FindObjectsOfTypeAll<HudManager>().First(x => x.GetInstanceID() >= 0 && x.name == "MainHud");
+            KeycardHud keyHud = hudMan.gameObject.AddComponent<KeycardHud>();
+            Transform itemSlotsTransform = hudMan.transform.Find("ItemSlots");
+            Transform keyCardClone = GameObject.Instantiate<Transform>(itemSlotsTransform.transform.Find("ItemSlot (0)"), MTM101BaldiDevAPI.prefabTransform);
+            keyCardClone.SetParent(itemSlotsTransform);
+            GameObject.DestroyImmediate(keyCardClone.transform.Find("ItemIcon (0)").gameObject); // nope
+            keyCardClone.GetComponent<RectTransform>().anchoredPosition += Vector2.left * 40; //go back
+            keyCardClone.name = "KeyDisplay1";
+            RawImage keyCardimage = keyCardClone.GetComponent<RawImage>();
+            keyCardimage.texture = AssetLoader.TextureFromMod(this, "Keycards", "IconCard1.png");
+            keyCardClone.localScale = Vector3.one;
+            keyCardClone.GetComponent<RectTransform>().sizeDelta = new Vector2(40f,35f);
+            keyCardimage.enabled = false;
+            keyHud.renderers[0] = keyCardimage;
+            for (int i = 2; i <= 3; i++)
+            {
+                RawImage keyIconClone = GameObject.Instantiate<Transform>(keyCardClone, MTM101BaldiDevAPI.prefabTransform).GetComponent<RawImage>();
+                keyIconClone.name = "KeyDisplay" + i;
+                keyIconClone.texture = AssetLoader.TextureFromMod(this, "Keycards", "IconCard" + i + ".png");
+                keyIconClone.transform.SetParent(itemSlotsTransform);
+                keyIconClone.transform.localScale = Vector3.one;
+                keyHud.renderers[i - 1] = keyIconClone;
+            }
 
-            GameObject lockedClassesObject = new GameObject("LockedClassesBuilder");
-            lockedClassesObject.transform.SetParent(MTM101BaldiDevAPI.prefabTransform);
-            Structure_LockedClasses lockedClasses = lockedClassesObject.AddComponent<Structure_LockedClasses>();
-            LockedRoomFunction lrfTemplate = Resources.FindObjectsOfTypeAll<LockedRoomFunction>().First(x => x.GetInstanceID() >= 0 && x.gameObject.name == "LockedFacultyRoomFunction_NoItems");
-            lockedClasses.keys = (ItemObject[])((ItemObject[])Structure_LockedClasses._key.GetValue(lrfTemplate)).Where(x => x.itemType == Items.SquareKey).ToArray();
-            lockedClasses.lockPrefabs = (GameLock[])((GameLock[])Structure_LockedClasses._lockPrefab.GetValue(lrfTemplate)).Clone();
-            assetMan.Add<Structure_LockedClasses>("LockedClasses", lockedClasses);
+            GameObject keycardBuilderObject = new GameObject("KeycardDoorBuilder");
+            keycardBuilderObject.transform.SetParent(MTM101BaldiDevAPI.prefabTransform);
+            Structure_KeycardDoors keycardBuilder = keycardBuilderObject.AddComponent<Structure_KeycardDoors>();
+            assetMan.Add<Structure_KeycardDoors>("Structure_KeycardDoors", keycardBuilder);
+
+
+            LockdownDoor doorTemplate = Resources.FindObjectsOfTypeAll<LockdownDoor>().First(x => x.GetInstanceID() >= 0 && x.name == "LockdownDoor_TrapCheck");
+            for (int i = 0; i < 3; i++)
+            {
+                LockdownDoor keyDoorOld = GameObject.Instantiate<LockdownDoor>(doorTemplate, MTM101BaldiDevAPI.prefabTransform);
+                keyDoorOld.name = "Keycard" + (i + 1) + "LockdownDoor";
+                KeycardLockdownDoor keyLockDoor = keyDoorOld.gameObject.AddComponent<KeycardLockdownDoor>();
+                FieldInfo[] fields = typeof(LockdownDoor).GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                for (int j = 0; j < fields.Length; j++)
+                {
+                    fields[j].SetValue(keyLockDoor, fields[j].GetValue(keyDoorOld));
+                }
+                keyLockDoor.ReflectionSetVariable("shutAtGameStart", true);
+                keyLockDoor.ReflectionSetVariable("speed", 3f);
+                keyLockDoor.myValue = i;
+                Destroy(keyDoorOld); // remove the old component
+                MeshRenderer renderer = keyDoorOld.transform.Find("LockdownDoor_Model").GetComponent<MeshRenderer>();
+
+                Material[] rendMats = renderer.materials;
+
+                Material newWarningStripeMaterial = new Material(rendMats[1]);
+                newWarningStripeMaterial.name = "ClearanceStripes" + (i + 1);
+                newWarningStripeMaterial.SetMainTexture(AssetLoader.TextureFromMod(this, "Keycards", "ClearanceStripes" + (i + 1) + ".png"));
+                rendMats[1] = newWarningStripeMaterial;
+
+                Material newLockdownMaterial = new Material(rendMats[2]);
+                newLockdownMaterial.name = "LockdownKeyMaterial" + (i + 1);
+                newLockdownMaterial.SetMainTexture(AssetLoader.TextureFromMod(this, "Keycards", "LockdownClearance" + (i + 1) + ".png"));
+                rendMats[2] = newLockdownMaterial;
+
+                renderer.materials = rendMats;
+
+                keycardBuilder.doorPrefabs[i] = keyLockDoor;
+            }
+
+            string[] keycardEnums = new string[] { "Green", "Blue", "Red" };
+
+            SoundObject cardPickupSound = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "CardPickup.wav"), "", SoundType.Effect, Color.white);
+            cardPickupSound.subtitle = false;
+            for (int i = 0; i < 3; i++)
+            {
+                Sprite cardSprite = AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 50f, "Keycards", "Keycard" + (i + 1) + ".png");
+                ItemObject cardObject = new ItemBuilder(Info)
+                    .SetEnum("Keycard" + keycardEnums[i])
+                    .SetShopPrice(1000)
+                    .SetGeneratorCost(100)
+                    .SetItemComponent<ITM_Keycard>()
+                    .SetSprites(cardSprite, cardSprite)
+                    .SetNameAndDescription("Itm_KeyCard" + keycardEnums[i], "Desc_KeyCardBad")
+                    .SetAsInstantUse()
+                    .SetPickupSound(cardPickupSound)
+                    .Build();
+
+                ((ITM_Keycard)cardObject.item).myValue = i;
+
+                keycardBuilder.keycardItems[i] = cardObject;
+            }
 
             yield return "Modifying meta...";
             ItemMetaStorage.Instance.FindByEnum(Items.GrapplingHook).tags.Add("crmp_contraband"); // reasoning: dangerous
             ItemMetaStorage.Instance.FindByEnum(Items.Teleporter).tags.Add("crmp_contraband"); // reasoning: dangerous
             ItemMetaStorage.Instance.FindByEnum(Items.DetentionKey).tags.Add("crmp_contraband"); // reasoning: belongs to principal (they are called principal's keys)
+            ItemMetaStorage.Instance.FindByEnum(Items.CircleKey).tags.AddRange(new string[] { "crmp_contraband", "crmp_scanner_no_poster" }); // reasoning: they only ever open faculty rooms
+            ItemMetaStorage.Instance.FindByEnum(Items.HexagonKey).tags.AddRange(new string[] { "crmp_contraband", "crmp_scanner_no_poster" }); // reasoning: they only ever open faculty rooms
+            ItemMetaStorage.Instance.FindByEnum(Items.PentagonKey).tags.AddRange(new string[] { "crmp_contraband", "crmp_scanner_no_poster" }); // reasoning: they only ever open faculty rooms
+            ItemMetaStorage.Instance.FindByEnum(Items.SquareKey).tags.AddRange(new string[] { "crmp_contraband", "crmp_scanner_no_poster" }); // reasoning: they only ever open faculty rooms
+            ItemMetaStorage.Instance.FindByEnum(Items.WeirdKey).tags.AddRange(new string[] { "crmp_contraband", "crmp_scanner_no_poster" }); // reasoning: they only ever open faculty rooms
+            ItemMetaStorage.Instance.FindByEnum(Items.TriangleKey).tags.AddRange(new string[] { "crmp_contraband", "crmp_scanner_no_poster" }); // reasoning: they only ever open faculty rooms
         }
 
         public static List<ExtendedPosterObject> itemPosters = new List<ExtendedPosterObject>();
 
-        IEnumerator ResourcesLoadedPost()
+        public void CreateScannerPoster(string itemName, Texture2D itemTexture, string posterIdName)
         {
-            ItemMetaData[] allItems = ItemMetaStorage.Instance.FindAllWithTags(true, "crmp_contraband").ToArray();
-            yield return allItems.Length;
-            for (int i = 0; i < allItems.Length; i++)
+            ExtendedPosterObject poster = ScriptableObject.CreateInstance<ExtendedPosterObject>();
+            poster.baseTexture = assetMan.Get<Texture2D>("WarningPosterImage");
+            poster.overlayData = new PosterImageData[]
             {
-                yield return "Generating scanner poster for " + EnumExtensions.ToStringExtended(allItems[i].id);
-
-                ItemObject currentItem = allItems[i].value;
-
-                string itemName = currentItem.nameKey;
-
-                ExtendedPosterObject poster = ScriptableObject.CreateInstance<ExtendedPosterObject>();
-                poster.baseTexture = assetMan.Get<Texture2D>("WarningPosterImage");
-                poster.overlayData = new PosterImageData[]
-                {
-                    new PosterImageData(currentItem.itemSpriteLarge.texture, new IntVector2(100,-163 + 8), new IntVector2(64,64)),
+                    new PosterImageData(itemTexture, new IntVector2(100,-163 + 8), new IntVector2(64,64)),
                     new PosterImageData(assetMan.Get<Texture2D>("WarningCross"), new IntVector2(100-32,-163 + 32 + 8), new IntVector2(128,128))
-                };
-                poster.name = "Scanner_Poster_" + EnumExtensions.ToStringExtended(allItems[i].id);
-                poster.textData = new PosterTextData[]
-                {
+            };
+            poster.name = "Scanner_Poster_" + posterIdName;
+            poster.textData = new PosterTextData[]
+            {
                     new PosterTextData()
                     {
                         font = BaldiFonts.BoldComicSans24.FontAsset(),
@@ -726,10 +802,26 @@ namespace CriminalPack
                             new string[2] { "\\([^)]*\\)", "" }
                         }
                     }
-                };
+            };
 
-                itemPosters.Add(poster);
+            itemPosters.Add(poster);
+        }
+
+        IEnumerator ResourcesLoadedPost()
+        {
+            ItemMetaData[] allItems = ItemMetaStorage.Instance.FindAllWithTags(true, "crmp_contraband").Where(x => !x.tags.Contains("crmp_scanner_no_poster")).ToArray();
+            yield return allItems.Length + 1;
+            for (int i = 0; i < allItems.Length; i++)
+            {
+                yield return "Generating scanner poster for " + EnumExtensions.ToStringExtended(allItems[i].id);
+
+                ItemObject currentItem = allItems[i].value;
+
+                CreateScannerPoster(currentItem.nameKey, currentItem.itemSpriteLarge.texture, EnumExtensions.ToStringExtended(allItems[i].id));
             }
+
+            yield return "Generating scanner poster for shape keys";
+            CreateScannerPoster("PST_Scn_Itm_ShapeKeys", AssetLoader.TextureFromMod(this, "ShapeKeysAll.png"), "ShapeKeys");
         }
 
         /// <summary>
@@ -737,9 +829,10 @@ namespace CriminalPack
         /// </summary>
         /// <param name="toModify"></param>
         /// <returns></returns>
-        public void ModifyIntoPrison(LevelObject toModify)
+        public void ModifyIntoPrison(LevelObject toModify, int levelId)
         {
-            toModify.roomGroup = toModify.roomGroup.Where(x => x.name != "LockedRoom").ToArray();
+            // dont delete locked room this time
+            //toModify.roomGroup = toModify.roomGroup.Where(x => x.name != "LockedRoom").ToArray();
 
             toModify.potentialPostPlotSpecialHalls = new WeightedRoomAsset[]
             {
@@ -879,12 +972,38 @@ namespace CriminalPack
                 prefab = assetMan.Get<Structure_Scanner>("scanner")
             });
 
-            /*
-            structures.Add(new StructureWithParameters()
+            if (levelId <= 3)
             {
-                parameters = new StructureParameters(),
-                prefab = assetMan.Get<Structure_LockedClasses>("LockedClasses")
-            });*/
+                structures.Add(new StructureWithParameters()
+                {
+                    parameters = new StructureParameters()
+                    {
+                        minMax = new IntVector2[]
+                        {
+                            new IntVector2(2,4),
+                            new IntVector2(1,2),
+                            new IntVector2(1,3)
+                        }
+                    },
+                    prefab = assetMan.Get<Structure_KeycardDoors>("Structure_KeycardDoors")
+                });
+            }
+            else
+            {
+                structures.Add(new StructureWithParameters()
+                {
+                    parameters = new StructureParameters()
+                    {
+                        minMax = new IntVector2[]
+                        {
+                            new IntVector2(1,2),
+                            new IntVector2(2,4),
+                            new IntVector2(3,3)
+                        }
+                    },
+                    prefab = assetMan.Get<Structure_KeycardDoors>("Structure_KeycardDoors")
+                });
+            }
 
             toModify.forcedStructures = structures.ToArray();
         }
@@ -909,7 +1028,7 @@ namespace CriminalPack
             prisonCopy.potentialSpecialRooms = new WeightedRoomAsset[0];
             prisonCopy.minSpecialRooms = 0;
             prisonCopy.maxSpecialRooms = 0;
-            ModifyIntoPrison(prisonCopy);
+            ModifyIntoPrison(prisonCopy, levelId);
             scene.randomizedLevelObject = scene.randomizedLevelObject.AddToArray(new WeightedLevelObject()
             {
                 selection = prisonCopy,

@@ -14,11 +14,7 @@
 {"key":"Itm_EmptyDealerPouch","value":"Empty Dealer Pouch"},
 {"key":"Desc_EmptyDealerPouch","value":"Empty Dealer Pouch\nSomehow, the contents magically vanished...\nP.S: Nice try."},
 
-{"key":"Itm_Pickaxe_3","value":"Pickaxe (3)"},
-{"key":"Desc_Pickaxe_3","value":"Pickaxe (3)\nDig new hallways and break down walls with this handy dandy pickaxe!"},
-{"key":"Itm_Pickaxe_2","value":"Pickaxe (2)"},
-{"key":"Desc_Pickaxe_2","value":"Pickaxe (2)\nDig new hallways and break down walls with this handy dandy pickaxe!"},
-{"key":"Itm_Pickaxe_1","value":"Pickaxe (1)"},
-{"key":"Desc_Pickaxe_1","value":"Pickaxe (1)\nDig new hallways and break down walls with this handy dandy pickaxe!"}
+{"key":"Itm_KeyCardBad","value":"Key Card"},
+{"key":"Desc_KeyCardBad","value":"Key Card\nThis shouldn't be possible!"}
 
 ]}
