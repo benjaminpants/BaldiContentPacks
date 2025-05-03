@@ -131,7 +131,7 @@ namespace CriminalPack
                         weightedRooms[i] = new WeightedRoomController()
                         {
                             selection = facultyRooms[i],
-                            weight = facultyRooms[i].currentItemValue + 15 + facultyRooms[i].maxItemValue
+                            weight = facultyRooms[i].maxItemValue + 15
                         };
                     }
                     RoomController chosenRoom = WeightedRoomController.ControlledRandomSelection(weightedRooms, rng);
@@ -146,7 +146,7 @@ namespace CriminalPack
                         weightedPrevTierRooms[i] = new WeightedRoomController()
                         {
                             selection = lockedRooms[id - 1][i],
-                            weight = lockedRooms[id - 1][i].currentItemValue + 15
+                            weight = lockedRooms[id - 1][i].maxItemValue + 15
                         };
                     }
                     RoomController prevTierRoom = WeightedRoomController.ControlledRandomSelection(weightedPrevTierRooms, rng);
