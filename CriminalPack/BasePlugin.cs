@@ -583,6 +583,8 @@ namespace CriminalPack
             assetMan.Add<Texture2D>("PrisonFloor", AssetLoader.TextureFromMod(this, "Prison", "PrisonFloor.png"));
             assetMan.AddFromResourcesNoClones<RoomAsset>();
 
+            WindowObject cellWindow = ObjectCreators.CreateWindowObject("CellWindow", AssetLoader.TextureFromMod(this, "Prison", "CellWindow.png"), AssetLoader.TextureFromMod(this, "Prison", "CellWindowBroken.png"), AssetLoader.TextureFromMod(this, "Prison", "CellWindow_Mask.png"));
+
             StandardDoorMats cellMat = ObjectCreators.CreateDoorDataObject("CellDoor", AssetLoader.TextureFromMod(this, "Prison", "CellDoor_Open.png"), AssetLoader.TextureFromMod(this, "Prison", "CellDoor_Closed.png"));
 
             RoomAsset officeAsset = assetMan.Get<RoomAsset>("Room_Office_0");
@@ -659,6 +661,8 @@ namespace CriminalPack
             cellRoom.standardLightCells.Add(new IntVector2(2, 1));
             cellRoom.entitySafeCells.Add(new IntVector2(2, 1));
             cellRoom.eventSafeCells.Add(new IntVector2(2, 1));
+            cellRoom.windowChance = 0.8f;
+            cellRoom.windowObject = cellWindow;
             assetMan.Add<RoomAsset>("CellBlock", cellRoom);
 
             yield return "Setting up keycards...";
@@ -691,6 +695,15 @@ namespace CriminalPack
             Structure_KeycardDoors keycardBuilder = keycardBuilderObject.AddComponent<Structure_KeycardDoors>();
             assetMan.Add<Structure_KeycardDoors>("Structure_KeycardDoors", keycardBuilder);
 
+            Color[] keyDoorColors = new Color[3]
+            {
+                new Color(0f,1f,0f),
+                new Color(0f,0f,1f),
+                new Color(1f,0f,0f)
+            };
+
+            Sprite keycardDoorOpen = AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 16f, "Keycards", "Icon_KeyDoor_Open.png");
+            Sprite keycardDoorClosed = AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 16f, "Keycards", "Icon_KeyDoor_Closed.png");
 
             LockdownDoor doorTemplate = Resources.FindObjectsOfTypeAll<LockdownDoor>().First(x => x.GetInstanceID() >= 0 && x.name == "LockdownDoor_TrapCheck");
             for (int i = 0; i < 3; i++)
@@ -705,7 +718,10 @@ namespace CriminalPack
                 }
                 keyLockDoor.ReflectionSetVariable("shutAtGameStart", true);
                 keyLockDoor.ReflectionSetVariable("speed", 3f);
+                keyLockDoor.ReflectionSetVariable("mapUnlockedSprite", keycardDoorOpen);
+                keyLockDoor.ReflectionSetVariable("mapLockedSprite", keycardDoorClosed);
                 keyLockDoor.myValue = i;
+                keyLockDoor.myColor = keyDoorColors[i];
                 Destroy(keyDoorOld); // remove the old component
                 MeshRenderer renderer = keyDoorOld.transform.Find("LockdownDoor_Model").GetComponent<MeshRenderer>();
 
@@ -749,7 +765,7 @@ namespace CriminalPack
                 keycardBuilder.keycardItems[i] = cardObject;
             }
 
-            keycardBuilder.windowObj = Resources.FindObjectsOfTypeAll<WindowObject>().First(x => x.name == "WoodWindow" && x.GetInstanceID() >= 0);
+            keycardBuilder.windowObj = cellWindow;
 
             yield return "Modifying meta...";
             ItemMetaStorage.Instance.FindByEnum(Items.GrapplingHook).tags.Add("crmp_contraband"); // reasoning: dangerous
@@ -761,6 +777,12 @@ namespace CriminalPack
             ItemMetaStorage.Instance.FindByEnum(Items.SquareKey).tags.AddRange(new string[] { "crmp_contraband", "crmp_scanner_no_poster" }); // reasoning: they only ever open faculty rooms
             ItemMetaStorage.Instance.FindByEnum(Items.WeirdKey).tags.AddRange(new string[] { "crmp_contraband", "crmp_scanner_no_poster" }); // reasoning: they only ever open faculty rooms
             ItemMetaStorage.Instance.FindByEnum(Items.TriangleKey).tags.AddRange(new string[] { "crmp_contraband", "crmp_scanner_no_poster" }); // reasoning: they only ever open faculty rooms
+
+            NPCMetaStorage.Instance.Get(Character.Crafters).tags.Add("crmp_no_keycard");
+            NPCMetaStorage.Instance.Get(Character.Chalkles).tags.Add("crmp_no_keycard");
+            NPCMetaStorage.Instance.Get(Character.LookAt).tags.Add("crmp_no_keycard");
+            NPCMetaStorage.Instance.Get(Character.Bully).tags.Add("crmp_no_keycard");
+            NPCMetaStorage.Instance.Get(Character.Sweep).tags.Add("crmp_no_keycard");
         }
 
         public static List<ExtendedPosterObject> itemPosters = new List<ExtendedPosterObject>();
@@ -865,7 +887,19 @@ namespace CriminalPack
             facultyGroup.minRooms += 2;
             facultyGroup.stickToHallChance = 1f;
 
+            RoomGroup principalOfficeGroup = new RoomGroup();
+
             RoomGroup officeGroup = toModify.roomGroup.First(x => x.name == "Office");
+
+            principalOfficeGroup.minRooms = 1;
+            principalOfficeGroup.maxRooms = 1;
+            principalOfficeGroup.stickToHallChance = 1f;
+            principalOfficeGroup.floorTexture = officeGroup.floorTexture;
+            principalOfficeGroup.wallTexture = officeGroup.wallTexture;
+            principalOfficeGroup.ceilingTexture = officeGroup.ceilingTexture;
+            principalOfficeGroup.potentialRooms = officeGroup.potentialRooms;
+            principalOfficeGroup.name = "FacultyOffice";
+
             officeGroup.name = "CellBlocks"; // so other mods don't fuck it up
             officeGroup.minRooms = 25;
             officeGroup.maxRooms = 40;
@@ -877,6 +911,8 @@ namespace CriminalPack
                     weight = 100
                 }
             };
+
+            toModify.roomGroup = toModify.roomGroup.AddItem(principalOfficeGroup).ToArray();
 
             officeGroup.wallTexture = new WeightedTexture2D[]
             {
@@ -960,6 +996,8 @@ namespace CriminalPack
                 }
             };
 
+            toModify.timeLimit += 120f;
+
             List<StructureWithParameters> structures = toModify.forcedStructures.ToList();
             structures.Add(new StructureWithParameters()
             {
@@ -967,7 +1005,7 @@ namespace CriminalPack
                 {
                     minMax = new IntVector2[]
                     {
-                        new IntVector2(6,12),
+                        new IntVector2(3,6),
                         new IntVector2(12,16)
                     }
                 },
@@ -982,7 +1020,7 @@ namespace CriminalPack
                     {
                         minMax = new IntVector2[]
                         {
-                            new IntVector2(2,4),
+                            new IntVector2(4,8),
                             new IntVector2(1,2),
                             new IntVector2(1,3)
                         }
@@ -1161,7 +1199,7 @@ namespace CriminalPack
                             new WeightedItemObject()
                             {
                                 selection = assetMan.Get<ItemObject>("Crowbar"),
-                                weight = 68
+                                weight = 65
                             },
                             new WeightedItemObject()
                             {
@@ -1189,6 +1227,36 @@ namespace CriminalPack
                                 weight = 80
                             });
                         }*/
+                        break;
+                    case "F4":
+                        obj.potentialItems = obj.potentialItems.AddRangeToArray(new WeightedItemObject[]
+                        {
+                            new WeightedItemObject()
+                            {
+                                selection = assetMan.Get<ItemObject>("Crowbar"),
+                                weight = 68
+                            },
+                            new WeightedItemObject()
+                            {
+                                selection = assetMan.Get<ItemObject>("Mask"),
+                                weight = 80
+                            }
+                        });
+                        break;
+                    case "F5":
+                        obj.potentialItems = obj.potentialItems.AddRangeToArray(new WeightedItemObject[]
+                        {
+                            new WeightedItemObject()
+                            {
+                                selection = assetMan.Get<ItemObject>("Crowbar"),
+                                weight = 68
+                            },
+                            new WeightedItemObject()
+                            {
+                                selection = assetMan.Get<ItemObject>("Mask"),
+                                weight = 80
+                            }
+                        });
                         break;
                     default:
                         return;

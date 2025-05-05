@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MTM101BaldAPI.Registers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,12 +13,54 @@ namespace CriminalPack
         InFacultyRoom,
         InPreviousTierRoom,
         OutInTheOpen,
-        TuckedInOffRoom
+        AttachedToCharacter
     }
 
     public class WeightedKeycardPlacement : WeightedSelection<KeycardPlacements>
     {
 
+    }
+
+    public class KeycardPickupFollower : MonoBehaviour
+    {
+        public Pickup pickupToMove;
+        public NPC npcToTrack;
+        public Character characterEnumToSearch;
+        public MovementModifier mm;
+        public EnvironmentController ec;
+        bool foundTarget = false;
+
+        void Awake()
+        {
+            ec = GetComponent<EnvironmentController>();
+            mm = new MovementModifier(Vector3.zero, 0.8f);
+        }
+
+        void Update()
+        {
+            if (pickupToMove == null) return;
+            if (foundTarget && (!pickupToMove.gameObject.activeSelf))
+            {
+                npcToTrack.GetComponent<Entity>().ExternalActivity.moveMods.Remove(mm);
+                Destroy(this);
+                Destroy(pickupToMove.gameObject);
+                return;
+            }
+            if (npcToTrack != null)
+            {
+                pickupToMove.transform.position = npcToTrack.transform.position + (npcToTrack.transform.forward * -5f);
+            }
+            else
+            {
+                npcToTrack = ec.Npcs.Find(x => x.Character == characterEnumToSearch);
+                if (npcToTrack != null && !foundTarget)
+                {
+                    pickupToMove.gameObject.SetActive(true);
+                    npcToTrack.GetComponent<Entity>().ExternalActivity.moveMods.Add(mm);
+                    foundTarget = true;
+                }
+            }
+        }
     }
 
     public class Structure_KeycardDoors : StructureBuilder
@@ -50,6 +93,11 @@ namespace CriminalPack
             {
                 selection=KeycardPlacements.OutInTheOpen,
                 weight=40
+            },
+            new WeightedKeycardPlacement()
+            {
+                selection=KeycardPlacements.AttachedToCharacter,
+                weight=45
             }
         };
 
@@ -57,6 +105,7 @@ namespace CriminalPack
         LevelBuilder myBuilder;
         List<RoomController> classRooms = new List<RoomController>();
         List<Door> blockedDoors = new List<Door>();
+        public List<Character> availableCharacterEnums = new List<Character>();
 
         KeycardManager kcm;
 
@@ -77,6 +126,9 @@ namespace CriminalPack
             base.Generate(lg, rng);
             kcm = lg.Ec.gameObject.AddComponent<KeycardManager>();
             myBuilder = lg;
+            availableCharacterEnums.AddRange(lg.Ec.npcsToSpawn.Where(x => x.GetMeta().flags.HasFlag(NPCFlags.CanMove) && !x.GetMeta().tags.Contains("crmp_no_keycard")).Select(x => x.Character));
+
+            availableCharacterEnums.Remove(Character.Baldi);
 
             classRooms.AddRange(lg.Ec.rooms.Where(x => x.HasIncompleteActivity));
             RepopulatePotentialCards(rng);
@@ -159,6 +211,22 @@ namespace CriminalPack
                     Vector3 worldPos = potentialPlaces[rng.Next(potentialPlaces.Count)].CenterWorldPosition;
                     myBuilder.CreateItem(ec.mainHall, keycardItems[id], new Vector2(worldPos.x, worldPos.z), true);
                     return true;
+                case KeycardPlacements.AttachedToCharacter:
+                    if (availableCharacterEnums.Count == 0) return false;
+                    Character chosenEnum = availableCharacterEnums[rng.Next(availableCharacterEnums.Count)];
+                    int charIndex = ec.npcsToSpawn.IndexOf(ec.npcsToSpawn.First(x => x.Character == chosenEnum));
+                    availableCharacterEnums.Remove(chosenEnum);
+                    if (charIndex == -1) return false; //how
+                    if ((ec.npcSpawnTile[charIndex] != null) && lockedRoomsAll.Contains(ec.npcSpawnTile[charIndex].room))
+                    {
+                        return false;
+                    }
+                    KeycardPickupFollower kpf = ec.gameObject.AddComponent<KeycardPickupFollower>();
+                    Cell targetCell = ec.mainHall.ControlledRandomEntitySafeCellNoGarbage(rng);
+                    kpf.pickupToMove = ec.CreateItem(targetCell.room, keycardItems[id], new Vector2(targetCell.CenterWorldPosition.x, targetCell.CenterWorldPosition.z));
+                    kpf.characterEnumToSearch = chosenEnum;
+                    kpf.pickupToMove.gameObject.SetActive(false);
+                    return true;
                 default:
                     throw new NotImplementedException("Unknown keycard placement: " + placement.ToString() + "!");
             }
@@ -183,8 +251,20 @@ namespace CriminalPack
                 LockedKeycardRoomFunction rf = room.functionObject.AddComponent<LockedKeycardRoomFunction>();
                 rf.doors = placedDoors;
                 room.functions.AddFunction(rf); // to prevent softlocks
+
+                // todo: make it so it will more smartly find a potential window spot
                 if (room.potentialDoorPositions.Count > 0)
                 {
+                    WeightedIntVector2[] potentialWindowPositions = new WeightedIntVector2[room.potentialDoorPositions.Count];
+                    for (int i = 0; i < room.potentialDoorPositions.Count; i++)
+                    {
+                        Cell cellToEval = room.ec.CellFromPosition(room.potentialDoorPositions[i] + Directions.ToIntVector2(myBuilder.GetRandomPotentialWindowDirection(room, room.potentialDoorPositions[i], rng)));
+                        potentialWindowPositions[i] = new WeightedIntVector2()
+                        {
+                            selection = room.potentialDoorPositions[i],
+                            weight = 25 + (cellToEval.room.type == RoomType.Hall ? 100 : 0)
+                        };
+                    }
                     int potentialWindowPositionIndex = rng.Next(0, room.potentialDoorPositions.Count);
                     WindowObject oldObject = room.windowObject;
                     room.windowObject = windowObj;

@@ -10,6 +10,8 @@ namespace CriminalPack
     {
         public int myValue;
 
+        public Color myColor;
+
         public bool openForever = false;
 
         public override void Open(bool cancelTimer, bool makeNoise)
@@ -22,6 +24,15 @@ namespace CriminalPack
         {
             Open(true, false);
             openForever = true;
+        }
+
+        public override void Initialize()
+        {
+            base.Initialize();
+            aMapTile.SpriteRenderer.color = myColor;
+            aMapTile.SpriteRenderer.sprite = mapLockedSprite;
+            bMapTile.SpriteRenderer.color = myColor;
+            bMapTile.SpriteRenderer.sprite = mapLockedSprite;
         }
 
         public override void Shut()
