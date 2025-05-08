@@ -370,7 +370,7 @@ namespace CriminalPack
                 .SetNameAndDescription("Itm_IOU", "Desc_IOU")
                 .SetShopPrice(500)
                 .SetGeneratorCost(int.MaxValue) // this should never be in the generator
-                .SetMeta(ItemFlags.CreatesEntity | ItemFlags.Persists, new string[0])
+                .SetMeta(ItemFlags.CreatesEntity | ItemFlags.Persists, new string[1] { "cann_like" }) // lol
                 .SetEnum(IOUEnum)
                 .SetItemComponent(iouItem)
                 .Build();
@@ -1135,7 +1135,7 @@ namespace CriminalPack
             for (int i = 0; i < objects.Length; i++)
             {
                 CustomLevelObject obj = objects[i];
-                if ((levelId > 0) && (obj.type == LevelType.Schoolhouse || obj.type == LevelType.Maintenance))
+                if ((levelId > 0) && (obj.type == LevelType.Schoolhouse || obj.type == LevelType.Maintenance || obj.type == prisonType))
                 {
                     obj.forcedItems.Add(assetMan.Get<ItemObject>("IOUDecoy"));
                 }

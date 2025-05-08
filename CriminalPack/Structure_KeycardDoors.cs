@@ -49,6 +49,7 @@ namespace CriminalPack
             if (npcToTrack != null)
             {
                 pickupToMove.transform.position = npcToTrack.transform.position + (npcToTrack.transform.forward * -5f);
+                pickupToMove.icon.UpdatePosition(ec.map);
             }
             else
             {
@@ -56,6 +57,8 @@ namespace CriminalPack
                 if (npcToTrack != null && !foundTarget)
                 {
                     pickupToMove.gameObject.SetActive(true);
+                    pickupToMove.icon = ec.map.AddIcon(pickupToMove.iconPre, pickupToMove.transform, Color.white);
+                    pickupToMove.icon.spriteRenderer.enabled = true;
                     npcToTrack.GetComponent<Entity>().ExternalActivity.moveMods.Add(mm);
                     foundTarget = true;
                 }

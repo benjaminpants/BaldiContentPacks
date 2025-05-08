@@ -198,12 +198,13 @@ namespace PiratePack
 
         }
 
-        public void SquakAndAlert()
+        public void SquakAndAlert(PlayerManager pm)
         {
             audMan.FlushQueue(true);
             ResetSoundSettings();
             audMan.QueueRandomAudio(squakSounds);
             ec.MakeNoise(transform.position, 2);
+            pm.RuleBreak("Bullying", 2f);
         }
 
         public void AddSound(CannSoundEntry sound)
@@ -659,6 +660,7 @@ namespace PiratePack
 
     public class Cann_Distract : Cann_Flee
     {
+        protected int navValue = 3;
 
         float timeUntilNextPlay = 0f;
 
@@ -685,7 +687,13 @@ namespace PiratePack
                 else
                 {
                     cann.ec.MakeNoise(cann.transform.position, 9);
-                    timeUntilNextPlay = Random.Range(0.5f,2f);
+                    timeUntilNextPlay = Random.Range(0.5f, 2f);
+                    for (int i = 0; i < cann.ec.Npcs.Count; i++)
+                    {
+                        NPC npc = cann.ec.Npcs[i];
+                        if (npc.GetMeta().tags.Contains("cann_ignore_distraction")) continue; // these characters already have ways of hearing and should ignore cann's distraction
+                        npc.navigationStateMachine.ChangeState(new NavigationState_TargetPositionRevert(npc, navValue, cann.transform.position, false));
+                    }
                 }
             }
         }
@@ -693,7 +701,7 @@ namespace PiratePack
         // dont want cann picking up on new sounds during the distraction phase, as this makes it last forever
         public override void HeardSound(SoundObject sound, AudioManager audMan)
         {
-            //base.HeardSound(sound, audMan);
+            
         }
     }
 
@@ -847,7 +855,7 @@ namespace PiratePack
                 cann.behaviorStateMachine.ChangeState(new Cann_WaitForSound(cann, new Cann_Distract(cann, pm, 3f), true));
                 return;
             }
-            cann.SquakAndAlert();
+            cann.SquakAndAlert(pm);
             if (Random.Range(1, 101) <= cann.chanceToStickAround)
             {
                 cann.SetFleeing(true);

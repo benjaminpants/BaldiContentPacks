@@ -85,6 +85,7 @@ namespace PiratePack
             harmony.PatchAllConditionals();
             Instance = this;
             LoadingEvents.RegisterOnLoadingScreenStart(Info, LoadEnumerator());
+            LoadingEvents.RegisterOnAssetsLoaded(Info, PostLoadEnumerator(), true);
             GeneratorManagement.Register(this, GenerationModType.Addend, GeneratorChanges);
             GeneratorManagement.RegisterFieldTripLootChange(this, FieldtripChanges);
             ModdedSaveGame.AddSaveHandler(new PiratePackSaveGameIO());
@@ -103,11 +104,6 @@ namespace PiratePack
 
         void GeneratorChanges(string floorName, int levelId, SceneObject obj)
         {
-            /*obj.CustomLevelObject().forcedStructures = obj.CustomLevelObject().forcedStructures.AddToArray(new StructureWithParameters()
-            {
-                parameters = new StructureParameters(),
-                prefab = assetMan.Get<StructureBuilder>("SunkenFloor")
-            });*/
             CustomLevelObject[] objects = obj.GetCustomLevelObjects();
             for (int i = 0; i < objects.Length; i++)
             {
@@ -160,6 +156,13 @@ namespace PiratePack
                 obj.forcedNpcs = obj.forcedNpcs.AddToArray(assetMan.Get<NPC>("Cann"));
             }
             obj.MarkAsNeverUnload();
+        }
+
+        IEnumerator PostLoadEnumerator()
+        {
+            yield return 1;
+            yield return "Adding meta...";
+            NPCMetaStorage.Instance.FindAll(x => x.flags.HasFlag(NPCFlags.CanHear)).Do(x => x.tags.Add("cann_ignore_distraction"));
         }
 
         IEnumerator LoadEnumerator()
