@@ -21,9 +21,10 @@ namespace CriminalPack.Patches
             List<ItemObject> objectsSorted;
             int possibleToSelect = 3;
             System.Random rng;
-            if (objct.levelObject)
+            if (objct.levelObject || (objct.randomizedLevelObject != null && objct.randomizedLevelObject.Length > 0))
             {
-                objectsSorted = objct.levelObject.potentialItems.Select(x => x.selection).ToList();
+                LevelObject levelObj = objct.GetCurrentCustomLevelObject();
+                objectsSorted = levelObj.potentialItems.Select(x => x.selection).ToList();
                 rng = new System.Random(Singleton<CoreGameManager>.Instance.Seed() + (int)(__instance.transform.position.x * 10) + (int)(__instance.transform.position.z * 10));
                 rng.Next();
             }

@@ -290,9 +290,10 @@ namespace CriminalPack
             if (timeTilReset != 0f) return;
             if (timeTilProcess != 0f) return;
             if (!other.gameObject.CompareTag("Player")) return;
+            PlayerManager foundPlayer = other.GetComponent<PlayerManager>();
+            if (foundPlayer.Tagged) return;
             foundContraband.Clear();
             playerItemCount = 0;
-            PlayerManager foundPlayer = other.GetComponent<PlayerManager>();
             for (int i = 0; i < foundPlayer.itm.maxItem + 1; i++)
             {
 

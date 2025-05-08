@@ -43,6 +43,7 @@ namespace CriminalPack
             {
                 npcToTrack.GetComponent<Entity>().ExternalActivity.moveMods.Remove(mm);
                 Destroy(this);
+                ec.items.Remove(pickupToMove);
                 Destroy(pickupToMove.gameObject);
                 return;
             }
@@ -253,6 +254,7 @@ namespace CriminalPack
                 lockedRoomsAll.Add(room);
                 LockedKeycardRoomFunction rf = room.functionObject.AddComponent<LockedKeycardRoomFunction>();
                 rf.doors = placedDoors;
+                rf.Initialize(room);
                 room.functions.AddFunction(rf); // to prevent softlocks
 
                 // todo: make it so it will more smartly find a potential window spot
