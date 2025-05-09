@@ -47,11 +47,13 @@ namespace CriminalPack
     {
         public List<KeycardLockdownDoor> doors = new List<KeycardLockdownDoor>();
         public List<NPC> holdTheDoorFor = new List<NPC>();
-        bool holdingDoor = false;
+        bool holdingDoorForNPC = false;
+        bool holdingDoorForPlayer = false;
 
         public override void OnPlayerEnter(PlayerManager player)
         {
             base.OnPlayerEnter(player);
+            holdingDoorForPlayer = true;
             for (int i = 0; i < doors.Count; i++)
             {
                 doors[i].Open(true, false);
@@ -61,6 +63,7 @@ namespace CriminalPack
         public override void OnPlayerExit(PlayerManager player)
         {
             base.OnPlayerExit(player);
+            holdingDoorForPlayer = false;
             for (int i = 0; i < doors.Count; i++)
             {
                 doors[i].Shut();
@@ -68,48 +71,26 @@ namespace CriminalPack
         }
 
         // all this logic just so Mrs. Pomp doesn't seriously struggle with the prison style.
-        readonly static FieldInfo _currentTargetTile = AccessTools.Field(typeof(Navigator), "currentTargetTile");
         void Update()
         {
             if (room == null) return;
             for (int i = 0; i < room.ec.Npcs.Count; i++)
             {
-                if (room.ec.Npcs[i] is NoLateTeacher) //switch this for a tags check?
+                if (room.ec.Npcs[i] is NoLateTeacher)
                 {
-                    Cell targetCell = (Cell)_currentTargetTile.GetValue(room.ec.Npcs[i].Navigator);
-                    if (targetCell == null) continue;
-                    Cell npcCell = room.ec.CellFromPosition(room.ec.Npcs[i].transform.position);
-                    // if the npc wants to enter this room and isn't already in this room, open the door for them
-                    // if the npc wants to leave the room and is in this room, open the door for them
-                    // otherwise, don't.
+                    NoLateTeacher pomp = (NoLateTeacher)room.ec.Npcs[i];
 
-                    if (((NoLateTeacher)room.ec.Npcs[i]).TargetClassRoom == room && npcCell.room != room)
+                    if ((pomp.TargetClassRoom == room) && (pomp.behaviorStateMachine.currentState is NoLateTeacher_Waiting))
                     {
-                        holdTheDoorFor.Add(room.ec.Npcs[i]);
+                        if (!holdTheDoorFor.Contains(room.ec.Npcs[i]))
+                        {
+                            holdTheDoorFor.Add(room.ec.Npcs[i]);
+                        }
                     }
                     else
                     {
                         holdTheDoorFor.Remove(room.ec.Npcs[i]);
                     }
-                    /*
-                    if ((targetCell.room == room) && (npcCell.room != room))
-                    {
-                        if (!holdTheDoorFor.Contains(room.ec.Npcs[i]))
-                        {
-                            holdTheDoorFor.Add(room.ec.Npcs[i]);
-                        }
-                    }
-                    else if ((targetCell.room != room) && npcCell.room == room)
-                    {
-                        if (!holdTheDoorFor.Contains(room.ec.Npcs[i]))
-                        {
-                            holdTheDoorFor.Add(room.ec.Npcs[i]);
-                        }
-                    }
-                    else if (holdTheDoorFor.Contains(room.ec.Npcs[i]))
-                    {
-                        holdTheDoorFor.Remove(room.ec.Npcs[i]);
-                    }*/
                 }
             }
 
@@ -117,20 +98,23 @@ namespace CriminalPack
             // close it
             // otherwise, if there are people wanting the door to be opened
             // open it
-            if (holdingDoor && holdTheDoorFor.Count == 0)
+            if (!holdingDoorForPlayer)
             {
-                holdingDoor = false;
-                for (int i = 0; i < doors.Count; i++)
+                if (holdingDoorForNPC && holdTheDoorFor.Count == 0)
                 {
-                    doors[i].Shut();
+                    holdingDoorForNPC = false;
+                    for (int i = 0; i < doors.Count; i++)
+                    {
+                        doors[i].Shut();
+                    }
                 }
-            }
-            else if (holdTheDoorFor.Count > 0)
-            {
-                holdingDoor = true;
-                for (int i = 0; i < doors.Count; i++)
+                else if (holdTheDoorFor.Count > 0)
                 {
-                    doors[i].Open(true, false);
+                    holdingDoorForNPC = true;
+                    for (int i = 0; i < doors.Count; i++)
+                    {
+                        doors[i].Open(true, false);
+                    }
                 }
             }
         }

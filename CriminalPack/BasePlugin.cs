@@ -717,7 +717,7 @@ namespace CriminalPack
                     fields[j].SetValue(keyLockDoor, fields[j].GetValue(keyDoorOld));
                 }
                 keyLockDoor.ReflectionSetVariable("shutAtGameStart", true);
-                keyLockDoor.ReflectionSetVariable("speed", 3f);
+                keyLockDoor.ReflectionSetVariable("speed", 5f);
                 keyLockDoor.ReflectionSetVariable("mapUnlockedSprite", keycardDoorOpen);
                 keyLockDoor.ReflectionSetVariable("mapLockedSprite", keycardDoorClosed);
                 keyLockDoor.myValue = i;
