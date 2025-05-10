@@ -13,7 +13,8 @@ namespace CriminalPack
         InFacultyRoom,
         InPreviousTierRoom,
         OutInTheOpen,
-        AttachedToCharacter
+        AttachedToCharacter,
+        InOffice
     }
 
     public class WeightedKeycardPlacement : WeightedSelection<KeycardPlacements>
@@ -102,6 +103,11 @@ namespace CriminalPack
             {
                 selection=KeycardPlacements.AttachedToCharacter,
                 weight=45
+            },
+            new WeightedKeycardPlacement()
+            {
+                selection = KeycardPlacements.InOffice,
+                weight=42
             }
         };
 
@@ -230,6 +236,21 @@ namespace CriminalPack
                     kpf.pickupToMove = ec.CreateItem(targetCell.room, keycardItems[id], new Vector2(targetCell.CenterWorldPosition.x, targetCell.CenterWorldPosition.z));
                     kpf.characterEnumToSearch = chosenEnum;
                     kpf.pickupToMove.gameObject.SetActive(false);
+                    return true;
+                case KeycardPlacements.InOffice:
+                    if (ec.offices.Count == 0) return false;
+                    RoomController officeRc = ec.offices.FirstOrDefault(x => x.functions.GetComponent<CharacterPostersRoomFunction>() != null);
+                    if (officeRc == null) return false;
+                    if (officeRc.itemSpawnPoints.Count > 0)
+                    {
+                        myBuilder.PlaceItemInRoom(keycardItems[id], officeRc, rng);
+                        return true;
+                    }
+                    GameObject[] allGlobes = officeRc.objectObject.GetComponentsInChildren<RendererContainer>().Where(x => x.name.StartsWith("Decor_Globe")).Select(x => x.gameObject).ToArray();
+                    if (allGlobes.Length == 0) return false;
+                    GameObject chosenGlobe = allGlobes[rng.Next(allGlobes.Length)];
+                    myBuilder.CreateItem(officeRc, keycardItems[id], new Vector2(chosenGlobe.transform.position.x, chosenGlobe.transform.position.z), true);
+                    GameObject.DestroyImmediate(chosenGlobe.gameObject);
                     return true;
                 default:
                     throw new NotImplementedException("Unknown keycard placement: " + placement.ToString() + "!");
