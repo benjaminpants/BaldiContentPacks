@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using BepInEx;
+using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
@@ -24,6 +25,7 @@ namespace CriminalPack
 {
     [BepInPlugin("mtm101.rulerp.baldiplus.criminalpackroot", "Criminal Pack Root Mod", "2.0.0.0")]
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi")]
+    [BepInDependency("mtm101.rulerp.baldiplus.leveltyped", BepInDependency.DependencyFlags.SoftDependency)]
     public class CriminalPackPlugin : BaseUnityPlugin
     {
         public static CriminalPackPlugin Instance;
@@ -39,7 +41,7 @@ namespace CriminalPack
 
         IEnumerator ResourcesLoaded()
         {
-            yield return 11;
+            yield return 11 + (Chainloader.PluginInfos.ContainsKey("mtm101.rulerp.baldiplus.leveltyped") ? 1 : 0);
             yield return "Fetching existing assets...";
             SoundObject[] foundSoundObjects = Resources.FindObjectsOfTypeAll<SoundObject>().Where(x => x.GetInstanceID() >= 0).ToArray();
             assetMan.Add<SoundObject>("CorrectBuzz", foundSoundObjects.First(x => x.name == "Activity_Correct"));
@@ -104,18 +106,15 @@ namespace CriminalPack
             assetMan.Add<SoundObject>("DealerUhOh", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "Dealer", "Dealer_UhOh.wav"), "Dealer_UhOh", SoundType.Voice, dealerColor));
             assetMan.Add<SoundObject>("DealerUhOh2", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "Dealer", "Dealer_UhOh2.wav"), "Dealer_UhOh2", SoundType.Voice, dealerColor));
             assetMan.Add<SoundObject>("DealerTaxed", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "Dealer", "Dealer_Taxed.wav"), "Dealer_Taxed", SoundType.Voice, dealerColor));
-            assetMan.Add<SoundObject>("DealerTaxedWithItem", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "Dealer", "Dealer_TaxedWithItem.wav"), "Dealer_TaxedWithItem", SoundType.Voice, dealerColor));
             assetMan.Add<SoundObject>("DealerInterrupted", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "Dealer", "Dealer_Interrupted.wav"), "Dealer_Interrupted", SoundType.Voice, dealerColor));
 
             assetMan.Add<SoundObject>("BaldiThanks", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "CharacterHappy", "Baldi.wav"), "CharacterHappy_Baldi", SoundType.Voice, Color.green));
 
-            // this will be WRONG!!!
             assetMan.Add<SoundObject>("PrincipalThanks", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "CharacterHappy", "Principal.wav"), "CharacterHappy_Principal", SoundType.Voice, Color.white));
             assetMan.Add<SoundObject>("BeansThanks", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "CharacterHappy", "Beans.wav"), "CharacterHappy_Beans", SoundType.Voice, Color.white));
             assetMan.Add<SoundObject>("PlaytimeThanks", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "CharacterHappy", "Playtime.wav"), "CharacterHappy_Playtime", SoundType.Voice, Color.red));
             assetMan.Add<SoundObject>("FirstPrizeThanks", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "CharacterHappy", "FirstPrize.wav"), "CharacterHappy_FirstPrize", SoundType.Voice, Color.white));
             assetMan.Add<SoundObject>("DrReflexThanks", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "CharacterHappy", "DrReflex.wav"), "CharacterHappy_DrReflex", SoundType.Voice, Color.white));
-            assetMan.Add<SoundObject>("TestThanks", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "CharacterHappy", "TheTest.wav"), "CharacterHappy_TheTest", SoundType.Effect, Color.white));
 
             assetMan.Add<SoundObject>("PrincipalFraud", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "PRI_NoFraud.wav"), "Vfx_PRI_NoFraud", SoundType.Voice, Color.white));
             assetMan.Add<SoundObject>("PrincipalContraband", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "PRI_NoContraband.wav"), "Vfx_PRI_NoContraband", SoundType.Voice, Color.white));
@@ -466,8 +465,7 @@ namespace CriminalPack
                 assetMan.Get<SoundObject>("DealerUhOh2"),
             };
 
-            dealer.audSteal = assetMan.Get<SoundObject>("DealerTaxedWithItem");
-            dealer.audStealNoSpare = assetMan.Get<SoundObject>("DealerTaxed");
+            dealer.audSteal = assetMan.Get<SoundObject>("DealerTaxed");
             dealer.audInterrupted = assetMan.Get<SoundObject>("DealerInterrupted");
 
             dealer.audMan = dealer.GetComponent<PropagatedAudioManager>();
@@ -783,6 +781,14 @@ namespace CriminalPack
             NPCMetaStorage.Instance.Get(Character.LookAt).tags.Add("crmp_no_keycard");
             NPCMetaStorage.Instance.Get(Character.Bully).tags.Add("crmp_no_keycard");
             NPCMetaStorage.Instance.Get(Character.Sweep).tags.Add("crmp_no_keycard");
+
+
+            // we move it all into a seperate class so that we don't add an invalid using to this file when leveltyped isn't installed
+            if (Chainloader.PluginInfos.ContainsKey("mtm101.rulerp.baldiplus.leveltyped"))
+            {
+                yield return "Adding Level Typed support...";
+                LevelTypedAdder.Add();
+            }
         }
 
         public static List<ExtendedPosterObject> itemPosters = new List<ExtendedPosterObject>();
@@ -857,6 +863,8 @@ namespace CriminalPack
         {
             // dont delete locked room this time
             //toModify.roomGroup = toModify.roomGroup.Where(x => x.name != "LockedRoom").ToArray();
+
+            toModify.randomEvents.RemoveAll(x => x.selection.Type == RandomEventType.Party); // no.
 
             toModify.potentialPostPlotSpecialHalls = new WeightedRoomAsset[]
             {
@@ -1005,54 +1013,103 @@ namespace CriminalPack
                 {
                     minMax = new IntVector2[]
                     {
-                        new IntVector2(3,6),
+                        new IntVector2(6,9),
                         new IntVector2(12,16)
                     }
                 },
                 prefab = assetMan.Get<Structure_Scanner>("scanner")
             });
 
-            if (levelId <= 3)
+            switch (levelId)
             {
-                structures.Add(new StructureWithParameters()
-                {
-                    parameters = new StructureParameters()
+                case 0:
+                    structures.Add(new StructureWithParameters()
                     {
-                        minMax = new IntVector2[]
+                        parameters = new StructureParameters()
                         {
-                            new IntVector2(4,8),
-                            new IntVector2(1,2),
-                            new IntVector2(1,3)
-                        }
-                    },
-                    prefab = assetMan.Get<Structure_KeycardDoors>("Structure_KeycardDoors")
-                });
-            }
-            else
-            {
-                structures.Add(new StructureWithParameters()
-                {
-                    parameters = new StructureParameters()
+                            minMax = new IntVector2[]
+                            {
+                                new IntVector2(4,4),
+                                new IntVector2(0,0),
+                                new IntVector2(0,0)
+                            }
+                        },
+                        prefab = assetMan.Get<Structure_KeycardDoors>("Structure_KeycardDoors")
+                    });
+                    break;
+                case 1:
+                    structures.Add(new StructureWithParameters()
                     {
-                        minMax = new IntVector2[]
+                        parameters = new StructureParameters()
                         {
-                            new IntVector2(1,2),
-                            new IntVector2(2,4),
-                            new IntVector2(3,3)
-                        }
-                    },
-                    prefab = assetMan.Get<Structure_KeycardDoors>("Structure_KeycardDoors")
-                });
+                            minMax = new IntVector2[]
+                            {
+                                new IntVector2(2,5),
+                                new IntVector2(2,2),
+                                new IntVector2(0,0)
+                            }
+                        },
+                        prefab = assetMan.Get<Structure_KeycardDoors>("Structure_KeycardDoors")
+                    });
+                    break;
+                case 2:
+                    structures.Add(new StructureWithParameters()
+                    {
+                        parameters = new StructureParameters()
+                        {
+                            minMax = new IntVector2[]
+                            {
+                                new IntVector2(3,4),
+                                new IntVector2(2,2),
+                                new IntVector2(2,3)
+                            }
+                        },
+                        prefab = assetMan.Get<Structure_KeycardDoors>("Structure_KeycardDoors")
+                    });
+                    break;
+                case 3:
+                    structures.Add(new StructureWithParameters()
+                    {
+                        parameters = new StructureParameters()
+                        {
+                            minMax = new IntVector2[]
+                            {
+                                new IntVector2(2,2),
+                                new IntVector2(2,3),
+                                new IntVector2(2,2)
+                            }
+                        },
+                        prefab = assetMan.Get<Structure_KeycardDoors>("Structure_KeycardDoors")
+                    });
+                    break;
+                default: // 4 and above or 3 and below
+                    structures.Add(new StructureWithParameters()
+                    {
+                        parameters = new StructureParameters()
+                        {
+                            minMax = new IntVector2[]
+                            {
+                                new IntVector2(1,2),
+                                new IntVector2(2,4),
+                                new IntVector2(3,3)
+                            }
+                        },
+                        prefab = assetMan.Get<Structure_KeycardDoors>("Structure_KeycardDoors")
+                    });
+                    break;
             }
 
             toModify.forcedStructures = structures.ToArray();
         }
 
-
+        public bool ShouldGeneratePrisonType(string levelName, int levelId, SceneObject scene)
+        {
+            if (levelName != "F4" && levelName != "F5") return false; // we dont want to add this type to anything we dont want to
+            return true;
+        }
         void PrisonLevelTypeCreator(string levelName, int levelId, SceneObject scene)
         {
-            if (scene.GetMeta().info != MTM101BaldiDevAPI.Instance.Info) return; // ignore modded scenes
-            if (levelName != "F4" && levelName != "F5") return; // we dont want to add this type to anything we dont want to
+            if (!ShouldGeneratePrisonType(levelName, levelId, scene)) return;
             CustomLevelObject[] supportedObjects = scene.GetCustomLevelObjects();
             CustomLevelObject factoryLevel = supportedObjects.First(x => x.type == LevelType.Factory);
             if (factoryLevel == null) return;
@@ -1072,10 +1129,9 @@ namespace CriminalPack
             scene.randomizedLevelObject = scene.randomizedLevelObject.AddToArray(new WeightedLevelObject()
             {
                 selection = prisonCopy,
-                weight = 999999
+                weight = 90
             });
         }
-
         void GeneratorModifications(string levelName, int levelId, SceneObject scene)
         {
             CustomLevelObject[] objects = scene.GetCustomLevelObjects();

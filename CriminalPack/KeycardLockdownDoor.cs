@@ -85,6 +85,7 @@ namespace CriminalPack
                         if (!holdTheDoorFor.Contains(room.ec.Npcs[i]))
                         {
                             holdTheDoorFor.Add(room.ec.Npcs[i]);
+                            continue;
                         }
                     }
                     else

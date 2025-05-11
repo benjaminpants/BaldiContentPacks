@@ -63,6 +63,11 @@ namespace CriminalPack
                     pickupToMove.icon.spriteRenderer.enabled = true;
                     npcToTrack.GetComponent<Entity>().ExternalActivity.moveMods.Add(mm);
                     foundTarget = true;
+                    if (npcToTrack.ec.CellFromPosition(npcToTrack.transform.position).room.functions.GetComponent<LockedKeycardRoomFunction>())
+                    {
+                        npcToTrack.GetComponent<Entity>().Teleport(npcToTrack.ec.mainHall.RandomEntitySafeCellNoGarbage().CenterWorldPosition);
+                        Debug.LogWarning("Keycarded NPC was trapped in keycarded room! Moving...");
+                    }
                 }
             }
         }
@@ -102,7 +107,7 @@ namespace CriminalPack
             new WeightedKeycardPlacement()
             {
                 selection=KeycardPlacements.AttachedToCharacter,
-                weight=45
+                weight=47
             },
             new WeightedKeycardPlacement()
             {
@@ -116,6 +121,7 @@ namespace CriminalPack
         List<RoomController> classRooms = new List<RoomController>();
         List<Door> blockedDoors = new List<Door>();
         public List<Character> availableCharacterEnums = new List<Character>();
+        bool[] cardsAvailable = new bool[3] { false, false, false };
 
         KeycardManager kcm;
 
@@ -150,6 +156,7 @@ namespace CriminalPack
                 availableCards.RemoveAt(chosenIndex);
                 int chosenClassIndex = rng.Next(classRooms.Count);
                 BlockRoom(classRooms[chosenClassIndex], doorPrefabs[chosenCard], rng);
+                cardsAvailable[chosenCard] = true;
                 classRooms.RemoveAt(chosenClassIndex);
                 if (availableCards.Count == 0) // if we've ran out of a available keycards, repopulate again
                 {
@@ -162,6 +169,7 @@ namespace CriminalPack
             // assign 1 random faculty room to be keycard locked
             for (int i = 0; i < 3; i++)
             {
+                if (!cardsAvailable[i]) continue;
                 if (facultyRooms.Count == 0) break;
                 int chosenIndex = rng.Next(0, facultyRooms.Count);
                 BlockRoom(facultyRooms[chosenIndex], doorPrefabs[i], rng);
@@ -263,7 +271,16 @@ namespace CriminalPack
             for (int j = 0; j < room.doors.Count; j++)
             {
                 if (blockedDoors.Contains(room.doors[j])) continue; // dont block doors that have already been blocked
-                PlaceDoor(kld, room.doors[j].bTile.position, room.doors[j].direction.GetOpposite(), 0f, false, out GameObject door);
+                GameObject door;
+                // make sure all doors are not in the room
+                if (room.doors[j].bTile.room != room)
+                {
+                    PlaceDoor(kld, room.doors[j].bTile.position, room.doors[j].direction.GetOpposite(), 0f, false, out door);
+                }
+                else
+                {
+                    PlaceDoor(kld, room.doors[j].aTile.position, room.doors[j].direction, 0f, false, out door);
+                }
                 KeycardLockdownDoor doorComp = door.GetComponent<KeycardLockdownDoor>();
                 kcm.lockdownDoors.Add(doorComp);
                 blockedDoors.Add(room.doors[j]);

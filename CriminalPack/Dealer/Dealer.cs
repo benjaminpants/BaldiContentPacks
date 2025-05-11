@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using MTM101BaldAPI.Components;
+using MTM101BaldAPI.Registers;
 using Rewired;
 using System;
 using System.Collections;
@@ -44,6 +45,7 @@ namespace CriminalPack
         public float requireSeePlayerTime = 0.06f;
         public float dealerDeliveryWait = 30f;
         public int pointsToReward = 150;
+        public int pointsToPunish = 200;
         public float grappleDistance = 100f; // limit grapple to 10 tiles.
         public AudioManager audMan;
         public Entity entity;
@@ -56,7 +58,6 @@ namespace CriminalPack
         public SoundObject[] audInquireGood = new SoundObject[0];
         public SoundObject[] audInquireBad = new SoundObject[0];
         public SoundObject[] audInquireLost = new SoundObject[0];
-        public SoundObject audStealNoSpare;
         public SoundObject audSteal;
         public SoundObject audInterrupted;
         public WeightedItemObject[] weightedItems = new WeightedItemObject[0];
@@ -73,7 +74,7 @@ namespace CriminalPack
 
         public void SetGuilty()
         {
-            base.SetGuilt(10f, "Bullying");
+            base.SetGuilt(15f, "Bullying");
         }
 
         private IEnumerator TurnPlayer(PlayerManager player, float speed)
@@ -461,7 +462,7 @@ namespace CriminalPack
             this.player = pm;
         }
 
-        static FieldInfo _slotLocked = AccessTools.Field(typeof(ItemManager), "slotLocked");
+        readonly static FieldInfo _value = AccessTools.Field(typeof(ITM_YTPs), "value");
 
         public override void Enter()
         {
@@ -472,34 +473,19 @@ namespace CriminalPack
             dealer.animator.SetDefaultAnimation("Idle", 1f);
             dealer.SetGuilty();
             base.ChangeNavigationState(new NavigationState_WanderRandom(dealer, 0));
-            if (dealer.stolenItem == Items.None)
+            dealer.audMan.PlaySingle(dealer.audSteal);
+            int currentRemaining = Mathf.Min(dealer.pointsToPunish);
+            int pointsToSubtract = 0;
+            while (currentRemaining > 0)
             {
-                dealer.audMan.PlaySingle(dealer.audStealNoSpare);
+                ItemObject recentestPointObject = ItemMetaStorage.Instance.GetPointsObject(UnityEngine.Random.Range(1, currentRemaining + 1), false);
+                int pnts = (int)_value.GetValue(recentestPointObject.item);
+                if (pnts > currentRemaining && (pointsToSubtract != 0)) break;
+                pointsToSubtract += pnts;
+                currentRemaining -= pnts;
+                dealer.stolenItems.Add(recentestPointObject);
             }
-            else
-            {
-                dealer.audMan.PlaySingle(dealer.audSteal);
-            }
-            bool sparedItem = false;
-            List<int> validItemSlots = new List<int>();
-            for (int i = 0; i < player.itm.items.Length; i++)
-            {
-                if (((bool[])_slotLocked.GetValue(player.itm))[i]) continue;
-                if (player.itm.items[i].itemType == Items.None) continue;
-                if ((!sparedItem) && player.itm.items[i].itemType == dealer.stolenItem)
-                {
-                    sparedItem = true;
-                    continue;
-                }
-                validItemSlots.Add(i);
-            }
-            for (int i = 0; i < Mathf.Min(validItemSlots.Count, 3); i++)
-            {
-                int chosenSlotIndex = UnityEngine.Random.Range(0, validItemSlots.Count);
-                dealer.stolenItems.Add(player.itm.items[validItemSlots[chosenSlotIndex]]);
-                player.itm.RemoveItem(validItemSlots[chosenSlotIndex]);
-                validItemSlots.RemoveAt(chosenSlotIndex);
-            }
+            Singleton<CoreGameManager>.Instance.AddPoints(-pointsToSubtract, player.playerNumber, true, false); // dont include so it doesn't get affected
             dealer.stolenItem = Items.None;
         }
 

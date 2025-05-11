@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CarnivalPack", "CarnivalPac
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CriminalPack", "CriminalPack\CriminalPack.csproj", "{2C24A263-7180-4481-AAF7-418EFF3CA7DF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PiratePack", "PiratePack\PiratePack.csproj", "{5BD66A70-DE78-4384-BF6D-A8BBCA530D85}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PiratePack", "PiratePack\PiratePack.csproj", "{5BD66A70-DE78-4384-BF6D-A8BBCA530D85}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

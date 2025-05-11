@@ -585,10 +585,10 @@ namespace PiratePack
         public override void DestinationEmpty()
         {
             loops--;
-            PiratePlugin.Log.LogDebug(loops + " loops left!");
+            //PiratePlugin.Log.LogDebug(loops + " loops left!");
             if (loops <= 0)
             {
-                PiratePlugin.Log.LogDebug("Cann finished loop cycle! Attempting room...");
+                //PiratePlugin.Log.LogDebug("Cann finished loop cycle! Attempting room...");
                 cann.behaviorStateMachine.ChangeState(new Cann_AttemptPerch(cann, currentLoop));
                 return;
             }

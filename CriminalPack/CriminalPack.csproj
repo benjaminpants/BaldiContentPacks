@@ -35,6 +35,9 @@
 		<Reference Include="HarmonyXInterop">
 			<HintPath>..\Dependencies\HarmonyXInterop.dll</HintPath>
 		</Reference>
+		<Reference Include="LevelTyped">
+		  <HintPath>..\DependenciesExtra\LevelTyped.dll</HintPath>
+		</Reference>
 		<Reference Include="Mono.Cecil">
 			<HintPath>..\Dependencies\Mono.Cecil.dll</HintPath>
 		</Reference>

@@ -26,9 +26,11 @@ namespace CriminalPack
             {
                 halls[i].RemoveAll(x => Directions.OpenDirectionsFromBin(x.ConstBin).Count > 2);
                 halls[i].RemoveAll(x => x.shape == TileShapeMask.Corner);
+                halls[i].RemoveAll(x => !x.HasAllFreeWall);
             }
             halls.RemoveAll(x => x.Count == 0);
             int scannerCount = rng.Next(parameters.minMax[0].x, parameters.minMax[0].z);
+            int retries = 0;
             for (int i = 0; i < scannerCount; i++)
             {
                 if (halls.Count == 0)
@@ -41,7 +43,19 @@ namespace CriminalPack
                 halls.RemoveAt(chosenHallIndex);
                 List<Direction> potentialDirections = Directions.OpenDirectionsFromBin(chosenCell.ConstBin);
                 Direction chosenDirection = potentialDirections[rng.Next(0, potentialDirections.Count)];
-                Place(chosenCell, chosenDirection);
+                if (chosenCell.AllCoverageFitsInDirection(CellCoverage.West | CellCoverage.East, chosenDirection))
+                {
+                    Place(chosenCell, chosenDirection);
+                }
+                else
+                {
+                    retries++;
+                    if (retries >= 30)
+                    {
+                        continue;
+                    }
+                    i--; // go back
+                }
             }
         }
 
