@@ -41,7 +41,24 @@ namespace CriminalPack
             obj.minSpecialRooms = 0;
             obj.maxSpecialRooms = 0;
             CriminalPackPlugin.Instance.ModifyIntoPrison(obj, levelId);
-            LevelTypedPlugin.Instance.AddBusPassEnsurerIfNecessary(obj);
+            RoomGroup highPriorityRoomGroup = null;
+            for (int i = 0; i < obj.roomGroup.Length; i++)
+            {
+                RoomGroup roomGroup = obj.roomGroup[i];
+                for (int j = 0; j < roomGroup.potentialRooms.Length; j++)
+                {
+                    if ((bool)roomGroup.potentialRooms[j].selection.itemList.Find((ItemObject x) => x.itemType == Items.BusPass))
+                    {
+                        highPriorityRoomGroup = roomGroup;
+                        break;
+                    }
+                }
+            }
+            if (highPriorityRoomGroup == null) return;
+            List<RoomGroup> groupList = obj.roomGroup.ToList();
+            groupList.Remove(highPriorityRoomGroup);
+            groupList.Insert(0, highPriorityRoomGroup);
+            obj.roomGroup = groupList.ToArray();
         }
 
         public override int GetWeight(int defaultWeight)

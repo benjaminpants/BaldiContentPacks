@@ -432,7 +432,7 @@ namespace CriminalPack
             base.Exit();
             if (!hasGivenItem)
             {
-                dealer.navigationStateMachine.ChangeState(new NavigationState_TargetPosition(dealer, 0, myPlayer.transform.position));
+                ChangeNavigationState(new NavigationState_TargetPosition(dealer, 0, myPlayer.transform.position)); // todo: investigate if this is really right
             }
         }
 

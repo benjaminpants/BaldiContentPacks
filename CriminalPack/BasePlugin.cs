@@ -23,7 +23,7 @@ using UnityEngine.UI;
 
 namespace CriminalPack
 {
-    [BepInPlugin("mtm101.rulerp.baldiplus.criminalpackroot", "Criminal Pack Root Mod", "3.0.0.0")]
+    [BepInPlugin("mtm101.rulerp.baldiplus.criminalpackroot", "Criminal Pack Root Mod", "3.1.0.0")]
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi")]
     [BepInDependency("mtm101.rulerp.baldiplus.leveltyped", BepInDependency.DependencyFlags.SoftDependency)]
     public class CriminalPackPlugin : BaseUnityPlugin
@@ -861,8 +861,9 @@ namespace CriminalPack
         /// <returns></returns>
         public void ModifyIntoPrison(LevelObject toModify, int levelId)
         {
-            // dont delete locked room this time
-            //toModify.roomGroup = toModify.roomGroup.Where(x => x.name != "LockedRoom").ToArray();
+            // add a mandatory chalk eraser
+            toModify.forcedItems.Add(ItemMetaStorage.Instance.FindByEnum(Items.ChalkEraser).value);
+
 
             toModify.randomEvents.RemoveAll(x => x.selection.Type == RandomEventType.Party); // no.
 
@@ -890,23 +891,14 @@ namespace CriminalPack
 
             toModify.maxItemValue += 50;
 
-            RoomGroup facultyGroup = toModify.roomGroup.First(x => x.name == "Faculty");
+            List<RoomGroup> roomGroupList = toModify.roomGroup.ToList();
+
+            RoomGroup facultyGroup = roomGroupList.Find(x => x.name == "Faculty");
             facultyGroup.maxRooms += 4;
             facultyGroup.minRooms += 2;
             facultyGroup.stickToHallChance = 1f;
 
-            RoomGroup principalOfficeGroup = new RoomGroup();
-
-            RoomGroup officeGroup = toModify.roomGroup.First(x => x.name == "Office");
-
-            principalOfficeGroup.minRooms = 1;
-            principalOfficeGroup.maxRooms = 1;
-            principalOfficeGroup.stickToHallChance = 1f;
-            principalOfficeGroup.floorTexture = officeGroup.floorTexture;
-            principalOfficeGroup.wallTexture = officeGroup.wallTexture;
-            principalOfficeGroup.ceilingTexture = officeGroup.ceilingTexture;
-            principalOfficeGroup.potentialRooms = officeGroup.potentialRooms;
-            principalOfficeGroup.name = "FacultyOffice";
+            RoomGroup officeGroup = roomGroupList.Find(x => x.name == "Office");
 
             officeGroup.name = "CellBlocks"; // so other mods don't fuck it up
             officeGroup.minRooms = 25;
@@ -920,7 +912,20 @@ namespace CriminalPack
                 }
             };
 
-            toModify.roomGroup = toModify.roomGroup.AddItem(principalOfficeGroup).ToArray();
+            RoomGroup principalOfficeGroup = new RoomGroup();
+
+            principalOfficeGroup.minRooms = 1;
+            principalOfficeGroup.maxRooms = 1;
+            principalOfficeGroup.stickToHallChance = 1f;
+            principalOfficeGroup.floorTexture = officeGroup.floorTexture;
+            principalOfficeGroup.wallTexture = officeGroup.wallTexture;
+            principalOfficeGroup.ceilingTexture = officeGroup.ceilingTexture;
+            principalOfficeGroup.potentialRooms = officeGroup.potentialRooms;
+            principalOfficeGroup.name = "Office";
+
+            roomGroupList.Insert(0, principalOfficeGroup);
+
+            toModify.roomGroup = roomGroupList.ToArray();
 
             officeGroup.wallTexture = new WeightedTexture2D[]
             {
