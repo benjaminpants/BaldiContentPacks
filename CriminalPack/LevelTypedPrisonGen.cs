@@ -41,6 +41,7 @@ namespace CriminalPack
             obj.minSpecialRooms = 0;
             obj.maxSpecialRooms = 0;
             CriminalPackPlugin.Instance.ModifyIntoPrison(obj, levelId);
+            LevelTypedPlugin.Instance.AddBusPassEnsurerIfNecessary(obj);
         }
 
         public override int GetWeight(int defaultWeight)
