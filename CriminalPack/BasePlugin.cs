@@ -23,7 +23,7 @@ using UnityEngine.UI;
 
 namespace CriminalPack
 {
-    [BepInPlugin("mtm101.rulerp.baldiplus.criminalpackroot", "Criminal Pack Root Mod", "3.1.0.0")]
+    [BepInPlugin("mtm101.rulerp.baldiplus.criminalpackroot", "Criminal Pack Root Mod", "3.1.0.1")]
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi")]
     [BepInDependency("mtm101.rulerp.baldiplus.leveltyped", BepInDependency.DependencyFlags.SoftDependency)]
     public class CriminalPackPlugin : BaseUnityPlugin
@@ -898,7 +898,19 @@ namespace CriminalPack
             facultyGroup.minRooms += 2;
             facultyGroup.stickToHallChance = 1f;
 
+
             RoomGroup officeGroup = roomGroupList.Find(x => x.name == "Office");
+
+            RoomGroup principalOfficeGroup = new RoomGroup();
+
+            principalOfficeGroup.minRooms = 1;
+            principalOfficeGroup.maxRooms = 1;
+            principalOfficeGroup.stickToHallChance = 1f;
+            principalOfficeGroup.floorTexture = officeGroup.floorTexture;
+            principalOfficeGroup.wallTexture = officeGroup.wallTexture;
+            principalOfficeGroup.ceilingTexture = officeGroup.ceilingTexture;
+            principalOfficeGroup.potentialRooms = officeGroup.potentialRooms;
+            principalOfficeGroup.name = "Office";
 
             officeGroup.name = "CellBlocks"; // so other mods don't fuck it up
             officeGroup.minRooms = 25;
@@ -912,20 +924,7 @@ namespace CriminalPack
                 }
             };
 
-            RoomGroup principalOfficeGroup = new RoomGroup();
-
-            principalOfficeGroup.minRooms = 1;
-            principalOfficeGroup.maxRooms = 1;
-            principalOfficeGroup.stickToHallChance = 1f;
-            principalOfficeGroup.floorTexture = officeGroup.floorTexture;
-            principalOfficeGroup.wallTexture = officeGroup.wallTexture;
-            principalOfficeGroup.ceilingTexture = officeGroup.ceilingTexture;
-            principalOfficeGroup.potentialRooms = officeGroup.potentialRooms;
-            principalOfficeGroup.name = "Office";
-
             roomGroupList.Insert(0, principalOfficeGroup);
-
-            toModify.roomGroup = roomGroupList.ToArray();
 
             officeGroup.wallTexture = new WeightedTexture2D[]
             {
@@ -953,6 +952,8 @@ namespace CriminalPack
                     weight=100
                 }
             };
+
+            toModify.roomGroup = roomGroupList.ToArray();
 
             toModify.minPrePlotSpecialHalls = 5;
             toModify.maxPrePlotSpecialHalls = 5;
