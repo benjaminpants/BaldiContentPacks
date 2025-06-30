@@ -310,8 +310,18 @@ namespace PiratePack
         public Pickup[] GetItemsInRoom(RoomController rm)
         {
             List<Pickup> items = new List<Pickup>();
+            if (rm == null)
+            {
+                PiratePlugin.Log.LogWarning("RoomController is null???");
+                return items.ToArray();
+            }
             foreach (Pickup itm in ec.items)
             {
+                if (itm == null)
+                {
+                    PiratePlugin.Log.LogWarning("Pickup is null! Some mod is behaving incorrectly!");
+                    continue;
+                }
                 if (!itm.isActiveAndEnabled) continue;
                 if (itm.transform.parent == rm.objectObject.transform)
                 {

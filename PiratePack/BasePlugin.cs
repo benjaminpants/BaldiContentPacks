@@ -59,7 +59,7 @@ namespace PiratePack
 
     // todo: make cann flap faster if he is going slower than he normally is (and vise versa)
 
-    [BepInPlugin("mtm101.rulerp.baldiplus.piratepack", "Pirate Pack", "1.1.0.0")]
+    [BepInPlugin("mtm101.rulerp.baldiplus.piratepack", "Pirate Pack", "1.1.0.1")]
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi")]
     public class PiratePlugin : BaseUnityPlugin
     {
@@ -331,6 +331,8 @@ namespace PiratePack
                 if (i == 4)
                 {
                     assetMan.Add<ItemObject>("Shield5", shield);
+                    shield.GetMeta().tags.Add("adv_good");
+                    shield.GetMeta().tags.Add("adv_sm_potential_reward");
                 }
             }
 

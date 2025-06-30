@@ -23,7 +23,7 @@ using UnityEngine.UI;
 namespace CarnivalPack
 {
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi")]
-    [BepInPlugin("mtm101.rulerp.bbplus.carnivalpackroot", "Carnival Pack Root Mod", "2.1.0.0")]
+    [BepInPlugin("mtm101.rulerp.bbplus.carnivalpackroot", "Carnival Pack Root Mod", "2.1.0.1")]
     public class CarnivalPackBasePlugin : BaseUnityPlugin
     {
         public static CarnivalPackBasePlugin Instance;
@@ -35,7 +35,7 @@ namespace CarnivalPack
         public ConfigEntry<bool> balloonMayhamTestEnabled;
 
         public AssetManager assetMan = new AssetManager();
-
+        
         public static RoomCategory ZorpCat = EnumExtensions.ExtendEnum<RoomCategory>("ZorpRoom");
 
 
@@ -153,6 +153,7 @@ namespace CarnivalPack
                 .AddSpawnableRoomCategories(ZorpCat)
                 .AddPotentialRoomAsset(ZorpRoom, 100)
                 .SetPoster(AssetLoader.TextureFromMod(this, "zorpster_poster.png"), "PST_PRI_Zorpster1", "PST_PRI_Zorpster2")
+                .SetMetaTags(new string[] { "adv_ev_cold_school_immunity" })
                 .Build();
 
             Zorp.spriteRenderer[0].gameObject.transform.localPosition += Vector3.up;

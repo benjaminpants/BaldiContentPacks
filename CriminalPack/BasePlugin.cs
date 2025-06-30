@@ -23,7 +23,7 @@ using UnityEngine.UI;
 
 namespace CriminalPack
 {
-    [BepInPlugin("mtm101.rulerp.baldiplus.criminalpackroot", "Criminal Pack Root Mod", "3.1.0.1")]
+    [BepInPlugin("mtm101.rulerp.baldiplus.criminalpackroot", "Criminal Pack Root Mod", "3.1.0.2")]
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi")]
     [BepInDependency("mtm101.rulerp.baldiplus.leveltyped", BepInDependency.DependencyFlags.SoftDependency)]
     public class CriminalPackPlugin : BaseUnityPlugin
@@ -369,7 +369,7 @@ namespace CriminalPack
                 .SetNameAndDescription("Itm_IOU", "Desc_IOU")
                 .SetShopPrice(500)
                 .SetGeneratorCost(int.MaxValue) // this should never be in the generator
-                .SetMeta(ItemFlags.CreatesEntity | ItemFlags.Persists, new string[1] { "cann_like" }) // lol
+                .SetMeta(ItemFlags.CreatesEntity | ItemFlags.Persists, new string[] { "cann_like", "adv_sm_potential_reward", "adv_good" })
                 .SetEnum(IOUEnum)
                 .SetItemComponent(iouItem)
                 .Build();
