@@ -329,7 +329,7 @@ namespace CarnivalPack
             frenzyManager.eventPrefab = frenzyEventDedicated;
             GameObject.Destroy(managerTemplate);
 
-
+            ModdedHighscoreManager.AddModToList(Info, CarnivalPackBasePlugin.Instance.balloonFrenzyEnabled.Value ? null : new string[1] { "FrenzyDisabled" });
             // below are the hacks used to playtest balloon mayham
 
             if (balloonMayhamTestEnabled.Value)
@@ -398,12 +398,30 @@ namespace CarnivalPack
                         });
                     }
                 }
+                if (floorNumber >= 1)
+                {
+                    sceneObject.shopItems = sceneObject.shopItems.AddItem(new WeightedItemObject() { selection = assetMan.Get<ItemObject>("CottonCandy"), weight = 75 }).ToArray();
+                    sceneObject.MarkAsNeverUnload();
+                }
                 sceneObject.MarkAsNeverUnload();
             }
-            if (floorNumber >= 1)
+            if (sceneObject.GetMeta().tags.Contains("endless")) //endless map
             {
-                sceneObject.shopItems = sceneObject.shopItems.AddItem(new WeightedItemObject() { selection = assetMan.Get<ItemObject>("CottonCandy"), weight = 75 }).ToArray();
+                sceneObject.potentialNPCs.Add(new WeightedNPC() { selection = assetMan.Get<NPC>("Zorpster"), weight = 100 });
                 sceneObject.MarkAsNeverUnload();
+                for (int i = 0; i < levelObjects.Length; i++)
+                {
+                    levelObjects[i].potentialItems = levelObjects[i].potentialItems.AddItem(new WeightedItemObject() { selection = assetMan.Get<ItemObject>("CottonCandy"), weight = 80 }).ToArray();
+                    if (balloonFrenzyEnabled.Value)
+                    {
+                        levelObjects[i].randomEvents.Add(new WeightedRandomEvent()
+                        {
+                            selection = assetMan.Get<BalloonFrenzy>("FrenzyEvent"),
+                            weight = 50
+                        });
+                    }
+                }
+                sceneObject.shopItems = sceneObject.shopItems.AddItem(new WeightedItemObject() { selection = assetMan.Get<ItemObject>("CottonCandy"), weight = 75 }).ToArray();
             }
 
         }

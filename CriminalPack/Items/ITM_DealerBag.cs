@@ -89,6 +89,7 @@ namespace CriminalPack
             return true;
         }
 
+        static FieldInfo _survivePickup = AccessTools.Field(typeof(Pickup), "survivePickup");
         IEnumerator FlyUpAndBecomeItem()
         {
             float time = 0f;
@@ -107,6 +108,8 @@ namespace CriminalPack
                 // sorry for the delay.
                 RoomController rc = ec.CellFromPosition(transform.position).room;
                 Pickup pickup = ec.CreateItem(rc, toDrop, transform.position);
+                ec.items.Remove(pickup);
+                _survivePickup.SetValue(pickup, false);
                 pickup.transform.position = transform.position; //whatever
                 OnBagUsed(pm, Character.Null, toDrop.itemType);
             }

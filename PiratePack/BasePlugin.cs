@@ -91,6 +91,7 @@ namespace PiratePack
             ModdedSaveGame.AddSaveHandler(new PiratePackSaveGameIO());
             Log = this.Logger;
             youtuberModeEnabled = Config.Bind<bool>("General", "Youtuber Mode", false, "If true, Cann will always appear on Floor 2.");
+            ModdedHighscoreManager.AddModToList(Info);
         }
 
         void FieldtripChanges(FieldTrips tripEnum, FieldTripLoot loot)
@@ -126,7 +127,7 @@ namespace PiratePack
                 }
                 levelObj.MarkAsNeverUnload();
             }
-            if (((levelId > 0) && floorName.StartsWith("F")) || (floorName == "END")) // no shields or cann on floor 1
+            if (((levelId > 0) && floorName.StartsWith("F")) || (obj.GetMeta().tags.Contains("endless"))) // no shields or cann on floor 1
             {
                 obj.shopItems = obj.shopItems.AddRangeToArray(new WeightedItemObject[]
                 {

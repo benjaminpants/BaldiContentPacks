@@ -17,6 +17,7 @@ namespace CriminalPack
         InOffice
     }
 
+    [Serializable]
     public class WeightedKeycardPlacement : WeightedSelection<KeycardPlacements>
     {
 
@@ -140,6 +141,11 @@ namespace CriminalPack
         public override void Generate(LevelGenerator lg, System.Random rng)
         {
             base.Generate(lg, rng);
+            // apply our chances
+            for (int i = 0; i < parameters.chance.Length; i++)
+            {
+                potentialPlacements[i].weight = Mathf.CeilToInt(potentialPlacements[i].weight * parameters.chance[i]);
+            }
             kcm = lg.Ec.gameObject.AddComponent<KeycardManager>();
             myBuilder = lg;
             availableCharacterEnums.AddRange(lg.Ec.npcsToSpawn.Where(x => x.GetMeta().flags.HasFlag(NPCFlags.CanMove) && !x.GetMeta().tags.Contains("crmp_no_keycard")).Select(x => x.Character));

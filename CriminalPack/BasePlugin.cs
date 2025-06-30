@@ -19,6 +19,7 @@ using MTM101BaldAPI.Registers;
 using MTM101BaldAPI.SaveSystem;
 using MTM101BaldAPI.UI;
 using UnityEngine;
+using UnityEngine.Analytics;
 using UnityEngine.UI;
 
 namespace CriminalPack
@@ -41,7 +42,7 @@ namespace CriminalPack
 
         IEnumerator ResourcesLoaded()
         {
-            yield return 11 + (Chainloader.PluginInfos.ContainsKey("mtm101.rulerp.baldiplus.leveltyped") ? 1 : 0);
+            yield return 12 + (Chainloader.PluginInfos.ContainsKey("mtm101.rulerp.baldiplus.leveltyped") ? 1 : 0);
             yield return "Fetching existing assets...";
             SoundObject[] foundSoundObjects = Resources.FindObjectsOfTypeAll<SoundObject>().Where(x => x.GetInstanceID() >= 0).ToArray();
             assetMan.Add<SoundObject>("CorrectBuzz", foundSoundObjects.First(x => x.name == "Activity_Correct"));
@@ -789,6 +790,49 @@ namespace CriminalPack
                 yield return "Adding Level Typed support...";
                 LevelTypedAdder.Add();
             }
+
+            yield return "Adding Endless Level Type...";
+            SceneObject mediumPrison = SceneObject.Instantiate(SceneObjectMetaStorage.Instance.Find(x => x.value.name == "Endless_Factory_Medium").value);
+            mediumPrison.name = "Endless_Prison_Medium";
+            mediumPrison.AddMeta(this, new string[] { "endless" });
+            CustomLevelObject mediumPrisonLevelObject = ((CustomLevelObject)mediumPrison.levelObject).MakeClone();
+            mediumPrisonLevelObject.name = "Prison_Endless1";
+            mediumPrison.levelObject = mediumPrisonLevelObject;
+            List<StructureWithParameters> structures = mediumPrisonLevelObject.forcedStructures.ToList();
+            structures.RemoveAll(x => x.prefab is Structure_Rotohalls);
+            structures.RemoveAll(x => x.prefab is Structure_ConveyorBelt);
+            structures.RemoveAll(x => x.prefab.name == "LockdownDoorConstructor");
+            structures.RemoveAll(x => x.prefab is Structure_LevelBox);
+            mediumPrisonLevelObject.forcedStructures = structures.ToArray();
+            mediumPrisonLevelObject.potentialSpecialRooms = new WeightedRoomAsset[0];
+            mediumPrisonLevelObject.minSpecialRooms = 0;
+            mediumPrisonLevelObject.maxSpecialRooms = 0;
+            ModifyIntoPrison(mediumPrisonLevelObject, -1);
+            GeneratorManagement.EnqueueGeneratorChanges(mediumPrison);
+
+            SceneObject largePrison = SceneObject.Instantiate(SceneObjectMetaStorage.Instance.Find(x => x.value.name == "Endless_Factory_Large").value);
+            largePrison.name = "Endless_Prison_Large";
+            largePrison.AddMeta(this, new string[] { "endless" });
+            CustomLevelObject largePrisonLevelObject = ((CustomLevelObject)largePrison.levelObject).MakeClone();
+            largePrisonLevelObject.name = "Prison_Endless2";
+            largePrison.levelObject = largePrisonLevelObject;
+            List<StructureWithParameters> structureslarge = largePrisonLevelObject.forcedStructures.ToList();
+            structureslarge.RemoveAll(x => x.prefab is Structure_Rotohalls);
+            structureslarge.RemoveAll(x => x.prefab is Structure_ConveyorBelt);
+            structureslarge.RemoveAll(x => x.prefab.name == "LockdownDoorConstructor");
+            structureslarge.RemoveAll(x => x.prefab is Structure_LevelBox);
+            largePrisonLevelObject.forcedStructures = structureslarge.ToArray();
+            largePrisonLevelObject.potentialSpecialRooms = new WeightedRoomAsset[0];
+            largePrisonLevelObject.minSpecialRooms = 0;
+            largePrisonLevelObject.maxSpecialRooms = 0;
+            ModifyIntoPrison(largePrisonLevelObject, -1);
+            GeneratorManagement.EnqueueGeneratorChanges(largePrison);
+
+            EndlessModeManagement.AddEndlessLevel(new ModdedEndlessLevel(Info, "Level_Type_Prison", prisonType, new Dictionary<string, SceneObject>()
+            {
+                { "Level_Size_Medium", mediumPrison },
+                { "Level_Size_Large", largePrison }
+            }));
         }
 
         public static List<ExtendedPosterObject> itemPosters = new List<ExtendedPosterObject>();
@@ -1038,7 +1082,8 @@ namespace CriminalPack
                                 new IntVector2(4,4),
                                 new IntVector2(0,0),
                                 new IntVector2(0,0)
-                            }
+                            },
+                            chance = new float[] { 1f, 1f, 1.2f, 0.8f }
                         },
                         prefab = assetMan.Get<Structure_KeycardDoors>("Structure_KeycardDoors")
                     });
@@ -1053,7 +1098,8 @@ namespace CriminalPack
                                 new IntVector2(2,5),
                                 new IntVector2(2,2),
                                 new IntVector2(0,0)
-                            }
+                            },
+                            chance = new float[] { 1f, 1.2f }
                         },
                         prefab = assetMan.Get<Structure_KeycardDoors>("Structure_KeycardDoors")
                     });
@@ -1068,7 +1114,7 @@ namespace CriminalPack
                                 new IntVector2(3,4),
                                 new IntVector2(2,2),
                                 new IntVector2(2,3)
-                            }
+                            },
                         },
                         prefab = assetMan.Get<Structure_KeycardDoors>("Structure_KeycardDoors")
                     });
@@ -1099,6 +1145,22 @@ namespace CriminalPack
                                 new IntVector2(2,4),
                                 new IntVector2(3,3)
                             }
+                        },
+                        prefab = assetMan.Get<Structure_KeycardDoors>("Structure_KeycardDoors")
+                    });
+                    break;
+                case -1: // for endless? might be bad practice but still
+                    structures.Add(new StructureWithParameters()
+                    {
+                        parameters = new StructureParameters()
+                        {
+                            minMax = new IntVector2[]
+                            {
+                                new IntVector2(5,5),
+                                new IntVector2(1,1),
+                                new IntVector2(1,1)
+                            },
+                            chance = new float[] { 0.1f, 1f, 1.1f, 0f, 1f } // reduced chance for faculty room, increased chance for out in the open, NO ATTACHED TO CHARACTERS
                         },
                         prefab = assetMan.Get<Structure_KeycardDoors>("Structure_KeycardDoors")
                     });
@@ -1142,6 +1204,7 @@ namespace CriminalPack
         {
             CustomLevelObject[] objects = scene.GetCustomLevelObjects();
             scene.MarkAsNeverUnload();
+            bool isEndless = scene.GetMeta().tags.Contains("endless");
 
             // not level object specific
             switch (levelName)
@@ -1194,10 +1257,32 @@ namespace CriminalPack
                     break;
             }
 
+            if (isEndless)
+            {
+                scene.potentialNPCs.Add(new WeightedNPC()
+                {
+                    selection = assetMan.Get<NPC>("Dealer"),
+                    weight = 100
+                });
+                scene.shopItems = scene.shopItems.AddRangeToArray(new WeightedItemObject[]
+                {
+                        new WeightedItemObject()
+                        {
+                            selection = assetMan.Get<ItemObject>("Crowbar"),
+                            weight = 65
+                        },
+                        new WeightedItemObject()
+                        {
+                            selection = assetMan.Get<ItemObject>("Mask"),
+                            weight = 75
+                        }
+                });
+            }
+
             for (int i = 0; i < objects.Length; i++)
             {
                 CustomLevelObject obj = objects[i];
-                if ((levelId > 0) && (obj.type == LevelType.Schoolhouse || obj.type == LevelType.Maintenance || obj.type == prisonType))
+                if (((levelId > 0) || isEndless) && (obj.type == LevelType.Schoolhouse || obj.type == LevelType.Maintenance || obj.type == prisonType))
                 {
                     obj.forcedItems.Add(assetMan.Get<ItemObject>("IOUDecoy"));
                 }
@@ -1322,6 +1407,22 @@ namespace CriminalPack
                         break;
                     default:
                         return;
+                }
+                if (isEndless)
+                {
+                    obj.potentialItems = obj.potentialItems.AddRangeToArray(new WeightedItemObject[]
+                    {
+                        new WeightedItemObject()
+                        {
+                            selection = assetMan.Get<ItemObject>("Crowbar"),
+                            weight = 65
+                        },
+                        new WeightedItemObject()
+                        {
+                            selection = assetMan.Get<ItemObject>("Mask"),
+                            weight = 80
+                        }
+                    });
                 }
                 objects[i].MarkAsNeverUnload();
             }
