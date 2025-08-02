@@ -232,6 +232,7 @@ namespace CriminalPack
             assetMan.AddFromResources<Window>();
             ItemMetaData pouchMeta = new ItemMetaData(Info, new ItemObject[0]);
             pouchMeta.flags = ItemFlags.CreatesEntity | ItemFlags.Persists;
+            pouchMeta.tags.Add("recchars_daycare_throwable");
             Items pouchEnum = EnumExtensions.ExtendEnum<Items>("DealerPouch");
 
 
@@ -797,6 +798,7 @@ namespace CriminalPack
             mediumPrison.AddMeta(this, new string[] { "endless" });
             CustomLevelObject mediumPrisonLevelObject = ((CustomLevelObject)mediumPrison.levelObject).MakeClone();
             mediumPrisonLevelObject.name = "Prison_Endless1";
+            mediumPrisonLevelObject.type = prisonType;
             mediumPrison.levelObject = mediumPrisonLevelObject;
             List<StructureWithParameters> structures = mediumPrisonLevelObject.forcedStructures.ToList();
             structures.RemoveAll(x => x.prefab is Structure_Rotohalls);
@@ -817,6 +819,7 @@ namespace CriminalPack
             largePrisonLevelObject.name = "Prison_Endless2";
             largePrison.levelObject = largePrisonLevelObject;
             List<StructureWithParameters> structureslarge = largePrisonLevelObject.forcedStructures.ToList();
+            largePrisonLevelObject.type = prisonType;
             structureslarge.RemoveAll(x => x.prefab is Structure_Rotohalls);
             structureslarge.RemoveAll(x => x.prefab is Structure_ConveyorBelt);
             structureslarge.RemoveAll(x => x.prefab.name == "LockdownDoorConstructor");

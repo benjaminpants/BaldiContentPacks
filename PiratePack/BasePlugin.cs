@@ -402,6 +402,7 @@ namespace PiratePack
                 .SetShopPrice(500)
                 .SetGeneratorCost(35)
                 .SetItemComponent<ITM_Doubloon>(coinComponent)
+                .SetMeta(ItemFlags.None, new string[] { "recchars_daycare_throwable" } )
                 .Build();
 
             assetMan.Add<ItemObject>("Doubloon", coin);
