@@ -25,14 +25,19 @@ namespace CriminalPack.Patches
             {
                 LevelObject levelObj = objct.GetCurrentCustomLevelObject();
                 objectsSorted = levelObj.potentialItems.Select(x => x.selection).ToList();
-                rng = new System.Random(Singleton<CoreGameManager>.Instance.Seed() + (int)(__instance.transform.position.x * 10) + (int)(__instance.transform.position.z * 10));
+                rng = new System.Random(Singleton<CoreGameManager>.Instance.Seed() + (int)(__instance.transform.position.x * 100) + (int)(__instance.transform.position.z * 100));
                 rng.Next();
             }
             else
             {
                 possibleToSelect = 5;
-                objectsSorted = ItemMetaStorage.Instance.All().Select(x => x.value).ToList();
-                rng = new System.Random(99 + (int)(__instance.transform.position.x * 10) + (int)(__instance.transform.position.z * 10));
+                EnvironmentController ec = Singleton<BaseGameManager>.Instance.Ec;
+                objectsSorted = ec.items.Select(x => x.item).Where(x => (x.itemType != CriminalPackPlugin.IOUDecoyEnum) && (x.itemType != CriminalPackPlugin.IOUEnum) && (x.itemType != CriminalPackPlugin.pouchEnum) && (!EnumExtensions.GetExtendedName<Items>((int)x.itemType).StartsWith("Keycard"))).Distinct().ToList();
+                if (objectsSorted.Count == 0)
+                {
+                    objectsSorted = ItemMetaStorage.Instance.All().Select(x => x.value).Where(x => (x.itemType != CriminalPackPlugin.IOUDecoyEnum) && (x.itemType != CriminalPackPlugin.IOUEnum) && (x.itemType != CriminalPackPlugin.pouchEnum) && (!EnumExtensions.GetExtendedName<Items>((int)x.itemType).StartsWith("Keycard"))).ToList();
+                }
+                rng = new System.Random(99 + (int)(__instance.transform.position.x * 100) + (int)(__instance.transform.position.z * 100));
                 rng.Next();
             }
             objectsSorted.Sort((a, b) => b.value.CompareTo(a.value));

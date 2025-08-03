@@ -183,10 +183,15 @@ namespace CriminalPack
             looker.distance = limited ? grappleDistance : (grappleDistance * 1.75f);
         }
 
-        public CharacterChoice SelectRandomCharacter()
+        public CharacterChoice? SelectRandomCharacter()
         {
             List<Character> validCharacters = ec.npcsToSpawn.Select(x => x.Character).Distinct().ToList();
-            return WeightedCharacterChoice.RandomSelection(characterChoices.Where(x => validCharacters.Contains(x.selection.charEnum)).ToArray());
+            WeightedCharacterChoice[] validCharacterChoice = characterChoices.Where(x => validCharacters.Contains(x.selection.charEnum)).ToArray();
+            if (validCharacterChoice.Length == 0)
+            {
+                return null;
+            }
+            return WeightedCharacterChoice.RandomSelection(validCharacterChoice);
         }
     }
 
@@ -403,11 +408,17 @@ namespace CriminalPack
 
         public override void Enter()
         {
-            CharacterChoice choice = dealer.SelectRandomCharacter();
+            CharacterChoice? choice = dealer.SelectRandomCharacter();
+            if (choice == null)
+            {
+                End();
+                toTransitionTo = new Dealer_Wander(dealer, dealer.repeatAttemptCooldown * 2f);
+                return;
+            }
             // using audGrappled as a placeholder
             toPlay = toPlay.ToArray(); //makes a clone of the array even though i swear arrays werent passed by reference
-            toPlay[toPlay.ToList().IndexOf(dealer.audGrappled)] = choice.sound;
-            chosenCharacter = choice.charEnum;
+            toPlay[toPlay.ToList().IndexOf(dealer.audGrappled)] = choice.Value.sound;
+            chosenCharacter = choice.Value.charEnum;
             base.Enter();
         }
 

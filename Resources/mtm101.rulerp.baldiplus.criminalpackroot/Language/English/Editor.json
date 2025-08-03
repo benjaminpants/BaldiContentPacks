@@ -1,0 +1,34 @@
+{"items":[
+
+{"key":"Ed_Tool_window_cellbars_Title","value":"Cellbars"},
+{"key":"Ed_Tool_window_cellbars_red_Desc","value":"As fragile as regular windows, but oh well! Security theater, as they say!"},
+
+{"key":"Ed_Tool_room_jailcell_Title","value":"Jail Cell"},
+{"key":"Ed_Tool_room_jailcell_Desc","value":"Functionally identical to an Office, but with jail doors instead."},
+
+
+{"key":"Ed_Tool_structure_scanner_Title","value":"Scanner"},
+{"key":"Ed_Tool_structure_scanner_Desc","value":"Alerts Baldi and sends the Principal to the player if they walk under this with a contraband item."},
+{"key":"Ed_Tool_structure_keycarddoor_green_Title","value":"Clearance 1 Door"},
+{"key":"Ed_Tool_structure_keycarddoor_green_Desc","value":"Automatically opens when the player collects a clearance 1 keycard."},
+{"key":"Ed_Tool_structure_keycarddoor_blue_Title","value":"Clearance 2 Door"},
+{"key":"Ed_Tool_structure_keycarddoor_blue_Desc","value":"Automatically opens when the player collects a clearance 2 keycard."},
+{"key":"Ed_Tool_structure_keycarddoor_red_Title","value":"Clearance 3 Door"},
+{"key":"Ed_Tool_structure_keycarddoor_red_Desc","value":"Automatically opens when the player collects a clearance 3 keycard."},
+
+{"key":"Ed_Tool_item_crowbar_Desc","value":"Converts non-standard yellow doors to their standard equivalents, and can force open lockdown doors."},
+{"key":"Ed_Tool_item_thief_mask_Desc","value":"Makes Principal temporarily forget rule breaks and permanently forget rules broken with the mask on."},
+{"key":"Ed_Tool_item_empty_dealer_pouch_Desc","value":"Can be thrown at NPCs dealer can give items to in order to make them temporarily stop."},
+{"key":"Ed_Tool_item_iou_Desc","value":"Can force activate any object that usually requires an item, such as yellow doors, soda machines, tape players, and more."},
+{"key":"Ed_Tool_item_iou_decoy_Desc","value":"Same as the I.O.U, but will appear as a random high value item ingame."},
+{"key":"Ed_Tool_item_keycard_green_Desc","value":"Automatically opens all clearance 1 doors when collected."},
+{"key":"Ed_Tool_item_keycard_blue_Desc","value":"Automatically opens all clearance 2 doors when collected."},
+{"key":"Ed_Tool_item_keycard_red_Desc","value":"Automatically opens all clearance 3 doors when collected."},
+
+{"key":"Ed_Poster_Title_dealer_poster","value":"Dealer's Poster"},
+{"key":"Ed_Poster_Desc_dealer_poster","value":"Dealer's Poster in the office."},
+{"key":"Ed_ScannerPoster_Title","value":"{0} Banned"},
+{"key":"Ed_ScannerPoster_Desc","value":"A poster informing the reader that {0}s are contraband."},
+{"key":"Ed_ScannerPoster_S_Desc","value":"A poster informing the reader that {0} are contraband."}
+
+]}

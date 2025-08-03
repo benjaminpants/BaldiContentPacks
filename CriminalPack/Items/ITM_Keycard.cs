@@ -11,7 +11,13 @@ namespace CriminalPack
 
         public override bool Use(PlayerManager pm)
         {
-            pm.ec.GetComponent<KeycardManager>().AcquireKeycard(myValue);
+            KeycardManager manager = pm.ec.GetComponent<KeycardManager>();
+            if (manager == null)
+            {
+                GameObject.Destroy(this.gameObject);
+                return true;
+            }
+            manager.AcquireKeycard(myValue);
             GameObject.Destroy(this.gameObject);
             return true;
         }

@@ -8,13 +8,17 @@
 
 {"key":"Itm_IOU","value":"I.O.U"},
 {"key":"Desc_IOU","value":"I.O.U\nUse this throwable page on anything that requires an item,\n such as tape players, yellow doors, soda machines and more!\nBe careful though... Principal doesn't like fraud..."},
+{"key":"Itm_IOU_Decoy","value":"I.O.U (Decoy)"},
+{"key":"Desc_IOU_Decoy","value":"I.O.U (Decoy)\nA decoy I.O.U, unobtainable, disguises as another item."},
 
 {"key":"Itm_DealerPouch","value":"Dealer Pouch"},
 {"key":"Desc_DealerPouch","value":"Dealer Pouch\nWho knows what is inside?\nP.S: Stop reading this and deliver it!"},
 {"key":"Itm_EmptyDealerPouch","value":"Empty Dealer Pouch"},
 {"key":"Desc_EmptyDealerPouch","value":"Empty Dealer Pouch\nSomehow, the contents magically vanished...\nP.S: Nice try."},
 
-{"key":"Itm_KeyCardBad","value":"Key Card"},
+{"key":"Itm_KeyCardGreen","value":"Level 1 Key Card"},
+{"key":"Itm_KeyCardBlue","value":"Level 2 Key Card"},
+{"key":"Itm_KeyCardRed","value":"Level 3 Key Card"},
 {"key":"Desc_KeyCardBad","value":"Key Card\nThis shouldn't be possible!"}
 
 ]}

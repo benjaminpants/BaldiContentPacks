@@ -59,6 +59,14 @@ namespace CriminalPack
             }
         }
 
+        public override void Load(List<StructureData> data)
+        {
+            for (int i = 0; i < data.Count; i++)
+            {
+                Place(ec.CellFromPosition(data[i].position), data[i].direction);
+            }
+        }
+
         // time to generate posters!
         public override void Generate(LevelGenerator lg, System.Random rng)
         {

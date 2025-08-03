@@ -26,6 +26,8 @@ namespace CriminalPack
 {
     [BepInPlugin("mtm101.rulerp.baldiplus.criminalpackroot", "Criminal Pack Root Mod", "3.2.0.0")]
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi")]
+    [BepInDependency("mtm101.rulerp.baldiplus.levelstudio", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency("mtm101.rulerp.baldiplus.levelstudioloader", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("mtm101.rulerp.baldiplus.leveltyped", BepInDependency.DependencyFlags.SoftDependency)]
     public class CriminalPackPlugin : BaseUnityPlugin
     {
@@ -35,6 +37,7 @@ namespace CriminalPack
 
         public static Character dealerEnum;
         public static LevelType prisonType;
+        public static Items pouchEnum;
 
         public AssetManager assetMan = new AssetManager();
 
@@ -60,6 +63,8 @@ namespace CriminalPack
             assetMan.Add<Sprite>("IOUSmall", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "IOU_Small.png"), 25f));
             assetMan.Add<Sprite>("IOUCrumpled", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "IOU_Crumpled.png"), 50f));
             assetMan.Add<Sprite>("IOUBig", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "IOU_Big.png"), 50f));
+            assetMan.Add<Sprite>("IOU_DecoySmall", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "IOU_Decoy_Small.png"), 25f));
+            assetMan.Add<Sprite>("IOU_DecoyBig", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "IOU_Decoy_Big.png"), 50f));
             assetMan.Add<Sprite>("IOUBOOM", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "IOU_BOOM.png"), 50f));
             assetMan.Add<Texture2D>("IOU_Wall", AssetLoader.TextureFromMod(this, "IOU_Wall.png"));
             assetMan.Add<Texture2D>("IOU_WallFade", AssetLoader.TextureFromMod(this, "IOU_WallFade.png"));
@@ -233,7 +238,7 @@ namespace CriminalPack
             ItemMetaData pouchMeta = new ItemMetaData(Info, new ItemObject[0]);
             pouchMeta.flags = ItemFlags.CreatesEntity | ItemFlags.Persists;
             pouchMeta.tags.Add("recchars_daycare_throwable");
-            Items pouchEnum = EnumExtensions.ExtendEnum<Items>("DealerPouch");
+            pouchEnum = EnumExtensions.ExtendEnum<Items>("DealerPouch");
 
 
             Entity pouchEntity = new EntityBuilder()
@@ -370,15 +375,15 @@ namespace CriminalPack
                 .SetSprites(assetMan.Get<Sprite>("IOUSmall"), assetMan.Get<Sprite>("IOUBig"))
                 .SetNameAndDescription("Itm_IOU", "Desc_IOU")
                 .SetShopPrice(500)
-                .SetGeneratorCost(int.MaxValue) // this should never be in the generator
+                .SetGeneratorCost(40) // this should never be in the generator, but setup a generator cost anyway, just incase a mod uses it for sorting.
                 .SetMeta(ItemFlags.CreatesEntity | ItemFlags.Persists, new string[] { "cann_like", "adv_sm_potential_reward", "adv_good" })
                 .SetEnum(IOUEnum)
                 .SetItemComponent(iouItem)
                 .Build();
 
             ItemObject IOUDecoy = new ItemBuilder(Info)
-                .SetSprites(assetMan.Get<Sprite>("IOUSmall"), assetMan.Get<Sprite>("IOUBig"))
-                .SetNameAndDescription("erm... you shouldn't be getting this...", "erm....")
+                .SetSprites(assetMan.Get<Sprite>("IOU_DecoySmall"), assetMan.Get<Sprite>("IOU_DecoyBig"))
+                .SetNameAndDescription("Itm_IOU_Decoy", "Desc_IOU_Decoy")
                 .SetShopPrice(500)
                 .SetGeneratorCost(40)
                 .SetMeta(ItemFlags.NoUses | ItemFlags.InstantUse, new string[0])
@@ -418,6 +423,7 @@ namespace CriminalPack
             anim.spriteRenderer = dealer.spriteRenderer[0];
             dealer.animator = anim;
             dealer.spriteRenderer[0].transform.localPosition += new Vector3(0f, 0.4f, 0f);
+            dealer.spriteRenderer[0].sprite = assetMan.Get<Sprite>("dealer");
 
             dealer.audGrappled = assetMan.Get<SoundObject>("DealerScreech");
 
@@ -522,10 +528,13 @@ namespace CriminalPack
 
             // load scanner materials
             Material materialBase = Resources.FindObjectsOfTypeAll<Material>().First(x => x.name == "TileBase" && x.GetInstanceID() >= 0);
+            Shader standardShader = Resources.FindObjectsOfTypeAll<Shader>().First(x => x.name == "Shader Graphs/Standard");
 
             Material scannerBaseMat = new Material(materialBase) { name = "ScannerBaseMat" };
+            scannerBaseMat.shader = standardShader;
             scannerBaseMat.SetMainTexture(AssetLoader.TextureFromMod(this, "Models", "ScannerTex1.png"));
             Material scannerLightGreenMat = new Material(materialBase) { name = "ScannerLightGreenMat" };
+            scannerLightGreenMat.shader = standardShader;
             scannerLightGreenMat.SetMainTexture(AssetLoader.TextureFromMod(this, "Models", "ScannerTex2.png"));
             scannerLightGreenMat.SetTexture("_LightGuide", AssetLoader.TextureFromMod(this, "Models", "ScannerTexLightmap.png"));
 
@@ -567,6 +576,7 @@ namespace CriminalPack
             // add trigger
             BoxCollider scannerCollider = scannerObject.AddComponent<BoxCollider>();
             scannerCollider.size = new Vector3(1f, 1f, 0.1f); // i forgot scale
+            scannerCollider.center = Vector3.up * 0.5f;
             scannerCollider.isTrigger = true; 
 
             // create the structure builder
@@ -585,6 +595,8 @@ namespace CriminalPack
 
             WindowObject cellWindow = ObjectCreators.CreateWindowObject("CellWindow", AssetLoader.TextureFromMod(this, "Prison", "CellWindow.png"), AssetLoader.TextureFromMod(this, "Prison", "CellWindowBroken.png"), AssetLoader.TextureFromMod(this, "Prison", "CellWindow_Mask.png"));
 
+            assetMan.Add("CellWindow", cellWindow);
+
             StandardDoorMats cellMat = ObjectCreators.CreateDoorDataObject("CellDoor", AssetLoader.TextureFromMod(this, "Prison", "CellDoor_Open.png"), AssetLoader.TextureFromMod(this, "Prison", "CellDoor_Closed.png"));
 
             RoomAsset officeAsset = assetMan.Get<RoomAsset>("Room_Office_0");
@@ -597,6 +609,8 @@ namespace CriminalPack
             JailDoorRoomFunction jdrf = prisonCellContainer.gameObject.AddComponent<JailDoorRoomFunction>();
             jdrf.doorMat = cellMat;
             prisonCellContainer.AddFunction(jdrf);
+
+            assetMan.Add("PrisonCellRooomFunction", prisonCellContainer);
 
             // create cellblock
             RoomAsset cellRoom = ScriptableObject.CreateInstance<RoomAsset>();
@@ -749,12 +763,13 @@ namespace CriminalPack
             for (int i = 0; i < 3; i++)
             {
                 Sprite cardSprite = AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 50f, "Keycards", "Keycard" + (i + 1) + ".png");
+                Sprite cardSprite_small = AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 25f, "Keycards", "Keycard" + (i + 1) + "_Small.png");
                 ItemObject cardObject = new ItemBuilder(Info)
                     .SetEnum("Keycard" + keycardEnums[i])
                     .SetShopPrice(1000)
                     .SetGeneratorCost(100)
                     .SetItemComponent<ITM_Keycard>()
-                    .SetSprites(cardSprite, cardSprite)
+                    .SetSprites(cardSprite_small, cardSprite)
                     .SetNameAndDescription("Itm_KeyCard" + keycardEnums[i], "Desc_KeyCardBad")
                     .SetAsInstantUse()
                     .SetPickupSound(cardPickupSound)
@@ -882,12 +897,23 @@ namespace CriminalPack
             };
 
             itemPosters.Add(poster);
+
+            if (Chainloader.PluginInfos.ContainsKey("mtm101.rulerp.baldiplus.levelstudioloader"))
+            {
+                CriminalPackLoaderSupport.AddScannerPosterToLoader(poster);
+            }
+            if (Chainloader.PluginInfos.ContainsKey("mtm101.rulerp.baldiplus.levelstudio"))
+            {
+                CriminalPackEditorSupport.AddScannerPosterToEditor(poster, itemName);
+            }
         }
 
         IEnumerator ResourcesLoadedPost()
         {
+            bool loaderInstalled = Chainloader.PluginInfos.ContainsKey("mtm101.rulerp.baldiplus.levelstudioloader");
+            bool editorInstalled = Chainloader.PluginInfos.ContainsKey("mtm101.rulerp.baldiplus.levelstudio");
             ItemMetaData[] allItems = ItemMetaStorage.Instance.FindAllWithTags(true, "crmp_contraband").Where(x => !x.tags.Contains("crmp_scanner_no_poster")).ToArray();
-            yield return allItems.Length + 1;
+            yield return allItems.Length + 1 + (loaderInstalled ? 1 : 0) + (editorInstalled ? 1 : 0);
             for (int i = 0; i < allItems.Length; i++)
             {
                 yield return "Generating scanner poster for " + EnumExtensions.ToStringExtended(allItems[i].id);
@@ -899,6 +925,25 @@ namespace CriminalPack
 
             yield return "Generating scanner poster for shape keys";
             CreateScannerPoster("PST_Scn_Itm_ShapeKeys", AssetLoader.TextureFromMod(this, "ShapeKeysAll.png"), "ShapeKeys");
+
+            if (loaderInstalled)
+            {
+                yield return "Adding Level Loader Support...";
+                CriminalPackLoaderSupport.AddLoaderContent();
+            }
+
+            if (editorInstalled)
+            {
+                yield return "Adding Level Editor support...";
+                assetMan.Add<Sprite>("Editor_Cellbars", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Editor", "window_cellbars.png"), 1f));
+                assetMan.Add<Sprite>("Editor_Dealer", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Editor", "npc_dealer.png"), 1f));
+                assetMan.Add<Sprite>("Editor_Scanner", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Editor", "structure_scanner.png"), 1f));
+                assetMan.Add<Sprite>("Editor_KeycardDoorRed", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Editor", "structure_keycarddoor_red.png"), 1f));
+                assetMan.Add<Sprite>("Editor_KeycardDoorBlue", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Editor", "structure_keycarddoor_blue.png"), 1f));
+                assetMan.Add<Sprite>("Editor_KeycardDoorGreen", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Editor", "structure_keycarddoor_green.png"), 1f));
+                assetMan.Add<Sprite>("Editor_JailCell", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Editor", "room_jailcell.png"), 1f));
+                CriminalPackEditorSupport.AddEditorContent();
+            }
         }
 
         /// <summary>

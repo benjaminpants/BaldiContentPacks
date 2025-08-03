@@ -138,6 +138,53 @@ namespace CriminalPack
             }
         }
 
+        public override void Load(List<StructureData> data)
+        {
+            kcm = ec.gameObject.AddComponent<KeycardManager>();
+            for (int i = 0; i < data.Count; i++)
+            {
+                PlaceDoorInPremade(data[i].prefab.GetComponent<Door>(), data[i].position, data[i].direction);
+            }
+        }
+
+        public LockedKeycardRoomFunction SetupOrGetLockedRoomFunction(RoomController room)
+        {
+            LockedKeycardRoomFunction existingFunction = room.functionObject.GetComponent<LockedKeycardRoomFunction>();
+            if (existingFunction != null)
+            {
+                return existingFunction;
+            }
+            LockedKeycardRoomFunction rf = room.functionObject.AddComponent<LockedKeycardRoomFunction>();
+            rf.Initialize(room);
+            room.functions.AddFunction(rf); // to prevent softlocks
+            return rf;
+        }
+
+        public void PlaceDoorInPremade(Door prefab, IntVector2 position, Direction direction)
+        {
+            PlaceDoor(prefab, position, direction, 0f, false, out GameObject door);
+            KeycardLockdownDoor comp = door.GetComponent<KeycardLockdownDoor>();
+            kcm.lockdownDoors.Add(comp);
+            if (comp.bTile.room != null)
+            {
+                if (comp.bTile.room.type != RoomType.Hall)
+                {
+                    LockedKeycardRoomFunction rf = SetupOrGetLockedRoomFunction(comp.bTile.room);
+                    rf.doors.Add(comp);
+                    return;
+                }
+            }
+            if (comp.aTile.room != null)
+            {
+                if (comp.aTile.room.type != RoomType.Hall)
+                {
+                    LockedKeycardRoomFunction rf = SetupOrGetLockedRoomFunction(comp.aTile.room);
+                    rf.doors.Add(comp);
+                    return;
+                }
+            }
+        }
+
         public override void Generate(LevelGenerator lg, System.Random rng)
         {
             base.Generate(lg, rng);
