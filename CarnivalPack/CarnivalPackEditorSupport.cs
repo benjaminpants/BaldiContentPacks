@@ -1,0 +1,79 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using PlusStudioLevelLoader;
+using PlusLevelStudio;
+using UnityEngine;
+using MTM101BaldAPI.AssetTools;
+using PlusLevelStudio.Editor;
+using PlusStudioLevelFormat;
+using PlusLevelStudio.Editor.Tools;
+using MTM101BaldAPI;
+
+namespace CarnivalPack
+{
+    public static class CarnivalPackEditorSupport
+    {
+        public static void AddEditorStuff()
+        {
+            AssetManager assetMan = CarnivalPackBasePlugin.Instance.assetMan;
+            BalloonMayhamManagerEditor mayhemEditor = GameObject.Instantiate<BalloonMayhamManager>(assetMan.Get<BalloonMayhamManager>("BalloonMayhem"), MTM101BaldiDevAPI.prefabTransform).gameObject.SwapComponent<BalloonMayhamManager, BalloonMayhamManagerEditor>();
+            mayhemEditor.name = "BalloonMayhemEditor";
+            LevelStudioPlugin.Instance.gameModeAliases.Add("balloonmayhem", new EditorGameMode()
+            {
+                nameKey = "Ed_GameMode_BalloonMayhem",
+                descKey = "Ed_GameMode_BalloonMayhem_Desc",
+                hasSettingsPage = false,
+                prefab = mayhemEditor,
+            });
+            LevelStudioPlugin.Instance.eventSprites.Add("balloonfrenzy", assetMan.Get<Sprite>("Editor_Frenzy_Icon"));
+            LevelStudioPlugin.Instance.selectableTextures.Add("ZorpFloor");
+            LevelStudioPlugin.Instance.selectableTextures.Add("ZorpWall");
+            LevelStudioPlugin.Instance.selectableTextures.Add("ZorpCeil");
+            EditorInterface.AddNPCVisual("zorpster", assetMan.Get<NPC>("Zorpster"));
+            EditorLevelData.AddDefaultTextureAction((Dictionary<string, TextureContainer> dict) =>
+            {
+                dict.Add("zorp", new TextureContainer("ZorpFloor", "ZorpWall", "ZorpCeil"));
+            });
+            EditorInterfaceModes.AddModeCallback(AddContent);
+        }
+
+        public static void AddContent(EditorMode mode, bool vanillaCompliant)
+        {
+            AssetManager assetMan = CarnivalPackBasePlugin.Instance.assetMan;
+            // by default, AddToolToCategory doesnt create the category if it doesn't exist, so if any of these dont exist in the mode we are editing, this will do nothing.
+            EditorInterfaceModes.AddToolToCategory(mode, "rooms", new RoomTool("zorp", assetMan.Get<Sprite>("Editor_Zorpster_Room")));
+            EditorInterfaceModes.AddToolToCategory(mode, "npcs", new NPCTool("zorpster", assetMan.Get<Sprite>("Editor_Zorpster_NPC")));
+            EditorInterfaceModes.AddToolToCategory(mode, "items", new ItemTool("cottoncandy"));
+            if (mode.id == "full")
+            {
+                mode.availableGameModes.Add("balloonmayhem");
+            }
+            mode.availableRandomEvents.Add("balloonfrenzy");
+        }
+    }
+
+    public static class CarnivalPackLoaderSupport
+    {
+        public static void AddLoaderStuff()
+        {
+            AssetManager assetMan = CarnivalPackBasePlugin.Instance.assetMan;
+            LevelLoaderPlugin.Instance.roomTextureAliases.Add("ZorpFloor", assetMan.Get<Texture2D>("ZorpFloor"));
+            LevelLoaderPlugin.Instance.roomTextureAliases.Add("ZorpWall", assetMan.Get<Texture2D>("ZorpWall"));
+            LevelLoaderPlugin.Instance.roomTextureAliases.Add("ZorpCeil", assetMan.Get<Texture2D>("ZorpCeil"));
+            LevelLoaderPlugin.Instance.npcAliases.Add("zorpster", assetMan.Get<NPC>("Zorpster"));
+            LevelLoaderPlugin.Instance.itemObjects.Add("cottoncandy", assetMan.Get<ItemObject>("CottonCandy"));
+            RoomAsset zorpRoom = assetMan.Get<RoomAsset>("Zorp_Room");
+            LevelLoaderPlugin.Instance.roomSettings.Add("zorp", new RoomSettings(zorpRoom.category, zorpRoom.type, zorpRoom.color, zorpRoom.doorMats, zorpRoom.mapMaterial));
+            LevelLoaderPlugin.Instance.randomEventAliases.Add("balloonfrenzy", assetMan.Get<RandomEvent>("BalloonFrenzy"));
+        }
+    }
+
+    public class BalloonMayhamManagerEditor : BalloonMayhamManager
+    {
+        public override void LoadNextLevel()
+        {
+            Singleton<CoreGameManager>.Instance.Quit();
+        }
+    }
+}

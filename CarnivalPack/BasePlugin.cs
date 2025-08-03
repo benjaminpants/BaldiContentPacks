@@ -1,4 +1,5 @@
 ﻿using BepInEx;
+using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using HarmonyLib;
 using MTM101BaldAPI;
@@ -22,6 +23,8 @@ using UnityEngine.UI;
 
 namespace CarnivalPack
 {
+    [BepInDependency("mtm101.rulerp.baldiplus.levelstudio", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency("mtm101.rulerp.baldiplus.levelstudioloader", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi")]
     [BepInPlugin("mtm101.rulerp.bbplus.carnivalpackroot", "Carnival Pack Root Mod", "2.2.0.0")]
     public class CarnivalPackBasePlugin : BaseUnityPlugin
@@ -57,17 +60,6 @@ namespace CarnivalPack
             }
         }
 
-        public class CarnivalPackPage : CustomOptionsCategory
-        {
-            public override void Build()
-            {
-                CreateTextButton(() =>
-                {
-
-                },"TestPlay", "Balloon Frenzy", Vector3.zero, BaldiFonts.ComicSans18, TextAlignmentOptions.TopLeft, Vector2.one * 64, Color.black);
-            }
-        }
-
         public static string balloonMayhamMidi;
         public static RandomEventType balloonFrenzyEventEnum;
         void RegisterImportant()
@@ -86,6 +78,9 @@ namespace CarnivalPack
             assetMan.Add<Sprite>("CottonCandySmall", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "CottonCandySmall.png"), 25f));
             assetMan.Add<Sprite>("CottonCandyBig", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "CottonCandyBig.png"), 50f));
             assetMan.Add<Sprite>("Staminometer_Cotton", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Staminometer_Cotton.png"), 50f));
+            assetMan.Add<Sprite>("Editor_Zorpster_Room", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Editor", "room_zorp.png"), 1f));
+            assetMan.Add<Sprite>("Editor_Zorpster_NPC", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Editor", "npc_zorpster.png"), 1f));
+            assetMan.Add<Sprite>("Editor_Frenzy_Icon", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Editor", "event_balloonfrenzy.png"), 1f));
             AssetLoader.LocalizationFromMod(this);
             if (balloonMayhamTestEnabled.Value)
             {
@@ -265,6 +260,7 @@ namespace CarnivalPack
                 weight = 50
             });
 
+            assetMan.Add<RandomEvent>("BalloonFrenzy", frenzyEvent);
 
             assetMan.Add<SoundObject>("PrincipalNotPopBalloon", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "PRI_NoNotPoppingBalloons.wav"), "Vfx_PRI_NoNotBalloonPop", SoundType.Voice, Color.white));
 
@@ -327,6 +323,7 @@ namespace CarnivalPack
             frenzyManager.ReflectionSetVariable("destroyOnLoad", true);
             frenzyManager.timeUpSound = Resources.FindObjectsOfTypeAll<SoundObject>().First(x => x.GetInstanceID() >= 0 && x.name == "TimeLimitBell");
             frenzyManager.eventPrefab = frenzyEventDedicated;
+            assetMan.Add<BaseGameManager>("BalloonMayhem", frenzyManager);
             GameObject.Destroy(managerTemplate);
 
             ModdedHighscoreManager.AddModToList(Info, CarnivalPackBasePlugin.Instance.balloonFrenzyEnabled.Value ? null : new string[1] { "FrenzyDisabled" });
@@ -339,6 +336,18 @@ namespace CarnivalPack
                 {
                     x.manager = frenzyManager;
                 });
+            }
+
+            if (Chainloader.PluginInfos.ContainsKey("mtm101.rulerp.baldiplus.levelstudioloader"))
+            {
+                //yield return "Adding Level Typed support...";
+                CarnivalPackLoaderSupport.AddLoaderStuff();
+            }
+
+            if (Chainloader.PluginInfos.ContainsKey("mtm101.rulerp.baldiplus.levelstudio"))
+            {
+                //yield return "Adding Level Typed support...";
+                CarnivalPackEditorSupport.AddEditorStuff();
             }
         }
 
