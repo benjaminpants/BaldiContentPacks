@@ -1,4 +1,5 @@
 ﻿using BepInEx;
+using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
@@ -59,6 +60,8 @@ namespace PiratePack
 
     // todo: make cann flap faster if he is going slower than he normally is (and vise versa)
 
+    [BepInDependency("mtm101.rulerp.baldiplus.levelstudio", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency("mtm101.rulerp.baldiplus.levelstudioloader", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInPlugin("mtm101.rulerp.baldiplus.piratepack", "Pirate Pack", "1.2.0.0")]
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi")]
     public class PiratePlugin : BaseUnityPlugin
@@ -84,8 +87,9 @@ namespace PiratePack
             Harmony harmony = new Harmony("mtm101.rulerp.baldiplus.piratepack");
             harmony.PatchAllConditionals();
             Instance = this;
-            LoadingEvents.RegisterOnLoadingScreenStart(Info, LoadEnumerator());
-            LoadingEvents.RegisterOnAssetsLoaded(Info, PostLoadEnumerator(), true);
+            LoadingEvents.RegisterOnAssetsLoaded(Info, LoadEnumerator(), LoadingEventOrder.Start);
+            LoadingEvents.RegisterOnAssetsLoaded(Info, PostLoadEnumerator(), LoadingEventOrder.Post);
+            LoadingEvents.RegisterOnAssetsLoaded(Info, RegularLoadEnumerator(), LoadingEventOrder.Pre);
             GeneratorManagement.Register(this, GenerationModType.Addend, GeneratorChanges);
             GeneratorManagement.RegisterFieldTripLootChange(this, FieldtripChanges);
             ModdedSaveGame.AddSaveHandler(new PiratePackSaveGameIO());
@@ -159,6 +163,28 @@ namespace PiratePack
             obj.MarkAsNeverUnload();
         }
 
+        IEnumerator RegularLoadEnumerator()
+        {
+            bool loaderInstalled = Chainloader.PluginInfos.ContainsKey("mtm101.rulerp.baldiplus.levelstudioloader");
+            bool editorInstalled = Chainloader.PluginInfos.ContainsKey("mtm101.rulerp.baldiplus.levelstudio");
+            yield return 1 + (loaderInstalled ? 1 : 0) + (editorInstalled ? 1 : 0);
+            yield return "Loading...";
+            if (loaderInstalled)
+            {
+                yield return "Adding Level Loader Support...";
+                PiratePackLoaderSupport.AddLoaderContent();
+            }
+
+            if (editorInstalled)
+            {
+                yield return "Adding Level Editor support...";
+                assetMan.Add<Sprite>("Editor_Cann", AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Editor", "npc_cann.png"));
+                assetMan.Add<Sprite>("Editor_Shield3", AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Editor", "item_pshield3.png"));
+                assetMan.Add<Sprite>("Editor_Shield5", AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 1f, "Editor", "item_pshield5.png"));
+                PiratePackEditorSupport.AddEditorContent();
+            }
+        }
+
         IEnumerator PostLoadEnumerator()
         {
             yield return 1;
@@ -171,7 +197,7 @@ namespace PiratePack
             yield return 6;
             yield return "Loading Cann...";
 
-            assetMan.Add<Sprite>("CannPlaceholder", AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 50f, "CannPlaceholder.png"));
+            assetMan.Add<Sprite>("CannPlaceholder", AssetLoader.SpriteFromMod(this, new Vector2(0.5f, 0.2f), 50f, "CannPlaceholder.png"));
 
             Color cannSubtitles = new Color(58f / 255f, 255f / 255f, 88f / 255f);
 

@@ -136,8 +136,14 @@ namespace PiratePack
             FindLoops();
             if (loops.Count == 0)
             {
-                PiratePlugin.Log.LogError("Cann unable to find any loops! Report the current seed to MTM101!");
-                Despawn();
+                PiratePlugin.Log.LogWarning("Cann unable to find any loops for classrooms? Attempting to find loops for all rooms...");
+                FindLoops(false);
+                if (loops.Count == 0)
+                {
+                    PiratePlugin.Log.LogError("Cann unable to find any loops! Report seed to MTM101!!");
+                    PiratePlugin.Log.LogInfo("Cann creating dummy loops to avoid failure...");
+                    FindDummyLoops();
+                }
             }
             behaviorStateMachine.ChangeState(new Cann_FlyLoop(this, loopsAround));
             entity = GetComponent<Entity>();
@@ -377,6 +383,46 @@ namespace PiratePack
             }
         }
 
+        // dumb, and has copy and pasted code,
+        public void FindDummyLoops()
+        {
+            loops.Clear();
+            List<RoomController> roomsWithItems = ec.rooms.Where(x => (GetItemsInRoom(x).Length > 0)).ToList();
+
+            foreach (RoomController rc in roomsWithItems)
+            {
+                CannLoop newLoop = new CannLoop();
+
+                int loopWeight = 100;
+
+                Door[] doors = rc.doors.Where(x => (x.bTile.room.type == RoomType.Hall || x.aTile.room.type == RoomType.Hall)).ToArray();
+
+                if (doors.Length == 0)
+                {
+                    PiratePlugin.Log.LogWarning("Found no hallway linked doors for: " + rc.name + "!");
+                    continue;
+                }
+
+                Door foundDoor = doors[UnityEngine.Random.Range(0, doors.Length)];
+                if (foundDoor == null) continue;
+                Cell foundCell = foundDoor.bTile;
+                newLoop.cellsInLoop = new List<Cell> { foundCell };
+
+                newLoop.rooms.Add(new WeightedRoomController()
+                {
+                    selection = rc,
+                    weight = 100
+                });
+
+                loops.Add(new WeightedCannLoop()
+                {
+                    selection = newLoop,
+                    weight = loopWeight
+                });
+
+            }
+        }
+
         public void FindLoops(bool useClassrooms = true)
         {
             loops.Clear();
@@ -401,7 +447,7 @@ namespace PiratePack
                 if (classRooms.Count == 0)
                 {
                     PiratePlugin.Log.LogError("Cann couldn't find any valid rooms to form loops! Report this seed!");
-                    this.Despawn();
+                    Despawn();
                     return;
                 }
             }
@@ -415,7 +461,10 @@ namespace PiratePack
 
                 if (doors.Length == 0)
                 {
-                    PiratePlugin.Log.LogWarning("Found no hallway linked doors for: " + rc.name + "!");
+                    if (useClassrooms)
+                    {
+                        PiratePlugin.Log.LogWarning("Found no hallway linked doors for: " + rc.name + "!");
+                    }
                     continue;
                 }
 

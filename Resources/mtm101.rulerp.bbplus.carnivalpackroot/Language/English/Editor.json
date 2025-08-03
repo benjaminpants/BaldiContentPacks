@@ -6,6 +6,9 @@
 {"key":"Ed_Tool_item_cottoncandy_Desc","value":"Increases your max run speed and lowers your max walk speed, and disables stamina regen as long as you have stamina!"},
 {"key":"Ed_GameMode_BalloonMayhem","value":"Balloon Mayhem"},
 {"key":"Ed_GameMode_BalloonMayhem_Desc","value":"Collect balloons to keep the timer from ticking to zero! Collecting in combos gives you more time!"},
-{"key":"Ed_RandomEvent_balloonfrenzy","value":"Balloons appear around the school, the player and NPCs must pop them to avoid getting detention!"}
+{"key":"Ed_RandomEvent_balloonfrenzy","value":"Balloons appear around the school, the player and NPCs must pop them to avoid getting detention!"},
+
+{"key":"Ed_Poster_Title_zorpster_poster","value":"Zorpster's Poster"},
+{"key":"Ed_Poster_Desc_zorpster_poster","value":"Zorpster's Poster in the office."}
 
 ]}

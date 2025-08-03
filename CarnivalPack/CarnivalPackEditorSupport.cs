@@ -45,6 +45,7 @@ namespace CarnivalPack
             EditorInterfaceModes.AddToolToCategory(mode, "rooms", new RoomTool("zorp", assetMan.Get<Sprite>("Editor_Zorpster_Room")));
             EditorInterfaceModes.AddToolToCategory(mode, "npcs", new NPCTool("zorpster", assetMan.Get<Sprite>("Editor_Zorpster_NPC")));
             EditorInterfaceModes.AddToolToCategory(mode, "items", new ItemTool("cottoncandy"));
+            EditorInterfaceModes.AddToolToCategory(mode, "posters", new PosterTool(assetMan.Get<NPC>("Zorpster").Poster.baseTexture.name));
             if (mode.id == "full")
             {
                 mode.availableGameModes.Add("balloonmayhem");
@@ -66,6 +67,7 @@ namespace CarnivalPack
             RoomAsset zorpRoom = assetMan.Get<RoomAsset>("Zorp_Room");
             LevelLoaderPlugin.Instance.roomSettings.Add("zorp", new RoomSettings(zorpRoom.category, zorpRoom.type, zorpRoom.color, zorpRoom.doorMats, zorpRoom.mapMaterial));
             LevelLoaderPlugin.Instance.randomEventAliases.Add("balloonfrenzy", assetMan.Get<RandomEvent>("BalloonFrenzy"));
+            LevelLoaderPlugin.Instance.posterAliases.Add(assetMan.Get<NPC>("Zorpster").Poster.baseTexture.name, assetMan.Get<NPC>("Zorpster").Poster);
         }
     }
 
