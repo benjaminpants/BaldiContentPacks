@@ -559,6 +559,11 @@ namespace PiratePack
                 {
                     PiratePlugin.Log.LogDebug("Cann removed all loops from list... Generating new loops?");
                     cann.FindLoops(true);
+                    if (cann.loops.Count == 0)
+                    {
+                        PiratePlugin.Log.LogDebug("No loops? Resorting to dummy loops...");
+                        cann.FindDummyLoops();
+                    }
                 }
                 return null;
             }

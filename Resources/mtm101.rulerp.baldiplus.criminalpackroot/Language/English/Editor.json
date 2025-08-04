@@ -1,7 +1,7 @@
 {"items":[
 
 {"key":"Ed_Tool_window_cellbars_Title","value":"Cellbars"},
-{"key":"Ed_Tool_window_cellbars_red_Desc","value":"As fragile as regular windows, but oh well! Security theater, as they say!"},
+{"key":"Ed_Tool_window_cellbars_Desc","value":"As fragile as regular windows, but oh well! Security theater, as they say!"},
 
 {"key":"Ed_Tool_room_jailcell_Title","value":"Jail Cell"},
 {"key":"Ed_Tool_room_jailcell_Desc","value":"Functionally identical to an Office, but with jail doors instead."},

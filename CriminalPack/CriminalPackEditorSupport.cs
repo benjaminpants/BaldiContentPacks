@@ -159,6 +159,7 @@ namespace CriminalPack.Editor
 
         public void UpdateDoors()
         {
+            return; // PLACEHOLDER, TO AVOID A BUG UNTIL I HAVE TIME TO FIX IT
             for (int i = 0; i < myLevelData.doors.Count; i++)
             {
                 if (myLevelData.doors[i].DoorConnectedToRoom(myLevelData, myRoom, true))
