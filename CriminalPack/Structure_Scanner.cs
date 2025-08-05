@@ -185,6 +185,7 @@ namespace CriminalPack
             audMan.FlushQueue(true);
             SwapMaterial(blackLight);
             powered = false;
+            currentWaitingForPowerNumerator = null;
         }
 
         float timeTilProcess = 0f;
