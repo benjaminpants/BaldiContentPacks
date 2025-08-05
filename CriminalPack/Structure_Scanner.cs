@@ -211,7 +211,6 @@ namespace CriminalPack
 
         void Update()
         {
-            if (!powered) return;
             if (room.type == RoomType.Hall)
             {
                 if (ec.timeOut && !initiatedShutoff)
@@ -224,6 +223,7 @@ namespace CriminalPack
             {
                 SetPower(room.Powered);
             }
+            if (!powered) return;
             if (timeTilReset > 0f)
             {
                 timeTilReset -= Time.deltaTime * ec.EnvironmentTimeScale;
