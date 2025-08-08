@@ -111,6 +111,26 @@ namespace CarnivalPack
                 BinaryReader reader = new BinaryReader(File.OpenRead(roomPaths[i]));
                 BaldiRoomAsset formatAsset = BaldiRoomAsset.Read(reader);
                 ExtendedRoomAsset asset = LevelImporter.CreateRoomAsset(formatAsset);
+
+                if (formatAsset.basicObjects.Find(x => x.prefab == "locker") != null)
+                {
+                    asset.basicSwaps = new List<BasicObjectSwapData>()
+                    {
+                        new BasicObjectSwapData()
+                        {
+                            chance = 0.05f,
+                            potentialReplacements = new WeightedTransform[]
+                            {
+                                new WeightedTransform()
+                                {
+                                    weight = 100,
+                                    selection = LevelLoaderPlugin.Instance.basicObjects["bluelocker"].transform
+                                }
+                            },
+                            prefabToSwap = LevelLoaderPlugin.Instance.basicObjects["locker"].transform
+                        }
+                    };
+                }
                 asset.lightPre = LevelLoaderPlugin.Instance.lightTransforms["standardhanging"];
                 potentialZorpsterRooms.Add(new WeightedRoomAsset()
                 {
@@ -430,9 +450,9 @@ namespace CarnivalPack
             
             //AddSpriteFolderToAssetMan("", 40f, AssetLoader.GetModPath(this), "ZorpAnim");
             //AddAudioFolderToAssetMan(new Color(107f/255f,193f/255f,27/255f), AssetLoader.GetModPath(this), "ZorpLines");
-            LoadingEvents.RegisterOnAssetsLoaded(Info, RegisterImportant, false);
-            LoadingEvents.RegisterOnLoadingScreenStart(Info, PreLoadBulk());
-            LoadingEvents.RegisterOnAssetsLoaded(Info, DisableFrenzyForPotentiallyProblematicNPCs(), true);
+            LoadingEvents.RegisterOnAssetsLoaded(Info, RegisterImportant, LoadingEventOrder.Pre);
+            LoadingEvents.RegisterOnAssetsLoaded(Info, PreLoadBulk(), LoadingEventOrder.Start);
+            LoadingEvents.RegisterOnAssetsLoaded(Info, DisableFrenzyForPotentiallyProblematicNPCs(), LoadingEventOrder.Post);
             GeneratorManagement.Register(this, GenerationModType.Addend, AddNPCs);
             Instance = this;
 

@@ -3,6 +3,9 @@
 {"key":"Ed_Tool_room_zorp_Title","value":"Zorpster's Room"},
 {"key":"Ed_Tool_room_zorp_Desc","value":"No special properties. The place Zorpster sends you is at his spawn point."},
 
+{"key":"Ed_Tool_object_zorp_lavalamp_Title","value":"Big Green Lava Lamp"},
+{"key":"Ed_Tool_object_zorp_lavalamp_Desc","value":"A big green lava lamp beloved by a certain green alien..."},
+
 {"key":"Ed_Tool_item_cottoncandy_Desc","value":"Increases your max run speed and lowers your max walk speed, and disables stamina regen as long as you have stamina!"},
 {"key":"Ed_GameMode_BalloonMayhem","value":"Balloon Mayhem"},
 {"key":"Ed_GameMode_BalloonMayhem_Desc","value":"Collect balloons to keep the timer from ticking to zero! Collecting in combos gives you more time!"},
