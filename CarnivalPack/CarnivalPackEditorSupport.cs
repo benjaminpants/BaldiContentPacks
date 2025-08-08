@@ -31,6 +31,7 @@ namespace CarnivalPack
             LevelStudioPlugin.Instance.selectableTextures.Add("ZorpWall");
             LevelStudioPlugin.Instance.selectableTextures.Add("ZorpCeil");
             EditorInterface.AddNPCVisual("zorpster", assetMan.Get<NPC>("Zorpster"));
+            EditorInterface.AddObjectVisualWithCustomCapsuleCollider("zorp_lavalamp", LevelLoaderPlugin.Instance.basicObjects["zorp_lavalamp"], 1f, 7f, 1, Vector3.up * 3.5f);
             EditorLevelData.AddDefaultTextureAction((Dictionary<string, TextureContainer> dict) =>
             {
                 dict.Add("zorp", new TextureContainer("ZorpFloor", "ZorpWall", "ZorpCeil"));
@@ -44,6 +45,7 @@ namespace CarnivalPack
             // by default, AddToolToCategory doesnt create the category if it doesn't exist, so if any of these dont exist in the mode we are editing, this will do nothing.
             EditorInterfaceModes.AddToolToCategory(mode, "rooms", new RoomTool("zorp", assetMan.Get<Sprite>("Editor_Zorpster_Room")));
             EditorInterfaceModes.AddToolToCategory(mode, "npcs", new NPCTool("zorpster", assetMan.Get<Sprite>("Editor_Zorpster_NPC")));
+            EditorInterfaceModes.AddToolToCategory(mode, "objects", new ObjectToolNoRotation("zorp_lavalamp", assetMan.Get<Sprite>("Editor_LavaLamp")));
             EditorInterfaceModes.AddToolToCategory(mode, "items", new ItemTool("cottoncandy"));
             EditorInterfaceModes.AddToolToCategory(mode, "posters", new PosterTool(assetMan.Get<NPC>("Zorpster").Poster.baseTexture.name));
             if (mode.id == "full")
@@ -59,13 +61,8 @@ namespace CarnivalPack
         public static void AddLoaderStuff()
         {
             AssetManager assetMan = CarnivalPackBasePlugin.Instance.assetMan;
-            LevelLoaderPlugin.Instance.roomTextureAliases.Add("ZorpFloor", assetMan.Get<Texture2D>("ZorpFloor"));
-            LevelLoaderPlugin.Instance.roomTextureAliases.Add("ZorpWall", assetMan.Get<Texture2D>("ZorpWall"));
-            LevelLoaderPlugin.Instance.roomTextureAliases.Add("ZorpCeil", assetMan.Get<Texture2D>("ZorpCeil"));
             LevelLoaderPlugin.Instance.npcAliases.Add("zorpster", assetMan.Get<NPC>("Zorpster"));
             LevelLoaderPlugin.Instance.itemObjects.Add("cottoncandy", assetMan.Get<ItemObject>("CottonCandy"));
-            RoomAsset zorpRoom = assetMan.Get<RoomAsset>("Zorp_Room");
-            LevelLoaderPlugin.Instance.roomSettings.Add("zorp", new RoomSettings(zorpRoom.category, zorpRoom.type, zorpRoom.color, zorpRoom.doorMats, zorpRoom.mapMaterial));
             LevelLoaderPlugin.Instance.randomEventAliases.Add("balloonfrenzy", assetMan.Get<RandomEvent>("BalloonFrenzy"));
             LevelLoaderPlugin.Instance.posterAliases.Add(assetMan.Get<NPC>("Zorpster").Poster.baseTexture.name, assetMan.Get<NPC>("Zorpster").Poster);
         }

@@ -20,13 +20,15 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using PlusStudioLevelLoader;
+using PlusStudioLevelFormat;
 
 namespace CarnivalPack
 {
     [BepInDependency("mtm101.rulerp.baldiplus.levelstudio", BepInDependency.DependencyFlags.SoftDependency)]
-    [BepInDependency("mtm101.rulerp.baldiplus.levelstudioloader", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency("mtm101.rulerp.baldiplus.levelstudioloader", BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi")]
-    [BepInPlugin("mtm101.rulerp.bbplus.carnivalpackroot", "Carnival Pack Root Mod", "2.2.0.0")]
+    [BepInPlugin("mtm101.rulerp.bbplus.carnivalpackroot", "Carnival Pack", "3.0.0.0")]
     public class CarnivalPackBasePlugin : BaseUnityPlugin
     {
         public static CarnivalPackBasePlugin Instance;
@@ -39,7 +41,7 @@ namespace CarnivalPack
 
         public AssetManager assetMan = new AssetManager();
         
-        public static RoomCategory ZorpCat = EnumExtensions.ExtendEnum<RoomCategory>("ZorpRoom");
+        public static RoomCategory zorpsterRoomCat = EnumExtensions.ExtendEnum<RoomCategory>("ZorpRoom");
 
 
         void AddAudioFolderToAssetMan(Color subColor, params string[] path)
@@ -80,6 +82,7 @@ namespace CarnivalPack
             assetMan.Add<Sprite>("Staminometer_Cotton", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Staminometer_Cotton.png"), 50f));
             assetMan.Add<Sprite>("Editor_Zorpster_Room", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Editor", "room_zorp.png"), 1f));
             assetMan.Add<Sprite>("Editor_Zorpster_NPC", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Editor", "npc_zorpster.png"), 1f));
+            assetMan.Add<Sprite>("Editor_LavaLamp", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Editor", "object_zorp_lavalamp.png"), 1f));
             assetMan.Add<Sprite>("Editor_Frenzy_Icon", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Editor", "event_balloonfrenzy.png"), 1f));
             AssetLoader.LocalizationFromMod(this);
             if (balloonMayhamTestEnabled.Value)
@@ -87,55 +90,34 @@ namespace CarnivalPack
                 AssetLoader.LocalizationFromFile(Path.Combine(AssetLoader.GetModPath(this), "BalloonMayham.json"), Language.English);
             }
             balloonMayhamMidi = AssetLoader.MidiFromMod("balloonMayham", this, "Midi", "BalloonMayham.mid");
-            StandardDoorMats doorMats = ObjectCreators.CreateDoorDataObject("ZorpDoor", AssetLoader.TextureFromMod(this, "Map", "ZorpDoor_Open.png"), AssetLoader.TextureFromMod(this, "Map", "ZorpDoor_Closed.png"));
-            // create the room asset
-            RoomAsset ZorpRoom = ScriptableObject.CreateInstance<RoomAsset>();
-            ZorpRoom.name = "Zorpster_Room";
-            ZorpRoom.hasActivity = false;
-            ZorpRoom.activity = new ActivityData();
-            ZorpRoom.ceilTex = assetMan.Get<Texture2D>("ZorpCeil");
-            ZorpRoom.florTex = assetMan.Get<Texture2D>("ZorpFloor");
-            ZorpRoom.wallTex = assetMan.Get<Texture2D>("ZorpWall");
-            ZorpRoom.doorMats = doorMats;
-            ZorpRoom.potentialDoorPositions = new List<IntVector2>() { new IntVector2(0, 0) };
-            ZorpRoom.cells.Add(new CellData()
+
+
+            GameObject lavaLampBase = GameObject.Instantiate<GameObject>(Resources.FindObjectsOfTypeAll<EnvironmentObject>().First(x => x.name == "Plant" && x.GetInstanceID() >= 0 && x.transform.parent == null).gameObject, MTM101BaldiDevAPI.prefabTransform);
+            lavaLampBase.GetComponentInChildren<SpriteRenderer>().sprite = AssetLoader.SpriteFromMod(this, new Vector2(0.5f, 0f), 15f, "LavaLamp.png");
+            lavaLampBase.name = "LavaLamp";
+            assetMan.Add<GameObject>("LavaLamp", lavaLampBase);
+
+            assetMan.Add<StandardDoorMats>("ZorpDoorMats", ObjectCreators.CreateDoorDataObject("ZorpDoor", AssetLoader.TextureFromMod(this, "Map", "ZorpDoor_Open.png"), AssetLoader.TextureFromMod(this, "Map", "ZorpDoor_Closed.png")));
+            LevelLoaderPlugin.Instance.roomSettings.Add("zorp", new RoomSettings(CarnivalPackBasePlugin.zorpsterRoomCat, RoomType.Room, new Color(172f / 255f, 0f, 252f / 255f), assetMan.Get<StandardDoorMats>("ZorpDoorMats"), null));
+            LevelLoaderPlugin.Instance.basicObjects.Add("zorp_lavalamp", assetMan.Get<GameObject>("LavaLamp"));
+            LevelLoaderPlugin.Instance.roomTextureAliases.Add("ZorpFloor", assetMan.Get<Texture2D>("ZorpFloor"));
+            LevelLoaderPlugin.Instance.roomTextureAliases.Add("ZorpWall", assetMan.Get<Texture2D>("ZorpWall"));
+            LevelLoaderPlugin.Instance.roomTextureAliases.Add("ZorpCeil", assetMan.Get<Texture2D>("ZorpCeil"));
+
+            string[] roomPaths = Directory.GetFiles(Path.Combine(AssetLoader.GetModPath(this), "Rooms"), "*.rbpl");
+            List<WeightedRoomAsset> potentialZorpsterRooms = new List<WeightedRoomAsset>();
+            for (int i = 0; i < roomPaths.Length; i++)
             {
-                pos = new IntVector2(0, 0),
-                type = 12
-            });
-            ZorpRoom.cells.Add(new CellData()
-            {
-                pos = new IntVector2(0, 1),
-                type = 9
-            });
-            ZorpRoom.cells.Add(new CellData()
-            {
-                pos = new IntVector2(1, 0),
-                type = 4
-            });
-            ZorpRoom.cells.Add(new CellData()
-            {
-                pos = new IntVector2(1, 1),
-                type = 1
-            });
-            ZorpRoom.cells.Add(new CellData()
-            {
-                pos = new IntVector2(2, 0),
-                type = 6
-            });
-            ZorpRoom.cells.Add(new CellData()
-            {
-                pos = new IntVector2(2, 1),
-                type = 3
-            });
-            ZorpRoom.standardLightCells.Add(new IntVector2(0, 0));
-            ZorpRoom.entitySafeCells.Add(new IntVector2(2, 1));
-            ZorpRoom.eventSafeCells.Add(new IntVector2(0, 0));
-            ZorpRoom.eventSafeCells.Add(new IntVector2(0, 0));
-            ZorpRoom.lightPre = Resources.FindObjectsOfTypeAll<RoomAsset>().First(x => ((UnityEngine.Object)x).name == "Room_ReflexOffice_0").lightPre;
-            ZorpRoom.color = new Color(172f / 255f, 0f, 252f / 255f);
-            ZorpRoom.category = ZorpCat;
-            assetMan.Add<RoomAsset>("Zorp_Room", ZorpRoom);
+                BinaryReader reader = new BinaryReader(File.OpenRead(roomPaths[i]));
+                BaldiRoomAsset formatAsset = BaldiRoomAsset.Read(reader);
+                ExtendedRoomAsset asset = LevelImporter.CreateRoomAsset(formatAsset);
+                asset.lightPre = LevelLoaderPlugin.Instance.lightTransforms["standardhanging"];
+                potentialZorpsterRooms.Add(new WeightedRoomAsset()
+                {
+                    selection = asset,
+                    weight = 100
+                });
+            }
 
 
             Zorpster Zorp = new NPCBuilder<Zorpster>(Info)
@@ -145,8 +127,8 @@ namespace CarnivalPack
                 .IgnorePlayerOnSpawn()
                 .AddLooker()
                 .AddTrigger()
-                .AddSpawnableRoomCategories(ZorpCat)
-                .AddPotentialRoomAsset(ZorpRoom, 100)
+                .AddSpawnableRoomCategories(zorpsterRoomCat)
+                .AddPotentialRoomAssets(potentialZorpsterRooms.ToArray())
                 .SetPoster(AssetLoader.TextureFromMod(this, "zorpster_poster.png"), "PST_PRI_Zorpster1", "PST_PRI_Zorpster2")
                 .SetMetaTags(new string[] { "adv_ev_cold_school_immunity" })
                 .Build();
@@ -338,17 +320,12 @@ namespace CarnivalPack
                 });
             }
 
-            if (Chainloader.PluginInfos.ContainsKey("mtm101.rulerp.baldiplus.levelstudioloader"))
-            {
-                //yield return "Adding Level Typed support...";
-                CarnivalPackLoaderSupport.AddLoaderStuff();
-            }
-
+            CarnivalPackLoaderSupport.AddLoaderStuff();
             if (Chainloader.PluginInfos.ContainsKey("mtm101.rulerp.baldiplus.levelstudio"))
             {
-                //yield return "Adding Level Typed support...";
                 CarnivalPackEditorSupport.AddEditorStuff();
             }
+
         }
 
         public T CreateBalloonVariant<T>(Sprite sprite) where T : FrenzyBalloon
