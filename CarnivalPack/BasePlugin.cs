@@ -110,6 +110,7 @@ namespace CarnivalPack
             {
                 BinaryReader reader = new BinaryReader(File.OpenRead(roomPaths[i]));
                 BaldiRoomAsset formatAsset = BaldiRoomAsset.Read(reader);
+                reader.Close();
                 ExtendedRoomAsset asset = LevelImporter.CreateRoomAsset(formatAsset);
 
                 if (formatAsset.basicObjects.Find(x => x.prefab == "locker") != null)

@@ -21,13 +21,16 @@ using MTM101BaldAPI.UI;
 using UnityEngine;
 using UnityEngine.Analytics;
 using UnityEngine.UI;
+using PlusStudioLevelLoader;
+using PlusStudioLevelFormat;
+using UnityEngine.AI;
 
 namespace CriminalPack
 {
-    [BepInPlugin("mtm101.rulerp.baldiplus.criminalpackroot", "Criminal Pack Root Mod", "3.2.0.0")]
+    [BepInPlugin("mtm101.rulerp.baldiplus.criminalpackroot", "Criminal Pack Root Mod", "4.0.0.0")]
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi")]
     [BepInDependency("mtm101.rulerp.baldiplus.levelstudio", BepInDependency.DependencyFlags.SoftDependency)]
-    [BepInDependency("mtm101.rulerp.baldiplus.levelstudioloader", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency("mtm101.rulerp.baldiplus.levelstudioloader", BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency("mtm101.rulerp.baldiplus.leveltyped", BepInDependency.DependencyFlags.SoftDependency)]
     public class CriminalPackPlugin : BaseUnityPlugin
     {
@@ -38,6 +41,8 @@ namespace CriminalPack
         public static Character dealerEnum;
         public static LevelType prisonType;
         public static Items pouchEnum;
+
+        public List<WeightedRoomAsset> jailCellRooms = new List<WeightedRoomAsset>();
 
         public AssetManager assetMan = new AssetManager();
 
@@ -527,13 +532,13 @@ namespace CriminalPack
             yield return "Creating Scanner...";
 
             // load scanner materials
-            Material materialBase = Resources.FindObjectsOfTypeAll<Material>().First(x => x.name == "TileBase" && x.GetInstanceID() >= 0);
+            Material tileBaseMat = Resources.FindObjectsOfTypeAll<Material>().First(x => x.name == "TileBase" && x.GetInstanceID() >= 0);
             Shader standardShader = Resources.FindObjectsOfTypeAll<Shader>().First(x => x.name == "Shader Graphs/Standard");
 
-            Material scannerBaseMat = new Material(materialBase) { name = "ScannerBaseMat" };
+            Material scannerBaseMat = new Material(tileBaseMat) { name = "ScannerBaseMat" };
             scannerBaseMat.shader = standardShader;
             scannerBaseMat.SetMainTexture(AssetLoader.TextureFromMod(this, "Models", "ScannerTex1.png"));
-            Material scannerLightGreenMat = new Material(materialBase) { name = "ScannerLightGreenMat" };
+            Material scannerLightGreenMat = new Material(tileBaseMat) { name = "ScannerLightGreenMat" };
             scannerLightGreenMat.shader = standardShader;
             scannerLightGreenMat.SetMainTexture(AssetLoader.TextureFromMod(this, "Models", "ScannerTex2.png"));
             scannerLightGreenMat.SetTexture("_LightGuide", AssetLoader.TextureFromMod(this, "Models", "ScannerTexLightmap.png"));
@@ -611,73 +616,84 @@ namespace CriminalPack
             prisonCellContainer.AddFunction(jdrf);
 
             assetMan.Add("PrisonCellRooomFunction", prisonCellContainer);
+            LevelLoaderPlugin.Instance.windowObjects.Add("cellbars", assetMan.Get<WindowObject>("CellWindow"));
+            LevelLoaderPlugin.Instance.roomTextureAliases.Add("PrisonFloor", assetMan.Get<Texture2D>("PrisonFloor"));
+            LevelLoaderPlugin.Instance.roomTextureAliases.Add("PrisonWall", assetMan.Get<Texture2D>("PrisonWall"));
 
-            // create cellblock
-            RoomAsset cellRoom = ScriptableObject.CreateInstance<RoomAsset>();
-
-            cellRoom.mapMaterial = officeAsset.mapMaterial;
-            cellRoom.color = officeAsset.color;
-
-            cellRoom.name = "CellBlock";
-            ((UnityEngine.Object)cellRoom).name = "CellBlock";
-            cellRoom.category = RoomCategory.Office;
-            cellRoom.hasActivity = false;
-            cellRoom.activity = new ActivityData();
-            cellRoom.ceilTex = assetMan.Get<Texture2D>("PrisonFloor");
-            cellRoom.florTex = assetMan.Get<Texture2D>("PrisonFloor");
-            cellRoom.wallTex = assetMan.Get<Texture2D>("PrisonWall");
-            cellRoom.itemSpawnPoints = new List<ItemSpawnPoint>
+            LevelLoaderPlugin.Instance.roomSettings.Add("jailcell", new RoomSettings(RoomCategory.Office, RoomType.Room, officeAsset.color, cellMat , officeAsset.mapMaterial)
             {
-                new ItemSpawnPoint()
+                container = prisonCellContainer
+            });
+
+            // load up bed
+
+            Material bedMatressMat = new Material(tileBaseMat) { name = "BedMattress" };
+            bedMatressMat.shader = standardShader;
+            bedMatressMat.SetMainTexture(AssetLoader.TextureFromMod(this, "Models", "BedMattress.png"));
+
+            Material bedMatressSideMat = new Material(tileBaseMat) { name = "BedMattress_Side" };
+            bedMatressSideMat.shader = standardShader;
+            bedMatressSideMat.SetMainTexture(AssetLoader.TextureFromMod(this, "Models", "BedMattress_Side.png"));
+
+            Material bedFrameSMat = new Material(tileBaseMat) { name = "BedFrameS" };
+            bedFrameSMat.shader = standardShader;
+            bedFrameSMat.SetMainTexture(AssetLoader.TextureFromMod(this, "Models", "BedFrameS.png"));
+
+            Material bedFrameFMat = new Material(tileBaseMat) { name = "BedFrameF" };
+            bedFrameFMat.shader = standardShader;
+            bedFrameFMat.SetMainTexture(AssetLoader.TextureFromMod(this, "Models", "BedFrameF.png"));
+
+            Material pillowMat = new Material(tileBaseMat) { name = "BedFrameF" };
+            pillowMat.shader = standardShader;
+            pillowMat.SetMainTexture(AssetLoader.TextureFromMod(this, "Models", "Pillow.png"));
+
+            GameObject bedObject = AssetLoader.ModelFromModManualMaterials(this, new Dictionary<string, Material>()
+            {
+                { "bedframe_s", bedFrameSMat },
+                { "bedframe_f", bedFrameFMat },
+                { "mattress", bedMatressMat },
+                { "mattress_side", bedMatressSideMat },
+                { "pillow", pillowMat }
+            }, "Models", "prisonbed.obj");
+
+            bedObject.layer = LayerMask.NameToLayer("Ignore Raycast");
+            for (int i = 0; i < bedObject.transform.childCount; i++)
+            {
+                bedObject.transform.GetChild(i).transform.localScale = new Vector3(7.5f, 7.5f, -7.5f);
+            }
+            bedObject.name = "PrisonBed";
+            bedObject.transform.localScale = Vector3.one;
+            bedObject.ConvertToPrefab(true);
+            BoxCollider bedCollider = bedObject.AddComponent<BoxCollider>();
+            bedCollider.size = new Vector3(7.5f, 5f, 15f);
+            bedCollider.center = Vector3.up * 2.5f;
+            bedObject.AddComponent<NavMeshObstacle>().size = new Vector3(7.5f, 10f, 15f);
+            bedObject.GetComponent<NavMeshObstacle>().carving = true;
+
+            LevelLoaderPlugin.Instance.basicObjects.Add("prison_cell_bed", bedObject);
+            assetMan.Add<GameObject>("PrisonCellBed", bedObject);
+
+            string[] roomPaths = Directory.GetFiles(Path.Combine(AssetLoader.GetModPath(this), "Cells"), "*.rbpl");
+            for (int i = 0; i < roomPaths.Length; i++)
+            {
+                BinaryReader reader = new BinaryReader(File.OpenRead(roomPaths[i]));
+                BaldiRoomAsset formatAsset = BaldiRoomAsset.Read(reader);
+                reader.Close();
+                formatAsset.windowType = "cellbars";
+                formatAsset.windowChance = 0.8f;
+                formatAsset.maxItemValue = 25;
+                ExtendedRoomAsset cellRoom = LevelImporter.CreateRoomAsset(formatAsset);
+                cellRoom.minItemValue = 1;
+                int roomWeight = 50;
+                roomWeight -= formatAsset.cells.Count * 2;
+                roomWeight /= Mathf.Max(1, formatAsset.basicObjects.Count(x => x.prefab == "prison_cell_bed"));
+                roomWeight = Mathf.Max(10, roomWeight * 2);
+                jailCellRooms.Add(new WeightedRoomAsset()
                 {
-                    chance = 0.5f,
-                    minValue = 1,
-                    maxValue = 25,
-                    position = new Vector2(5f, 5f),
-                    weight = 25
-                }
-            };
-            cellRoom.maxItemValue = 25;
-            cellRoom.minItemValue = 1;
-            cellRoom.doorMats = cellMat;
-            cellRoom.roomFunctionContainer = prisonCellContainer;
-            cellRoom.potentialDoorPositions = new List<IntVector2>() { new IntVector2(1, 0), new IntVector2(2, 0) };
-            cellRoom.cells.Add(new CellData()
-            {
-                pos = new IntVector2(0, 0),
-                type = 12
-            });
-            cellRoom.cells.Add(new CellData()
-            {
-                pos = new IntVector2(0, 1),
-                type = 9
-            });
-            cellRoom.cells.Add(new CellData()
-            {
-                pos = new IntVector2(1, 0),
-                type = 4
-            });
-            cellRoom.cells.Add(new CellData()
-            {
-                pos = new IntVector2(1, 1),
-                type = 1
-            });
-            cellRoom.cells.Add(new CellData()
-            {
-                pos = new IntVector2(2, 0),
-                type = 6
-            });
-            cellRoom.cells.Add(new CellData()
-            {
-                pos = new IntVector2(2, 1),
-                type = 3
-            });
-            cellRoom.standardLightCells.Add(new IntVector2(2, 1));
-            cellRoom.entitySafeCells.Add(new IntVector2(2, 1));
-            cellRoom.eventSafeCells.Add(new IntVector2(2, 1));
-            cellRoom.windowChance = 0.8f;
-            cellRoom.windowObject = cellWindow;
-            assetMan.Add<RoomAsset>("CellBlock", cellRoom);
+                    selection = cellRoom,
+                    weight = roomWeight
+                });
+            }
 
             yield return "Setting up keycards...";
             HudManager hudMan = Resources.FindObjectsOfTypeAll<HudManager>().First(x => x.GetInstanceID() >= 0 && x.name == "MainHud");
@@ -942,6 +958,7 @@ namespace CriminalPack
                 assetMan.Add<Sprite>("Editor_KeycardDoorBlue", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Editor", "structure_keycarddoor_blue.png"), 1f));
                 assetMan.Add<Sprite>("Editor_KeycardDoorGreen", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Editor", "structure_keycarddoor_green.png"), 1f));
                 assetMan.Add<Sprite>("Editor_JailCell", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Editor", "room_jailcell.png"), 1f));
+                assetMan.Add<Sprite>("Editor_PrisonCellBed", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Editor", "object_prison_cell_bed.png"), 1f));
                 CriminalPackEditorSupport.AddEditorContent();
             }
         }
@@ -953,8 +970,10 @@ namespace CriminalPack
         /// <returns></returns>
         public void ModifyIntoPrison(LevelObject toModify, int levelId)
         {
-            // add a mandatory chalk eraser
+            // add 2 mandatory chalk erasers and a no squee
             toModify.forcedItems.Add(ItemMetaStorage.Instance.FindByEnum(Items.ChalkEraser).value);
+            toModify.forcedItems.Add(ItemMetaStorage.Instance.FindByEnum(Items.ChalkEraser).value);
+            toModify.forcedItems.Add(ItemMetaStorage.Instance.FindByEnum(Items.Wd40).value);
 
 
             toModify.randomEvents.RemoveAll(x => x.selection.Type == RandomEventType.Party); // no.
@@ -1007,14 +1026,7 @@ namespace CriminalPack
             officeGroup.name = "CellBlocks"; // so other mods don't fuck it up
             officeGroup.minRooms = 25;
             officeGroup.maxRooms = 40;
-            officeGroup.potentialRooms = new WeightedRoomAsset[1]
-            {
-                new WeightedRoomAsset()
-                {
-                    selection = assetMan.Get<RoomAsset>("CellBlock"),
-                    weight = 100
-                }
-            };
+            officeGroup.potentialRooms = jailCellRooms.ToArray(); // todo: consider cloning so mods dont break it?
 
             roomGroupList.Insert(0, principalOfficeGroup);
 
@@ -1052,6 +1064,7 @@ namespace CriminalPack
 
             toModify.minPlots = 8;
             toModify.maxPlots = 12;
+            //toModify.edgeBuffer = 10;
 
             toModify.standardLightColor = new Color(249f/255f, 241f/255f, 199f/255f);
             toModify.standardLightStrength = 6;
@@ -1488,8 +1501,8 @@ namespace CriminalPack
             Harmony harmony = new Harmony("mtm101.rulerp.baldiplus.criminalpackroot");
             harmony.PatchAllConditionals();
             Instance = this;
-            LoadingEvents.RegisterOnAssetsLoaded(Info, ResourcesLoaded(), false);
-            LoadingEvents.RegisterOnAssetsLoaded(Info, ResourcesLoadedPost(), true);
+            LoadingEvents.RegisterOnAssetsLoaded(Info, ResourcesLoaded(), LoadingEventOrder.Pre);
+            LoadingEvents.RegisterOnAssetsLoaded(Info, ResourcesLoadedPost(), LoadingEventOrder.Post);
             AssetLoader.LocalizationFromMod(this);
             GeneratorManagement.Register(this, GenerationModType.Addend, GeneratorModifications);
             GeneratorManagement.Register(this, GenerationModType.Preparation, PrisonLevelTypeCreator);

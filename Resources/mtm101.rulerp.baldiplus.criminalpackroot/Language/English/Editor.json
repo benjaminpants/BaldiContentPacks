@@ -6,6 +6,8 @@
 {"key":"Ed_Tool_room_jailcell_Title","value":"Jail Cell"},
 {"key":"Ed_Tool_room_jailcell_Desc","value":"Functionally identical to an Office, but with jail doors instead."},
 
+{"key":"Ed_Tool_object_prison_cell_bed_Title","value":"Prison Bed"},
+{"key":"Ed_Tool_object_prison_cell_bed_Desc","value":"This bed is so uncomfortable it's considered inhumane to force anyone to sleep on it!"},
 
 {"key":"Ed_Tool_structure_scanner_Title","value":"Scanner"},
 {"key":"Ed_Tool_structure_scanner_Desc","value":"Alerts Baldi and sends the Principal to the player if they walk under this with a contraband item."},

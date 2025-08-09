@@ -30,6 +30,9 @@ namespace CriminalPack
             LevelStudioPlugin.Instance.structureTypes.Add("scanner", typeof(HallDoorStructureLocation));
             LevelStudioPlugin.Instance.selectableTextures.Add("PrisonFloor");
             LevelStudioPlugin.Instance.selectableTextures.Add("PrisonWall");
+
+            EditorInterface.AddObjectVisual("prison_cell_bed", assetMan.Get<GameObject>("PrisonCellBed"), true);
+
             EditorInterfaceModes.AddModeCallback(AddContentToMode);
             EditorLevelData.AddDefaultTextureAction((Dictionary<string, TextureContainer> dict) =>
             {
@@ -45,6 +48,7 @@ namespace CriminalPack
             EditorInterfaceModes.AddToolToCategory(mode, "rooms", new RoomTool("jailcell", assetMan.Get<Sprite>("Editor_JailCell")));
             EditorInterfaceModes.AddToolToCategory(mode, "posters", new PosterTool(assetMan.Get<NPC>("Dealer").Poster.baseTexture.name));
             EditorInterfaceModes.AddToolToCategory(mode, "npcs", new NPCTool("dealer", assetMan.Get<Sprite>("Editor_Dealer")));
+            EditorInterfaceModes.AddToolToCategory(mode, "objects", new ObjectTool("prison_cell_bed", assetMan.Get<Sprite>("Editor_PrisonCellBed")));
             EditorInterfaceModes.AddToolsToCategory(mode, "items", new ItemTool[]
             {
                 new ItemTool("crowbar"),
@@ -102,14 +106,6 @@ namespace CriminalPack
             LevelLoaderPlugin.Instance.itemObjects.Add("keycard_green", keyDoor.keycardItems[0]);
             LevelLoaderPlugin.Instance.itemObjects.Add("keycard_blue", keyDoor.keycardItems[1]);
             LevelLoaderPlugin.Instance.itemObjects.Add("keycard_red", keyDoor.keycardItems[2]);
-            LevelLoaderPlugin.Instance.windowObjects.Add("cellbars", assetMan.Get<WindowObject>("CellWindow"));
-            LevelLoaderPlugin.Instance.roomTextureAliases.Add("PrisonFloor", assetMan.Get<Texture2D>("PrisonFloor"));
-            LevelLoaderPlugin.Instance.roomTextureAliases.Add("PrisonWall", assetMan.Get<Texture2D>("PrisonWall"));
-            RoomAsset cellRoomAsset = assetMan.Get<RoomAsset>("CellBlock");
-            LevelLoaderPlugin.Instance.roomSettings.Add("jailcell", new RoomSettings(cellRoomAsset.category, cellRoomAsset.type, cellRoomAsset.color, cellRoomAsset.doorMats, cellRoomAsset.mapMaterial)
-            {
-                container = cellRoomAsset.roomFunctionContainer
-            });
         }
 
         public static void AddScannerPosterToLoader(PosterObject obj)
