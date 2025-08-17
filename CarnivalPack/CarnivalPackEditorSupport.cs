@@ -72,7 +72,7 @@ namespace CarnivalPack
     {
         public override void LoadNextLevel()
         {
-            Singleton<CoreGameManager>.Instance.Quit();
+            EditorPlayModeManager.Instance.Win();
         }
     }
 }
