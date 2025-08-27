@@ -755,7 +755,11 @@ namespace PiratePack
                     for (int i = 0; i < cann.ec.Npcs.Count; i++)
                     {
                         NPC npc = cann.ec.Npcs[i];
-                        if (npc.GetMeta().tags.Contains("cann_ignore_distraction")) continue; // these characters already have ways of hearing and should ignore cann's distraction
+                        NPCMetadata npcMeta = npc.GetMeta();
+                        if (npcMeta != null)
+                        {
+                            if (npcMeta.tags.Contains("cann_ignore_distraction")) continue;
+                        }
                         npc.navigationStateMachine.ChangeState(new NavigationState_TargetPositionRevert(npc, navValue, cann.transform.position, false));
                     }
                 }

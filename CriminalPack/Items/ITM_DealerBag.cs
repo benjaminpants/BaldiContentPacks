@@ -35,10 +35,11 @@ namespace CriminalPack
         bool popped = false;
 
         // todo: figure out wtf is going on with this
-        public void EntityTriggerEnter(Collider other)
+        public void EntityTriggerEnter(Collider other, bool validCollision)
         {
             if (pm == null) return;
             if (popped) return;
+            if (!validCollision) return;
             if (other.TryGetComponent(out NPC npc))
             {
                 WeightedCharacterChoice choice = Dealer.characterChoices.Find(x => x.selection.charEnum == npc.Character);
@@ -51,12 +52,12 @@ namespace CriminalPack
             }
         }
 
-        public void EntityTriggerExit(Collider other)
+        public void EntityTriggerExit(Collider other, bool validCollision)
         {
             
         }
 
-        public void EntityTriggerStay(Collider other)
+        public void EntityTriggerStay(Collider other, bool validCollision)
         {
             
         }

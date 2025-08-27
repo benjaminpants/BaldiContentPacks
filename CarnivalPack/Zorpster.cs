@@ -50,7 +50,7 @@ namespace CarnivalPack
         public float standardSpeed = 22f;
         public float speedVariance = 10f;
 
-        public float nonPlayerSuckAddition = 8f;
+        public float nonPlayerSuckAddition = 12f;
 
         private float currentOffset = 0f;
 
@@ -247,7 +247,6 @@ namespace CarnivalPack
             Zorp.animator.Play("TractBack", 1f);
             Zorp.animator.SetDefaultAnimation("Idle", 1f);
             Zorp.MoveSpriteByAmount(2.75f, 1f);
-            //ent.SetBaseRotation(90);
         }
 
         public override void Enter()
@@ -283,9 +282,8 @@ namespace CarnivalPack
             moveMod.movementAddend = Zorp.Navigator.Velocity.normalized * Zorp.Navigator.speed * Zorp.Navigator.Am.Multiplier;
         }
 
-        public override void OnStateTriggerExit(Collider other)
+        public override void OnStateTriggerExit(Collider other, bool validCollision)
         {
-            base.OnStateTriggerExit(other);
             if (other.GetComponent<Entity>() == targetEnt)
             {
                 base.ChangeNavigationState(new NavigationState_WanderRandom(Zorp, 0));
@@ -301,7 +299,6 @@ namespace CarnivalPack
             targetEnt.SetTrigger(true);
             SetLookerStateIfExists(true);
             Zorp.MoveSpriteToBase(3f);
-            //targetEnt.SetBaseRotation(0);
         }
 
         public override void DestinationEmpty()
@@ -456,8 +453,13 @@ namespace CarnivalPack
             }
         }
 
-        public override void OnStateTriggerEnter(Collider other)
+        public override void OnStateTriggerEnter(Collider other, bool validCollision)
         {
+            if (!validCollision)
+            {
+                Zorp.animator.Play("TractBack", 1f);
+                Zorp.BecomeJammed();
+            }
             Entity otherEnt = other.GetComponent<Entity>();
             if (otherEnt != null)
             {

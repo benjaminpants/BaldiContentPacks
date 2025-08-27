@@ -113,6 +113,7 @@ namespace PiratePack
             for (int i = 0; i < objects.Length; i++)
             {
                 CustomLevelObject levelObj = objects[i];
+                if (levelObj.ModifiedByMod(Info)) continue;
                 if (levelObj.type != LevelType.Maintenance)
                 {
                     levelObj.potentialItems = levelObj.potentialItems.AddToArray(new WeightedItemObject()
@@ -120,6 +121,7 @@ namespace PiratePack
                         selection = assetMan.Get<ItemObject>("Doubloon"),
                         weight = 30 + (Mathf.Clamp(levelId, 0, 2) * 10)
                     });
+                    levelObj.MarkAsModifiedByMod(Info);
                 }
                 if (((levelId > 0) && floorName.StartsWith("F")) || (floorName == "END")) // no shields or cann on floor 1
                 {
@@ -128,6 +130,7 @@ namespace PiratePack
                         selection = assetMan.Get<ItemObject>("Shield3"),
                         weight = 80
                     });
+                    levelObj.MarkAsModifiedByMod(Info);
                 }
                 levelObj.MarkAsNeverUnload();
             }

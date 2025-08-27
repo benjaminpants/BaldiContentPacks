@@ -376,7 +376,6 @@ namespace CarnivalPack
                 if (floorName == "F1")
                 {
                     sceneObject.potentialNPCs.Add(new WeightedNPC() { selection = assetMan.Get<NPC>("Zorpster"), weight = 100 });
-                    sceneObject.MarkAsNeverUnload();
                 }
                 if (floorName == "F2")
                 {
@@ -395,6 +394,7 @@ namespace CarnivalPack
             {
                 for (int i = 0; i < levelObjects.Length; i++)
                 {
+                    if (levelObjects[i].ModifiedByMod(Info)) continue;
                     levelObjects[i].potentialItems = levelObjects[i].potentialItems.AddItem(new WeightedItemObject() { selection = assetMan.Get<ItemObject>("CottonCandy"), weight = 80 }).ToArray();
                     if (balloonFrenzyEnabled.Value)
                     {
@@ -404,6 +404,7 @@ namespace CarnivalPack
                             weight = 50
                         });
                     }
+                    levelObjects[i].MarkAsModifiedByMod(Info);
                 }
                 if (floorNumber >= 1)
                 {
@@ -418,6 +419,7 @@ namespace CarnivalPack
                 sceneObject.MarkAsNeverUnload();
                 for (int i = 0; i < levelObjects.Length; i++)
                 {
+                    if (levelObjects[i].ModifiedByMod(Info)) continue;
                     levelObjects[i].potentialItems = levelObjects[i].potentialItems.AddItem(new WeightedItemObject() { selection = assetMan.Get<ItemObject>("CottonCandy"), weight = 80 }).ToArray();
                     if (balloonFrenzyEnabled.Value)
                     {
@@ -427,6 +429,7 @@ namespace CarnivalPack
                             weight = 50
                         });
                     }
+                    levelObjects[i].MarkAsModifiedByMod(Info);
                 }
                 sceneObject.shopItems = sceneObject.shopItems.AddItem(new WeightedItemObject() { selection = assetMan.Get<ItemObject>("CottonCandy"), weight = 75 }).ToArray();
             }

@@ -1343,9 +1343,11 @@ namespace CriminalPack
             for (int i = 0; i < objects.Length; i++)
             {
                 CustomLevelObject obj = objects[i];
+                if (obj.ModifiedByMod(Info)) continue;
                 if (((levelId > 0) || isEndless) && (obj.type == LevelType.Schoolhouse || obj.type == LevelType.Maintenance || obj.type == prisonType))
                 {
                     obj.forcedItems.Add(assetMan.Get<ItemObject>("IOUDecoy"));
+                    obj.MarkAsModifiedByMod(Info);
                 }
 
                 switch (levelName)
@@ -1365,6 +1367,7 @@ namespace CriminalPack
                         }
                         });
                         //obj.forcedNpcs = obj.forcedNpcs.AddToArray(assetMan.Get<NPC>("Dealer"));
+                        obj.MarkAsModifiedByMod(Info);
                         break;
                     case "F2":
                         obj.potentialItems = obj.potentialItems.AddRangeToArray(new WeightedItemObject[]
@@ -1380,7 +1383,43 @@ namespace CriminalPack
                             weight = 60
                         }
                         });
-                        /*
+                        
+                        if (obj.type == LevelType.Schoolhouse)
+                        {
+                            obj.potentialStructures = obj.potentialStructures.AddToArray(new WeightedStructureWithParameters()
+                            {
+                                selection = new StructureWithParameters()
+                                {
+                                    parameters = new StructureParameters()
+                                    {
+                                        minMax = new IntVector2[]
+                                        {
+                                        new IntVector2(1,2),
+                                        new IntVector2(4,8)
+                                        }
+                                    },
+                                    prefab = assetMan.Get<Structure_Scanner>("scanner")
+                                },
+                                weight = 50
+                            });
+                        }
+                        obj.MarkAsModifiedByMod(Info);
+                        break;
+                    case "F3":
+                        obj.potentialItems = obj.potentialItems.AddRangeToArray(new WeightedItemObject[]
+                        {
+                            new WeightedItemObject()
+                            {
+                                selection = assetMan.Get<ItemObject>("Crowbar"),
+                                weight = 65
+                            },
+                            new WeightedItemObject()
+                            {
+                                selection = assetMan.Get<ItemObject>("Mask"),
+                                weight = 80
+                            }
+                        });
+                        
                         if (obj.type == LevelType.Schoolhouse)
                         {
                             obj.potentialStructures = obj.potentialStructures.AddToArray(new WeightedStructureWithParameters()
@@ -1399,42 +1438,8 @@ namespace CriminalPack
                                 },
                                 weight = 60
                             });
-                        }*/
-                        break;
-                    case "F3":
-                        obj.potentialItems = obj.potentialItems.AddRangeToArray(new WeightedItemObject[]
-                        {
-                            new WeightedItemObject()
-                            {
-                                selection = assetMan.Get<ItemObject>("Crowbar"),
-                                weight = 65
-                            },
-                            new WeightedItemObject()
-                            {
-                                selection = assetMan.Get<ItemObject>("Mask"),
-                                weight = 80
-                            }
-                        });
-                        /*
-                        if (obj.type == LevelType.Schoolhouse)
-                        {
-                            obj.potentialStructures = obj.potentialStructures.AddToArray(new WeightedStructureWithParameters()
-                            {
-                                selection = new StructureWithParameters()
-                                {
-                                    parameters = new StructureParameters()
-                                    {
-                                        minMax = new IntVector2[]
-                                        {
-                                        new IntVector2(2,6),
-                                        new IntVector2(12,16)
-                                        }
-                                    },
-                                    prefab = assetMan.Get<Structure_Scanner>("scanner")
-                                },
-                                weight = 80
-                            });
-                        }*/
+                        }
+                        obj.MarkAsModifiedByMod(Info);
                         break;
                     case "F4":
                         obj.potentialItems = obj.potentialItems.AddRangeToArray(new WeightedItemObject[]
@@ -1450,6 +1455,7 @@ namespace CriminalPack
                                 weight = 80
                             }
                         });
+                        obj.MarkAsModifiedByMod(Info);
                         break;
                     case "F5":
                         obj.potentialItems = obj.potentialItems.AddRangeToArray(new WeightedItemObject[]
@@ -1465,6 +1471,7 @@ namespace CriminalPack
                                 weight = 80
                             }
                         });
+                        obj.MarkAsModifiedByMod(Info);
                         break;
                     default:
                         return;
@@ -1484,6 +1491,7 @@ namespace CriminalPack
                             weight = 80
                         }
                     });
+                    obj.MarkAsModifiedByMod(Info);
                 }
                 objects[i].MarkAsNeverUnload();
             }

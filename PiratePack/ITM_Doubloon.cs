@@ -64,8 +64,9 @@ namespace PiratePack
 
         static readonly FieldInfo _currentState = AccessTools.Field(typeof(NavigationStateMachine), "currentState");
 
-        public void EntityTriggerEnter(Collider other)
+        public void EntityTriggerEnter(Collider other, bool validCollision)
         {
+            if (!validCollision) return;
             if (collecting) return;
             NPC npc = other.GetComponent<NPC>();
             if (npc == null)
@@ -95,11 +96,11 @@ namespace PiratePack
             spark.ec = npc.ec;
         }
 
-        public void EntityTriggerExit(Collider other)
+        public void EntityTriggerExit(Collider other, bool validCollision)
         {
         }
 
-        public void EntityTriggerStay(Collider other)
+        public void EntityTriggerStay(Collider other, bool validCollision)
         {
         }
 
