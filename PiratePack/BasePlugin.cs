@@ -113,7 +113,7 @@ namespace PiratePack
             for (int i = 0; i < objects.Length; i++)
             {
                 CustomLevelObject levelObj = objects[i];
-                if (levelObj.ModifiedByMod(Info)) continue;
+                if (levelObj.IsModifiedByMod(Info)) continue;
                 if (levelObj.type != LevelType.Maintenance)
                 {
                     levelObj.potentialItems = levelObj.potentialItems.AddToArray(new WeightedItemObject()

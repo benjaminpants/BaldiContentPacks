@@ -394,7 +394,7 @@ namespace CarnivalPack
             {
                 for (int i = 0; i < levelObjects.Length; i++)
                 {
-                    if (levelObjects[i].ModifiedByMod(Info)) continue;
+                    if (levelObjects[i].IsModifiedByMod(Info)) continue;
                     levelObjects[i].potentialItems = levelObjects[i].potentialItems.AddItem(new WeightedItemObject() { selection = assetMan.Get<ItemObject>("CottonCandy"), weight = 80 }).ToArray();
                     if (balloonFrenzyEnabled.Value)
                     {
@@ -419,7 +419,7 @@ namespace CarnivalPack
                 sceneObject.MarkAsNeverUnload();
                 for (int i = 0; i < levelObjects.Length; i++)
                 {
-                    if (levelObjects[i].ModifiedByMod(Info)) continue;
+                    if (levelObjects[i].IsModifiedByMod(Info)) continue;
                     levelObjects[i].potentialItems = levelObjects[i].potentialItems.AddItem(new WeightedItemObject() { selection = assetMan.Get<ItemObject>("CottonCandy"), weight = 80 }).ToArray();
                     if (balloonFrenzyEnabled.Value)
                     {

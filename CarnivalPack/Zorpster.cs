@@ -459,6 +459,7 @@ namespace CarnivalPack
             {
                 Zorp.animator.Play("TractBack", 1f);
                 Zorp.BecomeJammed();
+                return;
             }
             Entity otherEnt = other.GetComponent<Entity>();
             if (otherEnt != null)

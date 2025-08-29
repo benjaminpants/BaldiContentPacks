@@ -186,11 +186,19 @@ namespace CarnivalPack
             {
                 for (int i = 0; i < ec.Npcs.Count; i++)
                 {
-                    if (ec.Npcs[i].GetMeta().tags.Contains("no_balloon_frenzy")) continue;
+                    NPCMetadata npcMeta = ec.Npcs[i].GetMeta();
+                    bool doesBalloonFrenzy = true;
+                    bool lowPriority = false;
+                    if (npcMeta != null)
+                    {
+                        doesBalloonFrenzy = !npcMeta.tags.Contains("no_balloon_frenzy");
+                        lowPriority = npcMeta.tags.Contains("lower_balloon_frenzy_priority");
+                    }
+                    if (!doesBalloonFrenzy) continue;
                     FrenzyCounter npcCounter = ec.Npcs[i].gameObject.AddComponent<FrenzyCounter>();
                     npcCounter.frenzy = this;
                     npcCounter.myNPC = ec.Npcs[i];
-                    npcCounter.lowPriority = ec.Npcs[i].GetMeta().tags.Contains("lower_balloon_frenzy_priority");
+                    npcCounter.lowPriority = lowPriority;
                     createdCounters.Add(npcCounter);
                 }
             }

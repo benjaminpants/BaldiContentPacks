@@ -1343,7 +1343,7 @@ namespace CriminalPack
             for (int i = 0; i < objects.Length; i++)
             {
                 CustomLevelObject obj = objects[i];
-                if (obj.ModifiedByMod(Info)) continue;
+                if (obj.IsModifiedByMod(Info)) continue;
                 if (((levelId > 0) || isEndless) && (obj.type == LevelType.Schoolhouse || obj.type == LevelType.Maintenance || obj.type == prisonType))
                 {
                     obj.forcedItems.Add(assetMan.Get<ItemObject>("IOUDecoy"));
