@@ -189,7 +189,7 @@ namespace CarnivalPack
 
 
             // setup the balloon
-            Balloon balloonTemplate = Resources.FindObjectsOfTypeAll<Balloon>().First(x => x.GetInstanceID() >= 0 && x.name == "Balloon_Purple");
+            Balloon balloonTemplate = Resources.FindObjectsOfTypeAll<Balloon>().First(x => x.GetInstanceID() >= 0 && x.name == "Balloon_1");
             FrenzyBalloon balloonFrenzyBalloon = GameObject.Instantiate<Balloon>(balloonTemplate, MTM101BaldiDevAPI.prefabTransform).gameObject.AddComponent<FrenzyBalloon>();
             balloonFrenzyBalloon.name = "BalloonFrenzyBalloonStandard";
             balloonFrenzyBalloon.gameObject.layer = LayerMask.NameToLayer("ClickableCollidableEntities");
