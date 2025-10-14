@@ -19,6 +19,7 @@
 {"key":"Itm_KeyCardGreen","value":"Level 1 Key Card"},
 {"key":"Itm_KeyCardBlue","value":"Level 2 Key Card"},
 {"key":"Itm_KeyCardRed","value":"Level 3 Key Card"},
+{"key":"Itm_KeyCardAll","value":"Full Key Card"},
 {"key":"Desc_KeyCardBad","value":"Key Card\nThis shouldn't be possible!"}
 
 ]}

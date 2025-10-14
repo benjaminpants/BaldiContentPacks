@@ -17,6 +17,8 @@
 {"key":"Ed_Tool_structure_keycarddoor_blue_Desc","value":"Automatically opens when the player collects a clearance 2 keycard."},
 {"key":"Ed_Tool_structure_keycarddoor_red_Title","value":"Clearance 3 Door"},
 {"key":"Ed_Tool_structure_keycarddoor_red_Desc","value":"Automatically opens when the player collects a clearance 3 keycard."},
+{"key":"Ed_Tool_structure_keycarddoor_all_Title","value":"All Clearance Door"},
+{"key":"Ed_Tool_structure_keycarddoor_all_Desc","value":"Automatically opens when the player has every clearance in the level."},
 
 {"key":"Ed_Tool_item_crowbar_Desc","value":"Converts non-standard yellow doors to their standard equivalents, and can force open lockdown doors."},
 {"key":"Ed_Tool_item_thief_mask_Desc","value":"Makes Principal temporarily forget rule breaks and permanently forget rules broken with the mask on."},
@@ -26,6 +28,7 @@
 {"key":"Ed_Tool_item_keycard_green_Desc","value":"Automatically opens all clearance 1 doors when collected."},
 {"key":"Ed_Tool_item_keycard_blue_Desc","value":"Automatically opens all clearance 2 doors when collected."},
 {"key":"Ed_Tool_item_keycard_red_Desc","value":"Automatically opens all clearance 3 doors when collected."},
+{"key":"Ed_Tool_item_keycard_all_Desc","value":"Automatically opens all clearance doors when collected."},
 
 {"key":"Ed_Poster_Title_dealer_poster","value":"Dealer's Poster"},
 {"key":"Ed_Poster_Desc_dealer_poster","value":"Dealer's Poster in the office."},

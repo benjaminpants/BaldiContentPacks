@@ -9,7 +9,7 @@ namespace CriminalPack
 
     public class KeycardHud : MonoBehaviour
     {
-        public RawImage[] renderers = new RawImage[3];
+        public RawImage[] renderers = new RawImage[4];
 
         public void ReInit()
         {
@@ -21,6 +21,14 @@ namespace CriminalPack
 
         public void GiveCard(int cardNumber)
         {
+            if (renderers[3].enabled) return;
+            if (cardNumber == 3)
+            {
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    renderers[i].enabled = false;
+                }
+            }
             renderers[cardNumber].enabled = true;
         }
     }

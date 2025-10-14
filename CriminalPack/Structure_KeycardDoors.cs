@@ -1,4 +1,5 @@
-﻿using MTM101BaldAPI.Registers;
+﻿using MTM101BaldAPI;
+using MTM101BaldAPI.Registers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -76,8 +77,8 @@ namespace CriminalPack
 
     public class Structure_KeycardDoors : StructureBuilder
     {
-        public KeycardLockdownDoor[] doorPrefabs = new KeycardLockdownDoor[3];
-        public ItemObject[] keycardItems = new ItemObject[3];
+        public KeycardLockdownDoor[] doorPrefabs = new KeycardLockdownDoor[4]; // four to accomidate the "all" door
+        public ItemObject[] keycardItems = new ItemObject[4]; // four to accomidate the "all" keycard
         public WindowObject windowObj;
 
         public List<List<RoomController>> lockedRooms = new List<List<RoomController>>()
@@ -147,6 +148,29 @@ namespace CriminalPack
             }
         }
 
+        public void OnLoadingFinished(LevelBuilder builder)
+        {
+            List<Items> enums = builder.Ec.items.Select(x => x.item.itemType).ToList();
+            if (enums.Contains(EnumExtensions.GetFromExtendedName<Items>("KeycardGreen")))
+            {
+                AddKeycardToManager(0);
+            }
+            if (enums.Contains(EnumExtensions.GetFromExtendedName<Items>("KeycardBlue")))
+            {
+                AddKeycardToManager(1);
+            }
+            if (enums.Contains(EnumExtensions.GetFromExtendedName<Items>("KeycardRed")))
+            {
+                AddKeycardToManager(2);
+            }
+            if (kcm.keycardsAcquired.Count == 0)
+            {
+                AddKeycardToManager(0);
+                AddKeycardToManager(1);
+                AddKeycardToManager(2);
+            }
+        }
+
         public LockedKeycardRoomFunction SetupOrGetLockedRoomFunction(RoomController room)
         {
             LockedKeycardRoomFunction existingFunction = room.functionObject.GetComponent<LockedKeycardRoomFunction>();
@@ -160,11 +184,19 @@ namespace CriminalPack
             return rf;
         }
 
+        public void AddKeycardToManager(int id)
+        {
+            if (id == 3) return;
+            if (kcm.keycardsAcquired.ContainsKey(id)) return;
+            kcm.keycardsAcquired.Add(id, false);
+        }
+
         public void PlaceDoorInPremade(Door prefab, IntVector2 position, Direction direction)
         {
             PlaceDoor(prefab, position, direction, 0f, false, out GameObject door);
             KeycardLockdownDoor comp = door.GetComponent<KeycardLockdownDoor>();
             kcm.lockdownDoors.Add(comp);
+            AddKeycardToManager(comp.myValue);
             if (comp.bTile.room != null)
             {
                 if (comp.bTile.room.type != RoomType.Hall)
@@ -336,6 +368,7 @@ namespace CriminalPack
                 }
                 KeycardLockdownDoor doorComp = door.GetComponent<KeycardLockdownDoor>();
                 kcm.lockdownDoors.Add(doorComp);
+                AddKeycardToManager(doorComp.myValue);
                 blockedDoors.Add(room.doors[j]);
                 placedDoors.Add(doorComp);
             }

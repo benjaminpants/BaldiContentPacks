@@ -206,7 +206,7 @@ namespace CriminalPack
 
     public class Dealer_Grapple : Dealer_Statebase
     {
-
+        // todo: FIGURE OUT WHY THE FUCK ATTEMPTING TO CALL VelocityThisFrame IN UPDATE CAUSES SUPER SMALL VELOCITIES.
         readonly static FieldInfo _forces = AccessTools.Field(typeof(Entity), "forces");
         float minGrappleTime = 0.25f;
         bool caughtPlayer = false;

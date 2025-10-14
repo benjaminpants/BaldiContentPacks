@@ -24,6 +24,7 @@ namespace CriminalPack
             EditorInterface.AddStructureGenericVisual("keycarddoor_green", keyDoor.doorPrefabs[0].gameObject);
             EditorInterface.AddStructureGenericVisual("keycarddoor_blue", keyDoor.doorPrefabs[1].gameObject);
             EditorInterface.AddStructureGenericVisual("keycarddoor_red", keyDoor.doorPrefabs[2].gameObject);
+            EditorInterface.AddStructureGenericVisual("keycarddoor_all", keyDoor.doorPrefabs[3].gameObject);
             EditorInterface.AddStructureGenericVisual("scanner", assetMan.Get<Structure_Scanner>("scanner").prefab.gameObject);
             EditorInterface.AddWindow("cellbars", assetMan.Get<WindowObject>("CellWindow"));
             LevelStudioPlugin.Instance.structureTypes.Add("keycard_door", typeof(HallDoorStructureLocation));
@@ -58,7 +59,8 @@ namespace CriminalPack
                 new ItemTool("iou_decoy"),
                 new ItemTool("keycard_green"),
                 new ItemTool("keycard_blue"),
-                new ItemTool("keycard_red")
+                new ItemTool("keycard_red"),
+                new ItemTool("keycard_all")
             });
             EditorInterfaceModes.AddToolsToCategory(mode, "structures", new EditorTool[]
             {
@@ -66,6 +68,7 @@ namespace CriminalPack
                 new HallDoorStructureTool("keycard_door", "keycarddoor_green", assetMan.Get<Sprite>("Editor_KeycardDoorGreen")),
                 new HallDoorStructureTool("keycard_door", "keycarddoor_blue", assetMan.Get<Sprite>("Editor_KeycardDoorBlue")),
                 new HallDoorStructureTool("keycard_door", "keycarddoor_red", assetMan.Get<Sprite>("Editor_KeycardDoorRed")),
+                new HallDoorStructureTool("keycard_door", "keycarddoor_all", assetMan.Get<Sprite>("Editor_KeycardDoorAll")),
             });
             EditorInterfaceModes.InsertToolInCategory(mode, "doors", "window_standard", new WindowTool("cellbars", assetMan.Get<Sprite>("Editor_Cellbars")));
         }
@@ -99,13 +102,15 @@ namespace CriminalPack
             {
                 { "keycarddoor_green", keyDoor.doorPrefabs[0].gameObject },
                 { "keycarddoor_blue", keyDoor.doorPrefabs[1].gameObject },
-                { "keycarddoor_red", keyDoor.doorPrefabs[2].gameObject }
+                { "keycarddoor_red", keyDoor.doorPrefabs[2].gameObject },
+                { "keycarddoor_all", keyDoor.doorPrefabs[3].gameObject }
             }));
             LevelLoaderPlugin.Instance.structureAliases.Add("scanner", new LoaderStructureData(assetMan.Get<Structure_Scanner>("scanner"), new Dictionary<string, GameObject>()));
             // add keycard items
             LevelLoaderPlugin.Instance.itemObjects.Add("keycard_green", keyDoor.keycardItems[0]);
             LevelLoaderPlugin.Instance.itemObjects.Add("keycard_blue", keyDoor.keycardItems[1]);
             LevelLoaderPlugin.Instance.itemObjects.Add("keycard_red", keyDoor.keycardItems[2]);
+            LevelLoaderPlugin.Instance.itemObjects.Add("keycard_all", keyDoor.keycardItems[3]);
         }
 
         public static void AddScannerPosterToLoader(PosterObject obj)
@@ -131,7 +136,7 @@ namespace CriminalPack.Editor
         {
             get
             {
-                return string.Format(name.EndsWith("s") ? LocalizationManager.Instance.GetLocalizedText("Ed_ScannerPoster_Desc") : LocalizationManager.Instance.GetLocalizedText("Ed_ScannerPoster_S_Desc"), LocalizationManager.Instance.GetLocalizedText(name));
+                return string.Format(LocalizationManager.Instance.GetLocalizedText(name).ToLower().EndsWith("s") ? LocalizationManager.Instance.GetLocalizedText("Ed_ScannerPoster_S_Desc") : LocalizationManager.Instance.GetLocalizedText("Ed_ScannerPoster_Desc"), LocalizationManager.Instance.GetLocalizedText(name));
             }
         }
         public ScannerPosterTool(string type, string name) : base(type)

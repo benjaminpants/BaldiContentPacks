@@ -27,7 +27,7 @@ using UnityEngine.AI;
 
 namespace CriminalPack
 {
-    [BepInPlugin("mtm101.rulerp.baldiplus.criminalpackroot", "Criminal Pack Root Mod", "4.0.0.0")]
+    [BepInPlugin("mtm101.rulerp.baldiplus.criminalpackroot", "Criminal Pack Root Mod", "4.1.0.0")]
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi")]
     [BepInDependency("mtm101.rulerp.baldiplus.levelstudio", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("mtm101.rulerp.baldiplus.levelstudioloader", BepInDependency.DependencyFlags.HardDependency)]
@@ -391,7 +391,7 @@ namespace CriminalPack
                 .SetNameAndDescription("Itm_IOU_Decoy", "Desc_IOU_Decoy")
                 .SetShopPrice(500)
                 .SetGeneratorCost(40)
-                .SetMeta(ItemFlags.NoUses | ItemFlags.InstantUse, new string[0])
+                .SetMeta(ItemFlags.NoUses | ItemFlags.InstantUse | ItemFlags.Unobtainable, new string[0])
                 .SetEnum(IOUDecoyEnum)
                 .SetItemComponent<Item>()
                 .Build();
@@ -710,7 +710,7 @@ namespace CriminalPack
             keyCardClone.GetComponent<RectTransform>().sizeDelta = new Vector2(40f,35f);
             keyCardimage.enabled = false;
             keyHud.renderers[0] = keyCardimage;
-            for (int i = 2; i <= 3; i++)
+            for (int i = 2; i <= 4; i++)
             {
                 RawImage keyIconClone = GameObject.Instantiate<Transform>(keyCardClone, MTM101BaldiDevAPI.prefabTransform).GetComponent<RawImage>();
                 keyIconClone.name = "KeyDisplay" + i;
@@ -725,18 +725,19 @@ namespace CriminalPack
             Structure_KeycardDoors keycardBuilder = keycardBuilderObject.AddComponent<Structure_KeycardDoors>();
             assetMan.Add<Structure_KeycardDoors>("Structure_KeycardDoors", keycardBuilder);
 
-            Color[] keyDoorColors = new Color[3]
+            Color[] keyDoorColors = new Color[4]
             {
                 new Color(0f,1f,0f),
                 new Color(0f,0f,1f),
-                new Color(1f,0f,0f)
+                new Color(1f,0f,0f),
+                new Color(1f,68f/255f,0f)
             };
 
             Sprite keycardDoorOpen = AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 16f, "Keycards", "Icon_KeyDoor_Open.png");
             Sprite keycardDoorClosed = AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 16f, "Keycards", "Icon_KeyDoor_Closed.png");
 
             LockdownDoor doorTemplate = Resources.FindObjectsOfTypeAll<LockdownDoor>().First(x => x.GetInstanceID() >= 0 && x.name == "LockdownDoor_TrapCheck");
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < 4; i++)
             {
                 LockdownDoor keyDoorOld = GameObject.Instantiate<LockdownDoor>(doorTemplate, MTM101BaldiDevAPI.prefabTransform);
                 keyDoorOld.name = "Keycard" + (i + 1) + "LockdownDoor";
@@ -772,11 +773,11 @@ namespace CriminalPack
                 keycardBuilder.doorPrefabs[i] = keyLockDoor;
             }
 
-            string[] keycardEnums = new string[] { "Green", "Blue", "Red" };
+            string[] keycardEnums = new string[] { "Green", "Blue", "Red", "All" };
 
             SoundObject cardPickupSound = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "CardPickup.wav"), "", SoundType.Effect, Color.white);
             cardPickupSound.subtitle = false;
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < 4; i++)
             {
                 Sprite cardSprite = AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 50f, "Keycards", "Keycard" + (i + 1) + ".png");
                 Sprite cardSprite_small = AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 25f, "Keycards", "Keycard" + (i + 1) + "_Small.png");
@@ -957,6 +958,7 @@ namespace CriminalPack
                 assetMan.Add<Sprite>("Editor_KeycardDoorRed", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Editor", "structure_keycarddoor_red.png"), 1f));
                 assetMan.Add<Sprite>("Editor_KeycardDoorBlue", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Editor", "structure_keycarddoor_blue.png"), 1f));
                 assetMan.Add<Sprite>("Editor_KeycardDoorGreen", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Editor", "structure_keycarddoor_green.png"), 1f));
+                assetMan.Add<Sprite>("Editor_KeycardDoorAll", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Editor", "structure_keycarddoor_all.png"), 1f));
                 assetMan.Add<Sprite>("Editor_JailCell", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Editor", "room_jailcell.png"), 1f));
                 assetMan.Add<Sprite>("Editor_PrisonCellBed", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "Editor", "object_prison_cell_bed.png"), 1f));
                 CriminalPackEditorSupport.AddEditorContent();

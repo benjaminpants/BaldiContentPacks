@@ -1,6 +1,7 @@
 ﻿using HarmonyLib;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using UnityEngine;
@@ -124,21 +125,37 @@ namespace CriminalPack
     public class KeycardManager : MonoBehaviour
     {
         public List<KeycardLockdownDoor> lockdownDoors = new List<KeycardLockdownDoor>();
+        public Dictionary<int, bool> keycardsAcquired = new Dictionary<int, bool>();
 
+        // todo: revise later, use keycardsAcquired instead of checking id
         public void AcquireKeycard(int id)
         {
-            for (int i = lockdownDoors.Count - 1; i >= 0; i--)
+            keycardsAcquired[id] = true;
+            for (int i = 0; i < Singleton<CoreGameManager>.Instance.TotalPlayers; i++)
             {
-                if (lockdownDoors[i].myValue == id)
+                Singleton<CoreGameManager>.Instance.GetHud(i).GetComponent<KeycardHud>().GiveCard(id);
+            }
+            if (id == 3)
+            {
+                int[] keys = keycardsAcquired.Keys.ToArray();
+                for (int i = 0; i < keys.Length; i++)
+                {
+                    keycardsAcquired[keys[i]] = true;
+                }
+                for (int i = lockdownDoors.Count - 1; i >= 0; i--)
                 {
                     lockdownDoors[i].OpenForever();
                     lockdownDoors.RemoveAt(i);
                 }
+                return;
             }
-
-            for (int i = 0; i < Singleton<CoreGameManager>.Instance.TotalPlayers; i++)
+            for (int i = lockdownDoors.Count - 1; i >= 0; i--)
             {
-                Singleton<CoreGameManager>.Instance.GetHud(i).GetComponent<KeycardHud>().GiveCard(id);
+                if ((lockdownDoors[i].myValue == id) || (lockdownDoors[i].myValue == 3 && (!keycardsAcquired.ContainsValue(false))))
+                {
+                    lockdownDoors[i].OpenForever();
+                    lockdownDoors.RemoveAt(i);
+                }
             }
         }
     }
