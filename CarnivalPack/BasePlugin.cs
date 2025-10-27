@@ -22,6 +22,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using PlusStudioLevelLoader;
 using PlusStudioLevelFormat;
+using MTM101BaldAPI.Components.Animation;
 
 namespace CarnivalPack
 {
@@ -33,7 +34,7 @@ namespace CarnivalPack
     {
         public static CarnivalPackBasePlugin Instance;
 
-        public Dictionary<string, CustomAnimation<Sprite>> zorpsterAnimations;
+        public Dictionary<string, SpriteAnimation> zorpsterAnimations;
 
         public ConfigEntry<bool> youtuberModeEnabled;
         public ConfigEntry<bool> balloonFrenzyEnabled;
@@ -169,8 +170,9 @@ namespace CarnivalPack
             Zorp.escapeSound = assetMan.Get<SoundObject>("Aud_Zorp_Escape");
 
             // ANIMATOR!
-            CustomSpriteAnimator animator = Zorp.gameObject.AddComponent<CustomSpriteAnimator>();
-            animator.spriteRenderer = Zorp.spriteRenderer[0];
+            CustomSpriteRendererAnimator animator = Zorp.gameObject.AddComponent<CustomSpriteRendererAnimator>();
+            animator.renderer = Zorp.spriteRenderer[0];
+            animator.LoadAnimations(CarnivalPackBasePlugin.Instance.zorpsterAnimations);
             Zorp.animator = animator;
 
             assetMan.Add<Zorpster>("Zorpster", Zorp);

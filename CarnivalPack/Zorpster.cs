@@ -1,4 +1,5 @@
 ﻿using MTM101BaldAPI.Components;
+using MTM101BaldAPI.Components.Animation;
 using Rewired;
 using System;
 using System.Collections;
@@ -16,7 +17,7 @@ namespace CarnivalPack
         public SoundObject doneSound;
         public SoundObject escapeSound;
         public Entity myEnt;
-        public CustomSpriteAnimator animator;
+        public CustomSpriteRendererAnimator animator;
         public AudioManager wahahAudMan;
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
@@ -128,7 +129,6 @@ namespace CarnivalPack
                 clone.enabled = false;
                 tractorBeams[i] = clone;
             }
-            animator.animations = CarnivalPackBasePlugin.Instance.zorpsterAnimations;
             animator.SetDefaultAnimation("Idle", 1f);
             this.behaviorStateMachine.ChangeState(new Zorpster_Wander(this));
         }
