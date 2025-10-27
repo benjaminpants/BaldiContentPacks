@@ -115,6 +115,7 @@ namespace CarnivalPack
         {
             base.Initialize();
             spriteStartingPosition = spriteRenderer[0].gameObject.transform.localPosition;
+            animator.ec = ec;
             home = transform.position;
             homeCell = ec.CellFromPosition(home);
             myEnt = this.GetComponent<Entity>();

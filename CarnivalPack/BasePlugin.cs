@@ -173,6 +173,7 @@ namespace CarnivalPack
             CustomSpriteRendererAnimator animator = Zorp.gameObject.AddComponent<CustomSpriteRendererAnimator>();
             animator.renderer = Zorp.spriteRenderer[0];
             animator.LoadAnimations(CarnivalPackBasePlugin.Instance.zorpsterAnimations);
+            animator.timeScale = TimeScaleType.Npc;
             Zorp.animator = animator;
 
             assetMan.Add<Zorpster>("Zorpster", Zorp);
