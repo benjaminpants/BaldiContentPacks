@@ -280,7 +280,7 @@ namespace CarnivalPack
         {
             base.Update();
             Zorp.UpdateMoveSpeed(1.25f);
-            moveMod.movementAddend = Zorp.Navigator.Velocity.normalized * Zorp.Navigator.speed * Zorp.Navigator.Am.Multiplier;
+            moveMod.movementAddend = Zorp.Navigator.Velocity.normalized * Zorp.Navigator.speed * Zorp.Navigator.Am.Multiplier * Zorp.TimeScale;
         }
 
         public override void OnStateTriggerExit(Collider other, bool validCollision)

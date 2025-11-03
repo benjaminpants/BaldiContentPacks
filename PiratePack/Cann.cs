@@ -1,6 +1,7 @@
 ﻿using HarmonyLib;
 using MTM101BaldAPI;
 using MTM101BaldAPI.Components;
+using MTM101BaldAPI.Components.Animation;
 using MTM101BaldAPI.Registers;
 using System.Collections.Generic;
 using System.EnterpriseServices;
@@ -94,7 +95,7 @@ namespace PiratePack
         public SoundObject[] hungrySounds;
         public SoundObject easterEggSound;
         public SoundObject eatSound;
-        public RotatedSpriteAnimator animator;
+        public CustomRotatedSpriteAnimator animator;
         public SpriteRotator rotator;
         public CustomVolumeAnimator volumeAnimator;
 
@@ -121,17 +122,6 @@ namespace PiratePack
 
         public override void Initialize()
         {
-            // why the fuck is SpriteRotator null
-            animator.affectedObject = GetComponent<SpriteRotator>();
-            volumeAnimator.animator = animator;
-            animator.animations = new Dictionary<string, CustomAnimation<Sprite[]>>()
-            {
-                { "fly", new CustomAnimation<Sprite[]>(10, PiratePlugin.Instance.cannFlyFrames) },
-                { "talk1", new CustomAnimation<Sprite[]>(1, new Sprite[1][] { new Sprite[1] { PiratePlugin.Instance.cannTalkFrames[0] } })},
-                { "talk2", new CustomAnimation<Sprite[]>(1, new Sprite[1][] { new Sprite[1] { PiratePlugin.Instance.cannTalkFrames[1] } })},
-                { "talk3", new CustomAnimation<Sprite[]>(1, new Sprite[1][] { new Sprite[1] { PiratePlugin.Instance.cannTalkFrames[2] } })},
-            };
-            animator.SetDefaultAnimation("fly", 1f);
             base.Initialize();
             FindLoops();
             if (loops.Count == 0)

@@ -191,7 +191,7 @@ namespace CarnivalPack
         {
             base.ExitedSpawn();
             StartMode();
-            ec.GetBaldi().Praise(2f);
+            ec.GetBaldi().Praise(2f, false);
             ec.GetBaldi().GetComponent<Entity>().Teleport(myCounter.transform.position);
             ec.GetBaldi().AudMan.FlushQueue(true);
         }

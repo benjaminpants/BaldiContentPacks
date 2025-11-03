@@ -24,6 +24,7 @@ using UnityEngine.UI;
 using PlusStudioLevelLoader;
 using PlusStudioLevelFormat;
 using UnityEngine.AI;
+using MTM101BaldAPI.Components.Animation;
 
 namespace CriminalPack
 {
@@ -424,9 +425,83 @@ namespace CriminalPack
 
             dealerEnum = dealer.Character;
 
-            CustomSpriteAnimator anim = dealer.gameObject.AddComponent<CustomSpriteAnimator>();
-            anim.spriteRenderer = dealer.spriteRenderer[0];
+            CustomSpriteRendererAnimator anim = dealer.gameObject.AddComponent<CustomSpriteRendererAnimator>();
+            anim.timeScale = TimeScaleType.Npc;
+            anim.renderer = dealer.spriteRenderer[0];
             dealer.animator = anim;
+            /*animator.animations.Add("Idle", new CustomAnimation<UnityEngine.Sprite>(1, new Sprite[]
+            {
+                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer"),
+                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer2")
+            }));
+            animator.animations.Add("Grapple", new CustomAnimation<UnityEngine.Sprite>(6, new Sprite[]
+            {
+                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_grapple2"),
+                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_grapple"),
+                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_grapple3"),
+                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_grapple"),
+            }));
+            animator.animations.Add("Talk", new CustomAnimation<UnityEngine.Sprite>(12, new Sprite[]
+            {
+                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_talk1"),
+                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_talk2"),
+                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_talk3"),
+                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_talk2"),
+            }));
+            animator.animations.Add("CloakOpen", new CustomAnimation<UnityEngine.Sprite>(new Sprite[]
+            {
+                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer"),
+                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_open1"),
+                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_open2"),
+            }, 0.5f));
+            animator.animations.Add("CloakClose", new CustomAnimation<UnityEngine.Sprite>(new Sprite[]
+            {
+                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_open2"),
+                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_open1"),
+                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer"),
+            }, 0.5f));
+            animator.animations.Add("CloakIdle", new CustomAnimation<UnityEngine.Sprite>(new Sprite[]
+            {
+                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_open2"),
+            }, 0.25f));*/
+            dealer.animator.LoadAnimations(new Dictionary<string, SpriteAnimation>()
+            {
+                { "Idle", new SpriteAnimation(1, new Sprite[]
+                {
+                    CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer"),
+                    CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer2")
+                })},
+                { "Grapple", new SpriteAnimation(6, new Sprite[]
+                {
+                    CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_grapple2"),
+                    CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_grapple"),
+                    CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_grapple3"),
+                    CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_grapple"),
+                })},
+                { "Talk", new SpriteAnimation(12, new Sprite[]
+                {
+                    CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_talk1"),
+                    CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_talk2"),
+                    CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_talk3"),
+                    CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_talk2"),
+                })},
+                { "CloakOpen", new SpriteAnimation(new Sprite[]
+                {
+                    CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer"),
+                    CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_open1"),
+                    CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_open2"),
+                }, 0.5f)},
+                { "CloakClose", new SpriteAnimation(new Sprite[]
+                {
+                    CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_open2"),
+                    CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_open1"),
+                    CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer"),
+                }, 0.5f)},
+                { "CloakIdle", new SpriteAnimation(new Sprite[]
+                {
+                    CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_open2"),
+                }, 0.25f)}
+            });
             dealer.spriteRenderer[0].transform.localPosition += new Vector3(0f, 0.4f, 0f);
             dealer.spriteRenderer[0].sprite = assetMan.Get<Sprite>("dealer");
 
@@ -803,12 +878,12 @@ namespace CriminalPack
             ItemMetaStorage.Instance.FindByEnum(Items.GrapplingHook).tags.Add("crmp_contraband"); // reasoning: dangerous
             ItemMetaStorage.Instance.FindByEnum(Items.Teleporter).tags.Add("crmp_contraband"); // reasoning: dangerous
             ItemMetaStorage.Instance.FindByEnum(Items.DetentionKey).tags.Add("crmp_contraband"); // reasoning: belongs to principal (they are called principal's keys)
-            ItemMetaStorage.Instance.FindByEnum(Items.CircleKey).tags.AddRange(new string[] { "crmp_contraband", "crmp_scanner_no_poster" }); // reasoning: they only ever open faculty rooms
-            ItemMetaStorage.Instance.FindByEnum(Items.HexagonKey).tags.AddRange(new string[] { "crmp_contraband", "crmp_scanner_no_poster" }); // reasoning: they only ever open faculty rooms
-            ItemMetaStorage.Instance.FindByEnum(Items.PentagonKey).tags.AddRange(new string[] { "crmp_contraband", "crmp_scanner_no_poster" }); // reasoning: they only ever open faculty rooms
-            ItemMetaStorage.Instance.FindByEnum(Items.SquareKey).tags.AddRange(new string[] { "crmp_contraband", "crmp_scanner_no_poster" }); // reasoning: they only ever open faculty rooms
-            ItemMetaStorage.Instance.FindByEnum(Items.WeirdKey).tags.AddRange(new string[] { "crmp_contraband", "crmp_scanner_no_poster" }); // reasoning: they only ever open faculty rooms
-            ItemMetaStorage.Instance.FindByEnum(Items.TriangleKey).tags.AddRange(new string[] { "crmp_contraband", "crmp_scanner_no_poster" }); // reasoning: they only ever open faculty rooms
+            ItemMetaStorage.Instance.FindByEnum(Items.CircleKey).tags.UnionWith(new string[] { "crmp_contraband", "crmp_scanner_no_poster" }); // reasoning: they only ever open faculty rooms
+            ItemMetaStorage.Instance.FindByEnum(Items.HexagonKey).tags.UnionWith(new string[] { "crmp_contraband", "crmp_scanner_no_poster" }); // reasoning: they only ever open faculty rooms
+            ItemMetaStorage.Instance.FindByEnum(Items.PentagonKey).tags.UnionWith(new string[] { "crmp_contraband", "crmp_scanner_no_poster" }); // reasoning: they only ever open faculty rooms
+            ItemMetaStorage.Instance.FindByEnum(Items.SquareKey).tags.UnionWith(new string[] { "crmp_contraband", "crmp_scanner_no_poster" }); // reasoning: they only ever open faculty rooms
+            ItemMetaStorage.Instance.FindByEnum(Items.WeirdKey).tags.UnionWith(new string[] { "crmp_contraband", "crmp_scanner_no_poster" }); // reasoning: they only ever open faculty rooms
+            ItemMetaStorage.Instance.FindByEnum(Items.TriangleKey).tags.UnionWith(new string[] { "crmp_contraband", "crmp_scanner_no_poster" }); // reasoning: they only ever open faculty rooms
 
             NPCMetaStorage.Instance.Get(Character.Crafters).tags.Add("crmp_no_keycard");
             NPCMetaStorage.Instance.Get(Character.Chalkles).tags.Add("crmp_no_keycard");

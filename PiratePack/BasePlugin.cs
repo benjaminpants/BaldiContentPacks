@@ -18,6 +18,7 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using MTM101BaldAPI.Components.Animation;
 
 namespace PiratePack
 {
@@ -274,9 +275,18 @@ namespace PiratePack
 
             cannFlyFrames = spriteFrames.ToArray();
 
-            cann.animator = cann.gameObject.AddComponent<RotatedSpriteAnimator>();
+            cann.animator = cann.gameObject.AddComponent<CustomRotatedSpriteAnimator>();
+            cann.animator.LoadAnimations(new Dictionary<string, SpriteArrayAnimation>()
+            {
+                { "fly", new SpriteArrayAnimation(10, cannFlyFrames) },
+                { "talk1", new SpriteArrayAnimation(1, new Sprite[1][] { new Sprite[1] { cannTalkFrames[0] } })},
+                { "talk2", new SpriteArrayAnimation(1, new Sprite[1][] { new Sprite[1] { cannTalkFrames[1] } })},
+                { "talk3", new SpriteArrayAnimation(1, new Sprite[1][] { new Sprite[1] { cannTalkFrames[2] } })},
+            });
+            cann.animator.timeScale = TimeScaleType.Npc;
+            cann.animator.SetDefaultAnimation("fly", 1f);
             SpriteRotator rotator = cann.gameObject.AddComponent<SpriteRotator>();
-            cann.animator.affectedObject = rotator;
+            cann.animator.rotator = rotator;
             cann.rotator = rotator;
             rotator.ReflectionSetVariable("spriteRenderer", cann.spriteRenderer[0]);
             cann.volumeAnimator = cann.gameObject.AddComponent<CustomVolumeAnimator>();
@@ -284,6 +294,7 @@ namespace PiratePack
             cann.volumeAnimator.animations = new string[3] { "talk1", "talk2", "talk3" };
             cann.volumeAnimator.enabled = false;
             cann.volumeAnimator.volumeMultipler = 1f;
+            cann.volumeAnimator.animator = cann.animator;
 
             assetMan.Add<NPC>("Cann", cann);
 

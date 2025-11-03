@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using MTM101BaldAPI.Components;
+using MTM101BaldAPI.Components.Animation;
 using MTM101BaldAPI.Registers;
 using Rewired;
 using System;
@@ -49,7 +50,7 @@ namespace CriminalPack
         public float grappleDistance = 100f; // limit grapple to 10 tiles.
         public AudioManager audMan;
         public Entity entity;
-        public CustomSpriteAnimator animator;
+        public CustomSpriteRendererAnimator animator;
         public List<ItemObject> stolenItems = new List<ItemObject>();
         public SoundObject[] audGottaScram = new SoundObject[0];
         public SoundObject[] audHey = new SoundObject[0];
@@ -138,41 +139,6 @@ namespace CriminalPack
             entity = GetComponent<Entity>();
             navigator.SetSpeed(defaultSpeed);
             navigator.maxSpeed = defaultSpeed;
-            animator.animations.Add("Idle", new CustomAnimation<UnityEngine.Sprite>(1, new Sprite[]
-            {
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer"),
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer2")
-            }));
-            animator.animations.Add("Grapple", new CustomAnimation<UnityEngine.Sprite>(6, new Sprite[]
-            {
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_grapple2"),
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_grapple"),
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_grapple3"),
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_grapple"),
-            }));
-            animator.animations.Add("Talk", new CustomAnimation<UnityEngine.Sprite>(12, new Sprite[]
-            {
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_talk1"),
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_talk2"),
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_talk3"),
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_talk2"),
-            }));
-            animator.animations.Add("CloakOpen", new CustomAnimation<UnityEngine.Sprite>(new Sprite[]
-            {
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer"),
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_open1"),
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_open2"),
-            }, 0.5f));
-            animator.animations.Add("CloakClose", new CustomAnimation<UnityEngine.Sprite>(new Sprite[]
-            {
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_open2"),
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_open1"),
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer"),
-            }, 0.5f));
-            animator.animations.Add("CloakIdle", new CustomAnimation<UnityEngine.Sprite>(new Sprite[]
-            {
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_open2"),
-            }, 0.25f));
             animator.SetDefaultAnimation("Idle", 1f);
             SetLookerLimitation(false);
             this.behaviorStateMachine.ChangeState(new Dealer_Wander(this));
@@ -496,7 +462,7 @@ namespace CriminalPack
                 currentRemaining -= pnts;
                 dealer.stolenItems.Add(recentestPointObject);
             }
-            Singleton<CoreGameManager>.Instance.AddPoints(-pointsToSubtract, player.playerNumber, true, false); // dont include so it doesn't get affected
+            Singleton<CoreGameManager>.Instance.AddPoints(-pointsToSubtract, player.playerNumber, true, false, false); // dont include so it doesn't get affected
             dealer.stolenItem = Items.None;
         }
 

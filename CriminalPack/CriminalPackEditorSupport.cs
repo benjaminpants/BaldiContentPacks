@@ -35,10 +35,7 @@ namespace CriminalPack
             EditorInterface.AddObjectVisual("prison_cell_bed", assetMan.Get<GameObject>("PrisonCellBed"), true);
 
             EditorInterfaceModes.AddModeCallback(AddContentToMode);
-            EditorLevelData.AddDefaultTextureAction((Dictionary<string, TextureContainer> dict) =>
-            {
-                dict.Add("jailcell", new TextureContainer("PrisonFloor", "PrisonWall", "PrisonFloor"));
-            });
+            LevelStudioPlugin.Instance.defaultRoomTextures.Add("jailcell", new TextureContainer("PrisonFloor", "PrisonWall", "PrisonFloor"));
             EditorInterface.AddRoomVisualManager<CellRoomVisualManager>("jailcell");
         }
 
