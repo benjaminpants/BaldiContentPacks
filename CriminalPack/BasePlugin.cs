@@ -51,7 +51,7 @@ namespace CriminalPack
 
         IEnumerator ResourcesLoaded()
         {
-            yield return 12 + (Chainloader.PluginInfos.ContainsKey("mtm101.rulerp.baldiplus.leveltyped") ? 1 : 0);
+            yield return 13 + (Chainloader.PluginInfos.ContainsKey("mtm101.rulerp.baldiplus.leveltyped") ? 1 : 0);
             yield return "Fetching existing assets...";
             SoundObject[] foundSoundObjects = Resources.FindObjectsOfTypeAll<SoundObject>().Where(x => x.GetInstanceID() >= 0).ToArray();
             assetMan.Add<SoundObject>("CorrectBuzz", foundSoundObjects.First(x => x.name == "Activity_Correct"));
@@ -72,6 +72,7 @@ namespace CriminalPack
             assetMan.Add<Sprite>("IOU_DecoySmall", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "IOU_Decoy_Small.png"), 25f));
             assetMan.Add<Sprite>("IOU_DecoyBig", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "IOU_Decoy_Big.png"), 50f));
             assetMan.Add<Sprite>("IOUBOOM", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "IOU_BOOM.png"), 50f));
+            assetMan.Add<Sprite>("IOU_Sticker", AssetLoader.SpriteFromTexture2D(AssetLoader.TextureFromMod(this, "IOU_Sticker.png"), 1f));
             assetMan.Add<Texture2D>("IOU_Wall", AssetLoader.TextureFromMod(this, "IOU_Wall.png"));
             assetMan.Add<Texture2D>("IOU_WallFade", AssetLoader.TextureFromMod(this, "IOU_WallFade.png"));
             assetMan.Add<Texture2D>("dealer_poster", AssetLoader.TextureFromMod(this, "dealer_poster.png"));
@@ -429,41 +430,6 @@ namespace CriminalPack
             anim.timeScale = TimeScaleType.Npc;
             anim.renderer = dealer.spriteRenderer[0];
             dealer.animator = anim;
-            /*animator.animations.Add("Idle", new CustomAnimation<UnityEngine.Sprite>(1, new Sprite[]
-            {
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer"),
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer2")
-            }));
-            animator.animations.Add("Grapple", new CustomAnimation<UnityEngine.Sprite>(6, new Sprite[]
-            {
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_grapple2"),
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_grapple"),
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_grapple3"),
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_grapple"),
-            }));
-            animator.animations.Add("Talk", new CustomAnimation<UnityEngine.Sprite>(12, new Sprite[]
-            {
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_talk1"),
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_talk2"),
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_talk3"),
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_talk2"),
-            }));
-            animator.animations.Add("CloakOpen", new CustomAnimation<UnityEngine.Sprite>(new Sprite[]
-            {
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer"),
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_open1"),
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_open2"),
-            }, 0.5f));
-            animator.animations.Add("CloakClose", new CustomAnimation<UnityEngine.Sprite>(new Sprite[]
-            {
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_open2"),
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_open1"),
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer"),
-            }, 0.5f));
-            animator.animations.Add("CloakIdle", new CustomAnimation<UnityEngine.Sprite>(new Sprite[]
-            {
-                CriminalPackPlugin.Instance.assetMan.Get<Sprite>("dealer_open2"),
-            }, 0.25f));*/
             dealer.animator.LoadAnimations(new Dictionary<string, SpriteAnimation>()
             {
                 { "Idle", new SpriteAnimation(1, new Sprite[]
@@ -866,6 +832,7 @@ namespace CriminalPack
                     .SetAsInstantUse()
                     .SetPickupSound(cardPickupSound)
                     .Build();
+                cardObject.GetMeta().tags.Add("crmp_iou_sticker_nooverride");
 
                 ((ITM_Keycard)cardObject.item).myValue = i;
 
@@ -943,6 +910,13 @@ namespace CriminalPack
                 { "Level_Size_Medium", mediumPrison },
                 { "Level_Size_Large", largePrison }
             }));
+
+            yield return "Creating sticker...";
+            new StickerBuilder<IOUStickerData>(Info)
+                .SetEnum(IOUStickerEnum)
+                .SetDuplicateOddsMultiplier(0.5f)
+                .SetSprite(assetMan.Get<Sprite>("IOU_Sticker"))
+                .Build();
         }
 
         public static List<ExtendedPosterObject> itemPosters = new List<ExtendedPosterObject>();
@@ -1343,6 +1317,7 @@ namespace CriminalPack
             CustomLevelObject[] objects = scene.GetCustomLevelObjects();
             scene.MarkAsNeverUnload();
             bool isEndless = scene.GetMeta().tags.Contains("endless");
+            scene.potentialStickers = scene.potentialStickers.AddToArray(new WeightedSticker(IOUStickerEnum, 100));
 
             // not level object specific
             switch (levelName)
@@ -1577,6 +1552,8 @@ namespace CriminalPack
         public static Items IOUEnum = EnumExtensions.ExtendEnum<Items>("IOU");
 
         public static Items IOUDecoyEnum = EnumExtensions.ExtendEnum<Items>("IOUDecoy");
+
+        public static Sticker IOUStickerEnum = EnumExtensions.ExtendEnum<Sticker>("IOU");
 
 
         static Color dealerColor = new Color(174f / 255f, 94f / 255f, 144f / 255f);

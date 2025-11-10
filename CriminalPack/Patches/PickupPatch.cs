@@ -49,10 +49,23 @@ namespace CriminalPack.Patches
     [HarmonyPatch("Clicked")]
     class PickupClickedPatch
     {
-        static bool Prefix(Pickup __instance, int player)
+        static bool Prefix(Pickup __instance, int player, bool ___free)
         {
+            if (!___free) return false; // stop shops from triggering IOU stuff (for now, in the future try to find a way to make it work for the lols)
             if (__instance.GetComponent<DisableIOUSpamClick>()) return false;
-            if (__instance.item.itemType != CriminalPackPlugin.IOUDecoyEnum) return true;
+            if (__instance.GetComponent<RandomIOUChanceFailed>()) return false;
+            if (__instance.item.itemType != CriminalPackPlugin.IOUDecoyEnum)
+            {
+                if (__instance.item.GetMeta().flags.HasFlag(ItemFlags.Unobtainable)) return true; // unobtainable items shouldn't be IOUed
+                if (__instance.item.GetMeta().tags.Contains("crmp_iou_sticker_nooverride")) return true; // items with this tag shouldn't be overwritten
+                float chanceToBeIOUAnyway = Singleton<StickerManager>.Instance.StickerValue(CriminalPackPlugin.IOUStickerEnum) * 0.05f;
+                // we are checking if the chance failed, hence the use of > instead of <=
+                if ((chanceToBeIOUAnyway == 0f) || (UnityEngine.Random.Range(0f, 1f) > chanceToBeIOUAnyway))
+                {
+                    __instance.gameObject.AddComponent<RandomIOUChanceFailed>(); // technically if a pickup isn't destroyed this could stop it from being IOUed but. like. who cares at that point.
+                    return true;
+                }
+            }
             __instance.item = CriminalPackPlugin.Instance.assetMan.Get<ItemObject>("IOU");
             __instance.gameObject.AddComponent<DisableIOUSpamClick>();
             __instance.GetComponentInChildren<PickupBob>().enabled = false;
@@ -103,6 +116,11 @@ namespace CriminalPack.Patches
         }
 
         internal class DisableIOUSpamClick : MonoBehaviour
+        {
+
+        }
+
+        internal class RandomIOUChanceFailed : MonoBehaviour
         {
 
         }
