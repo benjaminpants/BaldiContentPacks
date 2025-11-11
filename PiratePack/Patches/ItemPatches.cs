@@ -14,8 +14,15 @@ namespace PiratePack.Patches
     {
         static void Postfix(ItemManager __instance)
         {
+            if (__instance == null)
+            {
+                PiratePlugin.Log.LogWarning("What the fuck? __instance null???");
+                return;
+            }
             ShieldTracker myShieldTracker = __instance.GetComponent<ShieldTracker>();
             if (myShieldTracker == null) return;
+            if (__instance.selectedItem >= __instance.items.Length) return;
+            if (__instance.items[__instance.selectedItem]) return;
             if (__instance.items[__instance.selectedItem].itemType == PiratePlugin.shieldItemType)
             {
                 myShieldTracker.EquipShield(__instance.selectedItem);

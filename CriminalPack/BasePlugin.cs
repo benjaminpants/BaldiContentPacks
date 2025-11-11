@@ -1317,7 +1317,7 @@ namespace CriminalPack
             CustomLevelObject[] objects = scene.GetCustomLevelObjects();
             scene.MarkAsNeverUnload();
             bool isEndless = scene.GetMeta().tags.Contains("endless");
-            scene.potentialStickers = scene.potentialStickers.AddToArray(new WeightedSticker(IOUStickerEnum, 100));
+            scene.potentialStickers = scene.potentialStickers.AddToArray(new WeightedSticker(IOUStickerEnum, 30));
 
             // not level object specific
             switch (levelName)
