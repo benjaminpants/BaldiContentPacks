@@ -69,6 +69,10 @@ namespace CriminalPack.Patches
                     return true;
                 }
             }
+            if (__instance.TryGetComponent(out Animator animator))
+            {
+                animator.enabled = false;
+            }
             __instance.item = CriminalPackPlugin.Instance.assetMan.Get<ItemObject>("IOU");
             __instance.gameObject.AddComponent<DisableIOUSpamClick>();
             __instance.GetComponentInChildren<PickupBob>().enabled = false;
