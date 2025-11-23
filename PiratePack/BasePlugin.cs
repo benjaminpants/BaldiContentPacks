@@ -64,7 +64,7 @@ namespace PiratePack
 
     [BepInDependency("mtm101.rulerp.baldiplus.levelstudio", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("mtm101.rulerp.baldiplus.levelstudioloader", BepInDependency.DependencyFlags.SoftDependency)]
-    [BepInPlugin("mtm101.rulerp.baldiplus.piratepack", "Pirate Pack", "1.3.0.1")]
+    [BepInPlugin("mtm101.rulerp.baldiplus.piratepack", "Pirate Pack", "1.3.1.0")]
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi")]
     public class PiratePlugin : BaseUnityPlugin
     {

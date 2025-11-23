@@ -19,6 +19,7 @@ namespace PiratePack
             AssetManager assetMan = PiratePlugin.Instance.assetMan;
             EditorInterface.AddNPCVisual("cann", assetMan.Get<NPC>("Cann"));
             EditorInterfaceModes.AddModeCallback(AddContentToMode);
+            LevelStudioPlugin.Instance.selectableShopItems.AddRange(new string[] { "pshield3", "doubloon" });
         }
 
         public static void AddContentToMode(EditorMode mode, bool vanillaCompliant)

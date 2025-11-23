@@ -28,7 +28,7 @@ using MTM101BaldAPI.Components.Animation;
 
 namespace CriminalPack
 {
-    [BepInPlugin("mtm101.rulerp.baldiplus.criminalpackroot", "Criminal Pack Root Mod", "4.2.0.0")]
+    [BepInPlugin("mtm101.rulerp.baldiplus.criminalpackroot", "Criminal Pack", "4.2.1.0")]
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi")]
     [BepInDependency("mtm101.rulerp.baldiplus.levelstudio", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("mtm101.rulerp.baldiplus.levelstudioloader", BepInDependency.DependencyFlags.HardDependency)]
@@ -274,7 +274,7 @@ namespace CriminalPack
             ItemObject pouchObject = new ItemBuilder(Info)
                 .SetEnum(pouchEnum)
                 .SetNameAndDescription("Itm_DealerPouch", "Desc_DealerPouch")
-                .SetShopPrice(25)
+                .SetShopPrice(250)
                 .SetGeneratorCost(int.MaxValue)
                 .SetItemComponent(dealerBag)
                 .SetSprites(assetMan.Get<Sprite>("PouchSmall"), assetMan.Get<Sprite>("PouchBig"))
@@ -309,7 +309,7 @@ namespace CriminalPack
             ItemObject emptyPouchObject = new ItemBuilder(Info)
                 .SetEnum(pouchEnum)
                 .SetNameAndDescription("Itm_EmptyDealerPouch", "Desc_EmptyDealerPouch")
-                .SetShopPrice(1)
+                .SetShopPrice(250)
                 .SetGeneratorCost(int.MaxValue)
                 .SetItemComponent(emptyDealerBag)
                 .SetSprites(assetMan.Get<Sprite>("PouchSmall"), assetMan.Get<Sprite>("PouchBig"))
@@ -381,7 +381,7 @@ namespace CriminalPack
             ItemObject IOU = new ItemBuilder(Info)
                 .SetSprites(assetMan.Get<Sprite>("IOUSmall"), assetMan.Get<Sprite>("IOUBig"))
                 .SetNameAndDescription("Itm_IOU", "Desc_IOU")
-                .SetShopPrice(500)
+                .SetShopPrice(600)
                 .SetGeneratorCost(40) // this should never be in the generator, but setup a generator cost anyway, just incase a mod uses it for sorting.
                 .SetMeta(ItemFlags.CreatesEntity | ItemFlags.Persists, new string[] { "cann_like", "adv_sm_potential_reward", "adv_good" })
                 .SetEnum(IOUEnum)

@@ -31,6 +31,9 @@ namespace CriminalPack
             LevelStudioPlugin.Instance.structureTypes.Add("scanner", typeof(HallDoorStructureLocation));
             LevelStudioPlugin.Instance.selectableTextures.Add("PrisonFloor");
             LevelStudioPlugin.Instance.selectableTextures.Add("PrisonWall");
+            LevelStudioPlugin.Instance.selectableShopItems.AddRange(new string[] { "crowbar", "thief_mask", "iou" });
+            LevelStudioPlugin.Instance.selectableStickers.Add("iou");
+            LevelStudioPlugin.Instance.stickerSprites.Add("iou", CriminalPackPlugin.Instance.assetMan.Get<Sprite>("IOUSmall"));
 
             EditorInterface.AddObjectVisual("prison_cell_bed", assetMan.Get<GameObject>("PrisonCellBed"), true);
 
@@ -93,6 +96,7 @@ namespace CriminalPack
             LevelLoaderPlugin.Instance.itemObjects.Add("thief_mask", assetMan.Get<ItemObject>("Mask"));
             LevelLoaderPlugin.Instance.itemObjects.Add("iou", assetMan.Get<ItemObject>("IOU"));
             LevelLoaderPlugin.Instance.itemObjects.Add("iou_decoy", assetMan.Get<ItemObject>("IOUDecoy"));
+            LevelLoaderPlugin.Instance.stickerAliases.Add("iou", CriminalPackPlugin.IOUStickerEnum);
 
             Structure_KeycardDoors keyDoor = assetMan.Get<Structure_KeycardDoors>("Structure_KeycardDoors");
             LevelLoaderPlugin.Instance.structureAliases.Add("keycard_door", new LoaderStructureData(keyDoor, new Dictionary<string, GameObject>()
