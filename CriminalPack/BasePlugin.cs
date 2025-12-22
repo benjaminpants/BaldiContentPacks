@@ -28,7 +28,7 @@ using MTM101BaldAPI.Components.Animation;
 
 namespace CriminalPack
 {
-    [BepInPlugin("mtm101.rulerp.baldiplus.criminalpackroot", "Criminal Pack", "4.2.1.0")]
+    [BepInPlugin("mtm101.rulerp.baldiplus.criminalpackroot", "Criminal Pack", "4.2.2.0")]
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi")]
     [BepInDependency("mtm101.rulerp.baldiplus.levelstudio", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("mtm101.rulerp.baldiplus.levelstudioloader", BepInDependency.DependencyFlags.HardDependency)]

@@ -52,7 +52,8 @@ namespace CriminalPack
                 }
             }
             potentialStickers.RemoveAll(x => x.selection == sticker);
-            potentialStickers.RemoveAll(x => StickerMetaStorage.Instance.Get(x.selection).tags.Contains("crmp_iou_sticker_nodisguise"));
+            potentialStickers.RemoveAll(x => x.selection.GetMeta().tags.Contains("crmp_iou_sticker_nodisguise"));
+            potentialStickers.RemoveAll(x => x.selection.GetMeta().tags.Contains("tms_daredevil"));
             potentialStickers.Shuffle();
             potentialStickers.Sort((a, b) => a.weight.CompareTo(b.weight));
             while (potentialStickers.Count > 3)
@@ -65,7 +66,7 @@ namespace CriminalPack
                 return state; // oh well. disguise failed.
             }
             Sticker chosenSticker = potentialStickers.RandomSelection();
-            state.disguisingAs = StickerMetaStorage.Instance.Get(chosenSticker).value.CreateStateData(state.activeLevel, state.opened, state.sticky);
+            state.disguisingAs = chosenSticker.GetMeta().value.CreateStateData(state.activeLevel, state.opened, state.sticky);
             return state;
         }
 
@@ -74,6 +75,18 @@ namespace CriminalPack
             inventoryState.opened = true;
             ((IOUStickerState)inventoryState).disguisingAs = null;
             return inventoryState;
+        }
+
+        public override BooleanHandshake CanStackWith(StickerStateData thisSticker, StickerStateData otherSticker)
+        {
+            IOUStickerState iouSticker = (IOUStickerState)thisSticker;
+            if (iouSticker.disguisingAs == null)
+            {
+                return base.CanStackWith(thisSticker, otherSticker);
+            }
+            // CanStackWith is the method the API natively uses for checking stacks. We use it with our disguising state and attempt to force the return value to be the one we want.
+            bool canStackAsDisguise = iouSticker.disguisingAs.CanStackWith(otherSticker);
+            return canStackAsDisguise ? BooleanHandshake.AlwaysTrue : BooleanHandshake.AlwaysFalse;
         }
     }
 
