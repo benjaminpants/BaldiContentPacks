@@ -31,6 +31,7 @@ namespace CarnivalPack
             LevelStudioPlugin.Instance.selectableTextures.Add("ZorpWall");
             LevelStudioPlugin.Instance.selectableTextures.Add("ZorpCeil");
             LevelStudioPlugin.Instance.selectableShopItems.Add("cottoncandy");
+            LevelStudioPlugin.Instance.selectableGeneratorItems.Add("cottoncandy");
             EditorInterface.AddNPCVisual("zorpster", assetMan.Get<NPC>("Zorpster"));
             EditorInterface.AddObjectVisualWithCustomCapsuleCollider("zorp_lavalamp", LevelLoaderPlugin.Instance.basicObjects["zorp_lavalamp"], 1f, 7f, 1, Vector3.up * 3.5f);
             LevelStudioPlugin.Instance.defaultRoomTextures.Add("zorp", new TextureContainer("ZorpFloor", "ZorpWall", "ZorpCeil"));

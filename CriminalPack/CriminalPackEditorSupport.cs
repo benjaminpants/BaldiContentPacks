@@ -32,6 +32,7 @@ namespace CriminalPack
             LevelStudioPlugin.Instance.selectableTextures.Add("PrisonFloor");
             LevelStudioPlugin.Instance.selectableTextures.Add("PrisonWall");
             LevelStudioPlugin.Instance.selectableShopItems.AddRange(new string[] { "crowbar", "thief_mask", "iou" });
+            LevelStudioPlugin.Instance.selectableGeneratorItems.AddRange(new string[] { "crowbar", "thief_mask", "iou", "iou_decoy" });
             LevelStudioPlugin.Instance.selectableStickers.Add("iou");
             LevelStudioPlugin.Instance.stickerSprites.Add("iou", CriminalPackPlugin.Instance.assetMan.Get<Sprite>("IOUSmall"));
 

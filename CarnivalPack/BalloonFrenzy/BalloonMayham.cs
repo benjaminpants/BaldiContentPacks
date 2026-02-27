@@ -59,7 +59,7 @@ namespace CarnivalPack
 
     public class BalloonMayhamManager : MainGameManager
     {
-
+        public FrenzyBalloon activityRewardBalloon;
         public BalloonFrenzy eventPrefab;
         public BalloonFrenzy myEvent;
         public ComboFrenzyCounter myCounter;
@@ -187,7 +187,7 @@ namespace CarnivalPack
             Singleton<CoreGameManager>.Instance.audMan.PlaySingle(timeUpSound);
         }
 
-        protected override void ExitedSpawn()
+        public override void ExitedSpawn()
         {
             base.ExitedSpawn();
             StartMode();
@@ -228,6 +228,19 @@ namespace CarnivalPack
             Singleton<MusicManager>.Instance.SetSpeed(0.5f);
         }
 
+        public override void ActivityCompleted(bool correct, Activity activity)
+        {
+            base.ActivityCompleted(correct, activity);
+            if (!correct) return;
+            if (correct)
+            {
+                FrenzyBalloon spawned = GameObject.Instantiate<FrenzyBalloon>(activityRewardBalloon, myEvent.transform);
+                spawned.canBeNPCPopped = false;
+                spawned.Initialize(activity.room);
+                spawned.myBalloon.Entity.Teleport(activity.room.RandomEntitySafeCellNoGarbage().CenterWorldPosition);
+            }
+        }
+
         public virtual void StartMode()
         {
             myEvent = GameObject.Instantiate<BalloonFrenzy>(eventPrefab);
@@ -242,28 +255,10 @@ namespace CarnivalPack
         {
             if (!allNotebooksFound)
             {
-                //UI.textShaking = true;
-                //myCounter.timescaleMultipler = 1.25f;
-                allNotebooksFound = true;
-                ec.SetElevators(true);
-                elevatorsToClose = ec.elevators.Count - 1;
-                foreach (Elevator elevator in ec.elevators)
-                {
-                    if (ec.elevators.Count > 1)
-                    {
-                        elevator.PrepareToClose();
-                    }
-                    StartCoroutine(ReturnSpawnFinal(elevator));
-                }
-                foreach (Activity activity in ec.activities)
-                {
-                    if (activity != lastActivity)
-                    {
-                        activity.Corrupt(false);
-                        activity.SetBonusMode(true);
-                    }
-                }
+                UI.textShaking = true;
+                myCounter.timescaleMultipler = 1.25f;
             }
+            base.AllNotebooks();
         }
 
         protected override void LoadSceneObject(SceneObject sceneObject, bool restarting)

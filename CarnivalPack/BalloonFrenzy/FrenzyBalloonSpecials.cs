@@ -70,4 +70,20 @@ namespace CarnivalPack
             spb.mm = mm;
         }
     }
+
+    public class FrenzyBalloon5xMult : FrenzyBalloon
+    {
+        public override void Pop(Entity popperResponsible)
+        {
+            base.Pop(popperResponsible);
+            if (popperResponsible == null) return;
+            if (popperResponsible.gameObject.TryGetComponent<FrenzyCounter>(out FrenzyCounter frenz))
+            {
+                for (int i = 0; i < 4; i++)
+                {
+                    frenz.OnBalloonPopped();
+                }
+            }
+        }
+    }
 }

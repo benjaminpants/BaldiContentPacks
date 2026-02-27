@@ -349,6 +349,7 @@ namespace CarnivalPack
                 return;
             }
             //Zorp.audMan.PlaySingle(Zorp.doneSound);
+            Zorp.animator.SetDefaultAnimation("Idle", 1f, true);
             Zorp.behaviorStateMachine.ChangeState(new Zorpster_Wander(Zorp));
         }
     }

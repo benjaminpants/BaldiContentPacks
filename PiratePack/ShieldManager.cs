@@ -70,7 +70,7 @@ namespace PiratePack
                 if (foundEntity.gameObject.GetComponent<Balloon>()) return; // don't try to push balloons
                 if (foundEntity.Frozen) return; // don't try to push away frozen entities
                 if (foundEntity.Squished && !pm.plm.Entity.Squished) return; // can't push away entities that are squished while we aren't.
-                MovementModifier slowSlightly = new MovementModifier(Vector3.zero, 0.5f);
+                MovementModifier slowSlightly = new MovementModifier(Vector3.zero, 0.25f);
                 foundEntity.SetTrigger(false);
                 foundEntity.ExternalActivity.moveMods.Add(slowSlightly);
                 TemporaryTriggerDisable tempDisable = foundEntity.gameObject.AddComponent<TemporaryTriggerDisable>();

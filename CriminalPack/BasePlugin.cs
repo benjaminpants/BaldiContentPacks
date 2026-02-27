@@ -28,7 +28,7 @@ using MTM101BaldAPI.Components.Animation;
 
 namespace CriminalPack
 {
-    [BepInPlugin("mtm101.rulerp.baldiplus.criminalpackroot", "Criminal Pack", "4.2.2.0")]
+    [BepInPlugin("mtm101.rulerp.baldiplus.criminalpackroot", "Criminal Pack", "4.2.3.0")]
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi")]
     [BepInDependency("mtm101.rulerp.baldiplus.levelstudio", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("mtm101.rulerp.baldiplus.levelstudioloader", BepInDependency.DependencyFlags.HardDependency)]
@@ -635,6 +635,7 @@ namespace CriminalPack
             yield return "Loading Prison Style assets...";
             assetMan.Add<Transform>("CagedLight", Resources.FindObjectsOfTypeAll<Transform>().First(x => x.GetInstanceID() >= 0 && x.name == "CagedLight"));
             prisonType = EnumExtensions.ExtendEnum<LevelType>("Prison");
+            LevelTypeMetaStorage.Instance.AddMeta(Info, prisonType, "PST_CHK_LVL_Prison");
             assetMan.Add<Texture2D>("PrisonWall", AssetLoader.TextureFromMod(this, "Prison", "PrisonWall.png"));
             assetMan.Add<Texture2D>("PrisonFloor", AssetLoader.TextureFromMod(this, "Prison", "PrisonFloor.png"));
             assetMan.AddFromResourcesNoClones<RoomAsset>();

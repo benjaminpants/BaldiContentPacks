@@ -29,7 +29,7 @@ namespace CarnivalPack
     [BepInDependency("mtm101.rulerp.baldiplus.levelstudio", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("mtm101.rulerp.baldiplus.levelstudioloader", BepInDependency.DependencyFlags.HardDependency)]
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi")]
-    [BepInPlugin("mtm101.rulerp.bbplus.carnivalpackroot", "Carnival Pack", "3.0.1.0")]
+    [BepInPlugin("mtm101.rulerp.bbplus.carnivalpackroot", "Carnival Pack", "3.0.2.0")]
     public class CarnivalPackBasePlugin : BaseUnityPlugin
     {
         public static CarnivalPackBasePlugin Instance;
@@ -266,6 +266,9 @@ namespace CarnivalPack
                 weight = 50
             });
 
+            FrenzyBalloon5xMult fiveBalloon = CreateBalloonVariant<FrenzyBalloon5xMult>(AssetLoader.SpriteFromMod(this, Vector2.one / 2f, 25f, "Balloons", "Balloon5xCombo.png"));
+            fiveBalloon.popSound = ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "Gen_PopWow.wav"), "Sfx_Effects_Pop", SoundType.Effect, Color.white);
+
             assetMan.Add<RandomEvent>("BalloonFrenzy", frenzyEvent);
 
             assetMan.Add<SoundObject>("PrincipalNotPopBalloon", ObjectCreators.CreateSoundObject(AssetLoader.AudioClipFromMod(this, "PRI_NoNotPoppingBalloons.wav"), "Vfx_PRI_NoNotBalloonPop", SoundType.Voice, Color.white));
@@ -329,6 +332,7 @@ namespace CarnivalPack
             frenzyManager.ReflectionSetVariable("destroyOnLoad", true);
             frenzyManager.timeUpSound = Resources.FindObjectsOfTypeAll<SoundObject>().First(x => x.GetInstanceID() >= 0 && x.name == "TimeLimitBell");
             frenzyManager.eventPrefab = frenzyEventDedicated;
+            frenzyManager.activityRewardBalloon = fiveBalloon;
             assetMan.Add<BaseGameManager>("BalloonMayhem", frenzyManager);
             GameObject.Destroy(managerTemplate);
 

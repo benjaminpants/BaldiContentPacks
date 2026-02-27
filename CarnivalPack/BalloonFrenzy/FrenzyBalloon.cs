@@ -67,6 +67,7 @@ namespace CarnivalPack
 
         void OnDestroy()
         {
+            if (frenzy == null) return;
             frenzy.spawnedBalloons.Remove(this);
         }
 
