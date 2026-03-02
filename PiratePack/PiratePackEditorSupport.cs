@@ -20,6 +20,7 @@ namespace PiratePack
             EditorInterface.AddNPCVisual("cann", assetMan.Get<NPC>("Cann"));
             EditorInterfaceModes.AddModeCallback(AddContentToMode);
             LevelStudioPlugin.Instance.selectableShopItems.AddRange(new string[] { "pshield3", "doubloon" });
+            LevelStudioPlugin.Instance.selectableGeneratorItems.AddRange(new string[] { "pshield3", "doubloon", "pshield5" });
         }
 
         public static void AddContentToMode(EditorMode mode, bool vanillaCompliant)
