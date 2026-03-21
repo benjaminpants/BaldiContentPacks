@@ -35,7 +35,7 @@ namespace CriminalPack
         bool popped = false;
 
         // todo: figure out wtf is going on with this
-        public void EntityTriggerEnter(Collider other, bool validCollision)
+        public void EntityTriggerEnter(Entity otherEntity, Collider other, bool validCollision)
         {
             if (pm == null) return;
             if (popped) return;
@@ -52,12 +52,12 @@ namespace CriminalPack
             }
         }
 
-        public void EntityTriggerExit(Collider other, bool validCollision)
+        public void EntityTriggerExit(Entity otherEntity, Collider other, bool validCollision)
         {
             
         }
 
-        public void EntityTriggerStay(Collider other, bool validCollision)
+        public void EntityTriggerStay(Entity otherEntity, Collider other, bool validCollision)
         {
             
         }

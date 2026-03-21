@@ -283,9 +283,9 @@ namespace CarnivalPack
             moveMod.movementAddend = Zorp.Navigator.Velocity.normalized * Zorp.Navigator.speed * Zorp.Navigator.Am.Multiplier * Zorp.TimeScale;
         }
 
-        public override void OnStateTriggerExit(Collider other, bool validCollision)
+        public override void OnStateTriggerExit(Entity otherEntity, Collider other, bool validCollision)
         {
-            if (other.GetComponent<Entity>() == targetEnt)
+            if (otherEntity == targetEnt)
             {
                 base.ChangeNavigationState(new NavigationState_WanderRandom(Zorp, 0));
                 Zorp.audMan.PlaySingle(Zorp.escapeSound);
@@ -455,7 +455,7 @@ namespace CarnivalPack
             }
         }
 
-        public override void OnStateTriggerEnter(Collider other, bool validCollision)
+        public override void OnStateTriggerEnter(Entity otherEnt, Collider other, bool validCollision)
         {
             if (!validCollision)
             {
@@ -463,7 +463,6 @@ namespace CarnivalPack
                 Zorp.BecomeJammed();
                 return;
             }
-            Entity otherEnt = other.GetComponent<Entity>();
             if (otherEnt != null)
             {
                 if ((otherEnt.gameObject.layer == LayerMask.NameToLayer("NPCs")) || (otherEnt.gameObject.layer == LayerMask.NameToLayer("Player")))

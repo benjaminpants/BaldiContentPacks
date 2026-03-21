@@ -99,7 +99,7 @@ namespace CarnivalPack
 
 
         static FieldInfo _pm = AccessTools.Field(typeof(Item), "pm");
-        public void EntityTriggerEnter(Collider other, bool validCollision)
+        public void EntityTriggerEnter(Entity otherEntity, Collider other, bool validCollision)
         {
             if (!validCollision) return;
             if (other.CompareTag("NPC") && canBeNPCPopped)
@@ -117,12 +117,12 @@ namespace CarnivalPack
             }
         }
 
-        public void EntityTriggerStay(Collider other, bool validCollision)
+        public void EntityTriggerStay(Entity otherEntity, Collider other, bool validCollision)
         {
             
         }
 
-        public void EntityTriggerExit(Collider other, bool validCollision)
+        public void EntityTriggerExit(Entity otherEntity, Collider other, bool validCollision)
         {
             
         }

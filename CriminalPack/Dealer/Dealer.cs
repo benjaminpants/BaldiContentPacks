@@ -229,7 +229,7 @@ namespace CriminalPack
             dealer.behaviorStateMachine.ChangeState(new Dealer_Wander(dealer, dealer.repeatAttemptCooldown));
         }
 
-        public override void OnStateTriggerEnter(Collider other, bool validCollision)
+        public override void OnStateTriggerEnter(Entity otherEntity, Collider other, bool validCollision)
         {
             if (!validCollision) return;
             if (caughtPlayer) return;
