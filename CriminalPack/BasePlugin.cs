@@ -28,7 +28,7 @@ using MTM101BaldAPI.Components.Animation;
 
 namespace CriminalPack
 {
-    [BepInPlugin("mtm101.rulerp.baldiplus.criminalpackroot", "Criminal Pack", "4.2.3.1")]
+    [BepInPlugin("mtm101.rulerp.baldiplus.criminalpackroot", "Criminal Pack", "4.2.3.2")]
     [BepInDependency("mtm101.rulerp.bbplus.baldidevapi")]
     [BepInDependency("mtm101.rulerp.baldiplus.levelstudio", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("mtm101.rulerp.baldiplus.levelstudioloader", BepInDependency.DependencyFlags.HardDependency)]
@@ -965,10 +965,13 @@ namespace CriminalPack
 
             itemPosters.Add(poster);
 
-            if (Chainloader.PluginInfos.ContainsKey("mtm101.rulerp.baldiplus.levelstudioloader"))
+            if (LevelLoaderPlugin.Instance.posterAliases.ContainsKey(poster.name))
             {
-                CriminalPackLoaderSupport.AddScannerPosterToLoader(poster);
+                Debug.LogWarning("Found duplicate poster object for: " + poster.name + "!");
+                Debug.LogWarning("Not adding poster to loader!");
+                return;
             }
+            CriminalPackLoaderSupport.AddScannerPosterToLoader(poster);
             if (Chainloader.PluginInfos.ContainsKey("mtm101.rulerp.baldiplus.levelstudio"))
             {
                 CriminalPackEditorSupport.AddScannerPosterToEditor(poster, itemName);

@@ -151,7 +151,7 @@ namespace CriminalPack
 
         public CharacterChoice? SelectRandomCharacter()
         {
-            List<Character> validCharacters = ec.npcsToSpawn.Select(x => x.Character).Distinct().ToList();
+            List<Character> validCharacters = ec.Npcs.Select(x => x.Character).Distinct().ToList();
             WeightedCharacterChoice[] validCharacterChoice = characterChoices.Where(x => validCharacters.Contains(x.selection.charEnum)).ToArray();
             if (validCharacterChoice.Length == 0)
             {
