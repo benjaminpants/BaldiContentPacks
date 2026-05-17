@@ -4,7 +4,6 @@ using MTM101BaldAPI.Components;
 using MTM101BaldAPI.Components.Animation;
 using MTM101BaldAPI.Registers;
 using System.Collections.Generic;
-using System.EnterpriseServices;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
@@ -30,7 +29,7 @@ namespace PiratePack
         public CannSoundEntry(SoundObject obj, AudioManager audMan)
         {
             soundObject = obj;
-            soundPitch = audMan.audioDevice.pitch;
+            soundPitch = audMan.audioSourceManager.GetAudioSource(obj.soundType).pitch;
             if (audMan.GetComponent<NPC>()) { soundType = SoundType.NPC; }
             else if (audMan.GetComponent<Item>()) { soundType = SoundType.Item; }
             else if ((audMan.transform.parent != null) && audMan.transform.parent.GetComponent<Door>()) { soundType = SoundType.Door; }
@@ -47,8 +46,8 @@ namespace PiratePack
             }
             else
             {
-                minDistance = audMan.audioDevice.minDistance;
-                maxDistance = audMan.audioDevice.maxDistance;
+                minDistance = audMan.audioSourceManager.minDistance;
+                maxDistance = audMan.audioSourceManager.maxDistance;
             }
         }
 
@@ -144,7 +143,7 @@ namespace PiratePack
             defaultSubtitleColor = (Color)_subtitleColor.GetValue(audMan);
             defaultMinDistance = (float)_minDistance.GetValue(audMan);
             defaultMaxDistance = (float)_maxDistance.GetValue(audMan);
-            volumeAnimator.audioSource = audMan.audioDevice;
+            //volumeAnimator.audioSource = audMan.audioDevice;
             SetVolumeAnimatorState(false);
         }
 
@@ -175,6 +174,7 @@ namespace PiratePack
         {
             audMan.FlushQueue(true);
             ResetSoundSettings();
+            volumeAnimator.audioSource = audMan.audioSourceManager.GetAudioSource(SoundType.Voice);
             audMan.QueueRandomAudio(hungrySounds);
         }
 
@@ -182,6 +182,7 @@ namespace PiratePack
         {
             audMan.FlushQueue(true);
             ResetSoundSettings();
+            volumeAnimator.audioSource = audMan.audioSourceManager.GetAudioSource(SoundType.Voice);
             audMan.QueueAudio(eatSound);
         }
 
@@ -191,7 +192,6 @@ namespace PiratePack
             _subtitleColor.SetValue(audMan, defaultSubtitleColor);
             _minDistance.SetValue(audMan, defaultMinDistance);
             _maxDistance.SetValue(audMan, defaultMaxDistance);
-
         }
 
         public void SquakAndAlert(PlayerManager pm)
@@ -234,7 +234,7 @@ namespace PiratePack
             if (man == audMan) return; // No infinite loops in the halls...
             // sound is too far away for cam to have heard
             // todo: account for sound propagation?
-            if (Vector3.Distance(transform.position, man.transform.position) > (((man is PropagatedAudioManager) ? (float)_maxDistance.GetValue(audMan) : man.audioDevice.maxDistance) * hearingMultiplier)) return;
+            if (Vector3.Distance(transform.position, man.transform.position) > (((man is PropagatedAudioManager) ? (float)_maxDistance.GetValue(audMan) : man.audioSourceManager.maxDistance) * hearingMultiplier)) return;
             if (behaviorStateMachine.currentState is Cann_StateBase)
             {
                 ((Cann_StateBase)behaviorStateMachine.currentState).HeardSound(obj, man);
@@ -267,6 +267,7 @@ namespace PiratePack
 
         public void PlaySoundEntry(CannSoundEntry entry, bool isObvious = false)
         {
+            audMan.audioSourceManager.ClearClips(); // mystman why
             if (!isObvious)
             {
                 if (entry.subtitleOverride)
@@ -288,10 +289,12 @@ namespace PiratePack
             if (Random.Range(1, 999) == 99)
             {
                 audMan.QueueAudio(easterEggSound);
+                volumeAnimator.audioSource = audMan.audioSourceManager.GetAudioSource(easterEggSound.soundType);
             }
             else
             {
                 audMan.QueueAudio(entry.soundObject);
+                volumeAnimator.audioSource = audMan.audioSourceManager.GetAudioSource(entry.soundObject.soundType);
             }
         }
 
@@ -411,6 +414,11 @@ namespace PiratePack
                 });
 
             }
+        }
+
+        protected override void VirtualUpdate()
+        {
+            base.VirtualUpdate();
         }
 
         public void FindLoops(bool useClassrooms = true)

@@ -8,11 +8,11 @@
 
 {"key":"Desc_PShield","value":"Shield\nWhoever touches this plastic shield is sure to be pushed away!\nTo carry it, just have it selected!"},
 
-{"key":"Sfx_Shield_Bonk","value":"*PONK!*"},
-{"key":"Sfx_Shield_Dissolve","value":"*PONK...*"},
+{"key":"Sfx_Shield_Bonk","value":"[PONK!]"},
+{"key":"Sfx_Shield_Dissolve","value":"[PONK...]"},
 
 {"key":"Itm_GoldDoubloon","value":"Gold Doubloon"},
 {"key":"Desc_GoldDoubloon","value":"Gold Doubloon\nThis doubloon is so shiny that anyone who sees it\npass by will chase after it!"},
-{"key":"Sfx_Doubloon_Collect","value":"*Dabling!*"}
+{"key":"Sfx_Doubloon_Collect","value":"[Dabling!]"}
 
 ]}
