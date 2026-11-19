@@ -126,5 +126,10 @@ namespace CarnivalPack
         {
             
         }
+
+        public void ClickableInSight(int player)
+        {
+            
+        }
     }
 }
